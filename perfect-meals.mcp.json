@@ -1,0 +1,59 @@
+{
+    "project_name": "Perfect Meals",
+    "version": "1.0.0",
+    "mcp_templates": {
+        "new_conversation": {
+            "template": "Project: Perfect Meals - Next.js Web Application\n\nContext for AI Assistant:\n1. This is a Next.js 15.2.1 project with TypeScript and Tailwind CSS\n2. Repository: https://github.com/lehinadenekan/perfect-meals\n3. Current development state: {DESCRIBE_CURRENT_TASK}\n4. Previous conversation ended at: {LAST_ACTION_PERFORMED}\n\nDevelopment Environment:\n- OS: darwin 24.1.0\n- Workspace: /Volumes/Samsung_T5/Coding/SaaS\n- Shell: /bin/bash\n- Node Package Manager: npm\n\nPlease maintain context of the project structure and features while optimizing for a fresh conversation.\n\n{SPECIFIC_TASK_OR_QUESTION}"
+        }
+    },
+    "project_context": {
+        "name": "Perfect Meals",
+        "type": "Next.js Web Application",
+        "stage": "Initial Development",
+        "repository": {
+            "platform": "GitHub",
+            "url": "https://github.com/lehinadenekan/perfect-meals",
+            "visibility": "public"
+        },
+        "tech_stack": {
+            "framework": "Next.js 15.2.1",
+            "language": "TypeScript",
+            "styling": "Tailwind CSS v3.3.0",
+            "package_manager": "npm"
+        },
+        "current_features": {
+            "landing_page": {
+                "components": ["Navigation Bar"],
+                "styling": {
+                    "background": "RGB(255, 200, 0)",
+                    "elements": [
+                        {"text": "Perfect Meals", "position": "left"},
+                        {"button": "Guest Mode", "position": "right"},
+                        {"button": "Log In", "position": "right"}
+                    ]
+                }
+            }
+        },
+        "development_state": {
+            "running_on": "localhost:3000",
+            "network_access": "http://192.168.1.138:3000",
+            "recent_actions": [
+                "Fixed PostCSS security vulnerability",
+                "Removed nodemon",
+                "Initialized Git repository",
+                "Created GitHub repository",
+                "Pushed initial commit"
+            ]
+        },
+        "project_structure": {
+            "core_files": [
+                "app/page.tsx",
+                "app/components/Navbar.tsx",
+                "app/layout.tsx",
+                "app/globals.css",
+                "tailwind.config.js",
+                "postcss.config.js"
+            ]
+        }
+    }
+} 

@@ -22,7 +22,11 @@
     "typescript": "latest"
   },
   "dependencies": {
+    "@auth/core": "^0.34.2",
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
     "next": "latest",
+    "next-auth": "^4.24.11",
     "react": "latest",
     "react-dom": "latest"
   }
