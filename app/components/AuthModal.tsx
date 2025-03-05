@@ -38,6 +38,31 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     }
   }
 
+  const handleFacebookLogin = async () => {
+    try {
+      setIsLoading(true)
+      setError('')
+
+      const result = await signIn('facebook', {
+        redirect: false,
+        callbackUrl: window.location.origin
+      })
+
+      if (result?.error) {
+        setError('Failed to sign in with Facebook. Please try again.')
+      } else if (result?.ok) {
+        // Wait briefly for the session to update
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        onClose()
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+      console.error('Facebook sign-in error:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Close modal if user becomes authenticated
   if (status === 'authenticated' && isOpen) {
     onClose()
@@ -92,7 +117,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     </div>
                   )}
 
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-3">
                     <button
                       onClick={handleGoogleLogin}
                       disabled={isLoading || status === 'loading'}
@@ -100,6 +125,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     >
                       <img className="h-5 w-5" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" />
                       {isLoading ? 'Signing in...' : 'Continue with Google'}
+                    </button>
+
+                    <button
+                      onClick={handleFacebookLogin}
+                      disabled={isLoading || status === 'loading'}
+                      className="flex w-full items-center justify-center gap-3 rounded-md bg-[#1877F2] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#166FE5] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <img className="h-5 w-5" src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook logo" />
+                      {isLoading ? 'Signing in...' : 'Continue with Facebook'}
                     </button>
                   </div>
                 </div>
