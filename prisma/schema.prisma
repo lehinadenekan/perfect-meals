@@ -42,7 +42,7 @@ model User {
   email             String                 @unique
   name              String?
   image             String?
-  emailVerified     DateTime?
+  emailVerified     DateTime?              @map("email_verified")
   accounts          Account[]
   sessions          Session[]
   recipes           Recipe[]               @relation("AuthoredRecipes")
@@ -50,6 +50,8 @@ model User {
   preferences       UserPreference?
   allergies         UserAllergy[]
   cuisinePreferences UserCuisinePreference[]
+
+  @@map("users")
 }
 
 model Recipe {
