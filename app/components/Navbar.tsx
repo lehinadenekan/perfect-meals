@@ -13,7 +13,7 @@ const Navbar = () => {
       <nav className="w-full bg-[#ffc800] p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="text-black text-xl font-bold">
-            Perfect Meals
+            perfect meals
           </div>
           <div className="flex gap-4 items-center">
             {status === 'loading' ? (
