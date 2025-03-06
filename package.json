@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:studio": "prisma studio",
+    "db:setup": "npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed"
   },
   "keywords": [],
   "author": "",
@@ -18,13 +23,16 @@
     "@types/react-dom": "latest",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.23",
+    "prisma": "^6.4.1",
     "tailwindcss": "^3.3.0",
     "typescript": "latest"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",
+    "@auth/prisma-adapter": "^2.8.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.4.1",
     "next": "latest",
     "next-auth": "^4.24.11",
     "react": "latest",
