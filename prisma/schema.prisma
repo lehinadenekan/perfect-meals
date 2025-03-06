@@ -1,1 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  recipes       Recipe[]  // Relation to recipes created by the user
+  savedRecipes  Recipe[] @relation("SavedRecipes") // Recipes saved by the user
+}
+
+model Recipe {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  title            String
+  description      String?  @db.Text
+  cookingTime      Int      // in minutes
+  servings         Int
+  difficulty       String   // EASY, MEDIUM, HARD
+  cuisineType      String   // e.g., Italian, Japanese, Nigerian, etc.
+  regionOfOrigin   String?  // Specific region or cultural context
+  imageUrl         String?
+  videoUrl         String?
+  calories         Int?
+  
+  // Recipe content
+  ingredients      Ingredient[]
+  instructions     Instruction[]
+  nutritionFacts   NutritionFacts?
+  
+  // Metadata and relationships
+  author          User     @relation(fields: [authorId], references: [id])
+  authorId        String
+  savedByUsers    User[]   @relation("SavedRecipes")
+  categories      Category[]
+  tags            Tag[]
+  reviews         Review[]
+  
+  // Dietary information
+  isVegetarian    Boolean  @default(false)
+  isVegan         Boolean  @default(false)
+  isGlutenFree    Boolean  @default(false)
+  isDairyFree     Boolean  @default(false)
+  isNutFree       Boolean  @default(false)
+  
+  // Metrics
+  averageRating   Float?
+  totalReviews    Int      @default(0)
+  
+  @@index([cuisineType])
+  @@index([authorId])
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Float
+  unit        String   // e.g., grams, cups, tablespoons
+  notes       String?
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String
+  
+  @@index([recipeId])
+}
+
+model Instruction {
+  id          String   @id @default(cuid())
+  stepNumber  Int
+  description String   @db.Text
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String
+  
+  @@index([recipeId])
+}
+
+model NutritionFacts {
+  id          String   @id @default(cuid())
+  protein     Float?   // in grams
+  carbs       Float?   // in grams
+  fat         Float?   // in grams
+  fiber       Float?   // in grams
+  sugar       Float?   // in grams
+  sodium      Float?   // in milligrams
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String   @unique
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  recipes     Recipe[]
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  recipes     Recipe[]
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int      // 1-5
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now())
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String
+  
+  @@index([recipeId])
+}
