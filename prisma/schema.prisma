@@ -38,19 +38,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  recipes       Recipe[]  // Relation to recipes created by the user
-  savedRecipes  Recipe[] @relation("SavedRecipes") // Recipes saved by the user
-  // User preferences
-  preference          UserPreference?
-  allergies           UserAllergy[]
-  cuisinePreferences  UserCuisinePreference[]
+  id                String                 @id @default(cuid())
+  email             String                 @unique
+  name              String?
+  image             String?
+  emailVerified     DateTime?
+  accounts          Account[]
+  sessions          Session[]
+  recipes           Recipe[]               @relation("AuthoredRecipes")
+  savedRecipes      Recipe[]              @relation("SavedRecipes")
+  preferences       UserPreference?
+  allergies         UserAllergy[]
+  cuisinePreferences UserCuisinePreference[]
 }
 
 model Recipe {
@@ -74,7 +73,7 @@ model Recipe {
   nutritionFacts   NutritionFacts?
   
   // Metadata and relationships
-  author          User     @relation(fields: [authorId], references: [id])
+  author          User     @relation("AuthoredRecipes", fields: [authorId], references: [id])
   authorId        String
   savedByUsers    User[]   @relation("SavedRecipes")
   categories      Category[]
@@ -159,61 +158,65 @@ model StandardIngredient {
   name          String        @unique
   category      String        // e.g., nuts, dairy, shellfish
   userAllergies UserAllergy[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Cuisine {
-  id              String        @id @default(cuid())
-  name            String        @unique
+  id              String                 @id @default(cuid())
+  name            String                 @unique
   region          String
-  userPreferences UserCuisinePreference[]
+  imageUrl        String?
+  preferences     UserCuisinePreference[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 }
 
 // User preference models
 model UserPreference {
-  id                    String   @id @default(cuid())
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId                String   @unique
-  cookingSkillLevel     String   // BEGINNER, INTERMEDIATE, ADVANCED
-  preferredServingSize  Int     @default(4)
-  maxCookingTime        Int?    // in minutes
-  measurementSystem     String   @default("METRIC") // METRIC, IMPERIAL
-  // Dietary preferences
-  preferVegetarian      Boolean @default(false)
-  preferVegan          Boolean @default(false)
-  preferGlutenFree     Boolean @default(false)
-  preferDairyFree      Boolean @default(false)
-  preferLowCarb        Boolean @default(false)
-  preferLowCalorie     Boolean @default(false)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userEmail   String   @unique
+  user        User     @relation(fields: [userEmail], references: [email])
+  cookingTime String   // "0-30", "30-60", "60+"
+  skillLevel  String   // "beginner", "intermediate", "advanced"
+  servingSize Int
+  mealPrep    Boolean  @default(false)
+  
+  // Dietary restrictions
+  isVegetarian Boolean @default(false)
+  isVegan      Boolean @default(false)
+  isGlutenFree Boolean @default(false)
+  isDairyFree  Boolean @default(false)
+  isKosher     Boolean @default(false)
+  isHalal      Boolean @default(false)
+  isLowCarb    Boolean @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model UserAllergy {
-  id                      String   @id @default(cuid())
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId                  String
-  ingredient              StandardIngredient @relation(fields: [ingredientId], references: [id])
-  ingredientId            String
-  severityLevel           String   // MILD, MODERATE, SEVERE
-  crossContaminationSensitive Boolean @default(false)
-  notes                   String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id           String             @id @default(cuid())
+  userEmail    String
+  user         User               @relation(fields: [userEmail], references: [email])
+  ingredientId String
+  ingredient   StandardIngredient @relation(fields: [ingredientId], references: [id])
+  severity     String            // "mild", "moderate", "severe"
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  @@unique([userId, ingredientId])
-  @@index([userId])
+  @@unique([userEmail, ingredientId])
 }
 
 model UserCuisinePreference {
   id              String   @id @default(cuid())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String
-  cuisine         Cuisine  @relation(fields: [cuisineId], references: [id])
+  userEmail       String
+  user            User     @relation(fields: [userEmail], references: [email])
   cuisineId       String
-  preferenceLevel String   // LOVE, LIKE, NEUTRAL, DISLIKE
+  cuisine         Cuisine  @relation(fields: [cuisineId], references: [id])
+  preferenceLevel String   // "love", "like", "neutral", "dislike"
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
-  @@unique([userId, cuisineId])
-  @@index([userId])
+
+  @@unique([userEmail, cuisineId])
 }

@@ -1,36 +1,6 @@
 import NextAuth from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
-import FacebookProvider from 'next-auth/providers/facebook'
+import { authOptions } from '@/lib/auth'
 
-const handler = NextAuth({
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID || '',
-      clientSecret: process.env.GOOGLE_SECRET || '',
-    }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_ID || '',
-      clientSecret: process.env.FACEBOOK_SECRET || '',
-    }),
-  ],
-  pages: {
-    signIn: '/', // We're handling sign in via our modal
-    error: '/', // We'll handle errors in the modal
-  },
-  callbacks: {
-    async session({ session, token }) {
-      return session
-    },
-    async jwt({ token, account, profile }) {
-      if (account && profile) {
-        token.accessToken = account.access_token
-      }
-      return token
-    },
-  },
-  session: {
-    strategy: 'jwt',
-  },
-})
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST } 
