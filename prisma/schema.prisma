@@ -179,20 +179,8 @@ model UserPreference {
   id          String   @id @default(cuid())
   userEmail   String   @unique
   user        User     @relation(fields: [userEmail], references: [email])
-  cookingTime String   // "0-30", "30-60", "60+"
-  skillLevel  String   // "beginner", "intermediate", "advanced"
-  servingSize Int
-  mealPrep    Boolean  @default(false)
-  
-  // Dietary restrictions
-  isVegetarian Boolean @default(false)
-  isVegan      Boolean @default(false)
-  isGlutenFree Boolean @default(false)
-  isDairyFree  Boolean @default(false)
-  isKosher     Boolean @default(false)
-  isHalal      Boolean @default(false)
-  isLowCarb    Boolean @default(false)
-  
+  dietType    String?  // One of: 'alkaline', 'gluten-free', 'halal', 'keto', 'kosher', 'paleo', 'vegan', 'vegetarian'
+  excludedFoods String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
