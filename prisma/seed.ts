@@ -1,100 +1,74 @@
 import { PrismaClient } from '@prisma/client';
+import { recipes } from './seed-data/recipes';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed Standard Ingredients
-  const standardIngredients = [
-    { name: 'Rice', category: 'Grains' },
-    { name: 'Wheat Flour', category: 'Grains' },
-    { name: 'Peanuts', category: 'Nuts' },
-    { name: 'Milk', category: 'Dairy' },
-    { name: 'Eggs', category: 'Protein' },
-    { name: 'Soy', category: 'Legumes' },
-    { name: 'Shellfish', category: 'Seafood' },
-    { name: 'Fish', category: 'Seafood' },
-    { name: 'Tree Nuts', category: 'Nuts' },
-    { name: 'Wheat', category: 'Grains' },
-  ];
+  console.log('Starting to seed database...');
 
-  for (const ingredient of standardIngredients) {
-    await prisma.standardIngredient.upsert({
-      where: { name: ingredient.name },
-      update: {},
-      create: ingredient,
+  // Clear existing data
+  await prisma.review.deleteMany();
+  await prisma.nutritionFacts.deleteMany();
+  await prisma.instruction.deleteMany();
+  await prisma.ingredient.deleteMany();
+  await prisma.recipe.deleteMany();
+  await prisma.user.deleteMany();
+
+  // Create a default user for recipes
+  const defaultUser = await prisma.user.create({
+    data: {
+      email: 'chef@perfectmeals.com',
+      name: 'Chef Perfect',
+    },
+  });
+
+  // Create recipes
+  for (const recipe of recipes) {
+    const createdRecipe = await prisma.recipe.create({
+      data: {
+        title: recipe.title,
+        description: recipe.description,
+        cookingTime: recipe.cookingTime,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
+        cuisineType: recipe.cuisineType,
+        regionOfOrigin: recipe.regionOfOrigin,
+        imageUrl: recipe.imageUrl,
+        calories: recipe.calories,
+        isVegetarian: recipe.isVegetarian,
+        isVegan: recipe.isVegan,
+        isGlutenFree: recipe.isGlutenFree,
+        isDairyFree: recipe.isDairyFree,
+        isNutFree: recipe.isNutFree,
+        authorId: defaultUser.id,
+        ingredients: {
+          create: recipe.ingredients,
+        },
+        instructions: {
+          create: recipe.instructions,
+        },
+        nutritionFacts: {
+          create: recipe.nutritionFacts,
+        },
+        // Add some sample reviews
+        reviews: {
+          create: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, () => ({
+            rating: Math.floor(Math.random() * 3) + 3, // Ratings between 3-5
+            comment: 'Great recipe!',
+          })),
+        },
+      },
     });
+
+    console.log(`Created recipe: ${createdRecipe.title}`);
   }
 
-  // Seed Cuisines
-  const cuisines = [
-    { name: 'Japanese', region: 'East Asia' },
-    { name: 'Chinese', region: 'East Asia' },
-    { name: 'Italian', region: 'Europe' },
-    { name: 'French', region: 'Europe' },
-    { name: 'Mexican', region: 'North America' },
-    { name: 'Indian', region: 'South Asia' },
-    { name: 'Thai', region: 'Southeast Asia' },
-    { name: 'Nigerian', region: 'West Africa' },
-    { name: 'Ethiopian', region: 'East Africa' },
-    { name: 'Brazilian', region: 'South America' },
-  ];
-
-  for (const cuisine of cuisines) {
-    await prisma.cuisine.upsert({
-      where: { name: cuisine.name },
-      update: {},
-      create: cuisine,
-    });
-  }
-
-  // Seed Categories
-  const categories = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Appetizer',
-    'Main Course',
-    'Dessert',
-    'Snack',
-    'Beverage',
-    'Side Dish',
-    'Soup',
-  ];
-
-  for (const category of categories) {
-    await prisma.category.upsert({
-      where: { name: category },
-      update: {},
-      create: { name: category },
-    });
-  }
-
-  // Seed Tags
-  const tags = [
-    'Quick & Easy',
-    'Healthy',
-    'Budget-Friendly',
-    'Spicy',
-    'Kid-Friendly',
-    'Party',
-    'Comfort Food',
-    'Low Calorie',
-    'High Protein',
-    'One Pot',
-  ];
-
-  for (const tag of tags) {
-    await prisma.tag.upsert({
-      where: { name: tag },
-      update: {},
-      create: { name: tag },
-    });
-  }
+  console.log('Database seeding completed!');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

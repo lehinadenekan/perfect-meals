@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Card from '../shared/Card';
 import ExclusionModal from './ExclusionModal';
+import MealCarousel from '../recipe/MealCarousel';
+import { Recipe } from '@/types/recipe';
 
 type DietType = 'alkaline' | 'gluten-free' | 'halal' | 'keto' | 'kosher' | 'paleo' | 'vegan' | 'vegetarian';
 
@@ -50,6 +52,9 @@ const DietaryPreferenceSelector = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+  const [showCarousel, setShowCarousel] = useState(false);
 
   // Load user preferences when session is available
   useEffect(() => {
@@ -116,6 +121,9 @@ const DietaryPreferenceSelector = () => {
         return [...prev, dietType];
       }
     });
+    // Reset carousel when preferences change
+    setShowCarousel(false);
+    setRecipes([]);
   };
 
   const handleClearPreferences = async () => {
@@ -128,14 +136,35 @@ const DietaryPreferenceSelector = () => {
       setSelectedDiets([]);
       setExcludedFoods([]);
       setIsModalOpen(false);
+      // Reset carousel
+      setShowCarousel(false);
+      setRecipes([]);
     } catch (error) {
       console.error('Error clearing preferences:', error);
     }
   };
 
-  const handleGenerateMeals = () => {
-    // TODO: Implement meal generation logic using selectedDiets and excludedFoods
-    console.log('Generating meals with:', { selectedDiets, excludedFoods });
+  const handleGenerateMeals = async () => {
+    setIsLoadingRecipes(true);
+    setShowCarousel(true);
+
+    try {
+      const queryParams = new URLSearchParams({
+        dietTypes: selectedDiets.join(','),
+        excludedFoods: excludedFoods.join(','),
+      });
+
+      const response = await fetch(`/api/recipes?${queryParams}`);
+      if (!response.ok) throw new Error('Failed to fetch recipes');
+
+      const data = await response.json();
+      setRecipes(data);
+    } catch (error) {
+      console.error('Error generating meals:', error);
+      setRecipes([]);
+    } finally {
+      setIsLoadingRecipes(false);
+    }
   };
 
   return (
@@ -201,6 +230,13 @@ const DietaryPreferenceSelector = () => {
       {excludedFoods.length > 0 && (
         <div className="mt-2 text-center text-gray-600">
           Excluded Foods: {excludedFoods.map(food => food.charAt(0).toUpperCase() + food.slice(1)).join(', ')}
+        </div>
+      )}
+
+      {/* Meal Carousel */}
+      {showCarousel && (
+        <div className="mt-8">
+          <MealCarousel recipes={recipes} isLoading={isLoadingRecipes} />
         </div>
       )}
 
