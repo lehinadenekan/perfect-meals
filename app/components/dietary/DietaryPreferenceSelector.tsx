@@ -141,7 +141,7 @@ const DietaryPreferenceSelector = () => {
   return (
     <div className="w-full max-w-7xl mx-auto">
       <h2 className="text-2xl font-bold text-center mb-16">Choose Your Dietary Preferences</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {/* Top Row */}
         {TOP_ROW_DIETS.map((dietType) => (
           <Card
@@ -167,7 +167,7 @@ const DietaryPreferenceSelector = () => {
       </div>
       
       {/* Action Buttons */}
-      <div className="flex justify-center space-x-6 mt-8">
+      <div className="flex justify-center space-x-6 mb-16">
         <button
           onClick={() => setIsModalOpen(true)}
           className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg font-semibold transition-colors duration-200"
@@ -192,15 +192,15 @@ const DietaryPreferenceSelector = () => {
 
       {/* Selected Diets Summary */}
       {selectedDiets.length > 0 && (
-        <div className="mt-6 text-center text-gray-600">
-          Selected diets: {selectedDiets.map(diet => DIET_TYPES[diet].title).join(', ')}
+        <div className="text-center text-gray-600">
+          Selected Diets: {selectedDiets.map(diet => DIET_TYPES[diet].title).join(', ')}
         </div>
       )}
 
       {/* Excluded Foods Summary */}
       {excludedFoods.length > 0 && (
         <div className="mt-2 text-center text-gray-600">
-          Excluded foods: {excludedFoods.map(food => food.charAt(0).toUpperCase() + food.slice(1)).join(', ')}
+          Excluded Foods: {excludedFoods.map(food => food.charAt(0).toUpperCase() + food.slice(1)).join(', ')}
         </div>
       )}
 
