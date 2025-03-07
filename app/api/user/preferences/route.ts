@@ -39,21 +39,42 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { dietTypes, excludedFoods } = await request.json();
+    const { dietTypes, excludedFoods } = await request.json() as {
+      dietTypes: string[];
+      excludedFoods: string[];
+    };
 
-    const updatedPreferences = await prisma.userPreference.upsert({
-      where: {
-        userEmail: session.user.email,
-      },
+    // First, ensure the user exists in the database
+    const user = await prisma.user.upsert({
+      where: { email: session.user.email },
       update: {
-        dietTypes,
-        excludedFoods,
+        name: session.user.name || null,
+        image: session.user.image || null,
       },
       create: {
-        userEmail: session.user.email,
-        dietTypes,
-        excludedFoods,
+        email: session.user.email,
+        name: session.user.name || null,
+        image: session.user.image || null,
       },
+    });
+
+    // Now create or update the preferences
+    const updatedPreferences = await prisma.$transaction(async (tx) => {
+      // Delete existing preferences if any
+      await tx.userPreference.deleteMany({
+        where: { userEmail: session.user.email }
+      });
+
+      // Create new preferences
+      return tx.userPreference.create({
+        data: {
+          user: {
+            connect: { email: session.user.email }
+          },
+          dietTypes,
+          excludedFoods
+        }
+      });
     });
 
     return NextResponse.json({

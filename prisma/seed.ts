@@ -6,12 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Starting to seed database...');
 
-  // Clear existing data
+  // Clear existing data in the correct order
   await prisma.review.deleteMany();
   await prisma.nutritionFacts.deleteMany();
   await prisma.instruction.deleteMany();
   await prisma.ingredient.deleteMany();
   await prisma.recipe.deleteMany();
+  await prisma.userCuisinePreference.deleteMany();
+  await prisma.userPreference.deleteMany();
   await prisma.user.deleteMany();
 
   // Create a default user for recipes
@@ -19,6 +21,20 @@ async function main() {
     data: {
       email: 'chef@perfectmeals.com',
       name: 'Chef Perfect',
+      preferences: {
+        create: {
+          cookingTime: 'MEDIUM',
+          servingSize: 4,
+          mealPrep: true,
+          isVegetarian: false,
+          isVegan: false,
+          isGlutenFree: false,
+          isDairyFree: false,
+          isKosher: false,
+          isHalal: false,
+          isLowCarb: false,
+        },
+      },
     },
   });
 
@@ -35,6 +51,7 @@ async function main() {
         regionOfOrigin: recipe.regionOfOrigin,
         imageUrl: recipe.imageUrl,
         calories: recipe.calories,
+        type: recipe.type,
         isVegetarian: recipe.isVegetarian,
         isVegan: recipe.isVegan,
         isGlutenFree: recipe.isGlutenFree,

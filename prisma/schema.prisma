@@ -68,6 +68,7 @@ model Recipe {
   imageUrl         String?
   videoUrl         String?
   calories         Int?
+  type             String   @default("DINNER") // BREAKFAST, LUNCH, DINNER, SNACK
   
   // Recipe content
   ingredients      Ingredient[]
@@ -95,6 +96,7 @@ model Recipe {
   
   @@index([cuisineType])
   @@index([authorId])
+  @@index([type])
 }
 
 model Ingredient {
@@ -176,13 +178,19 @@ model Cuisine {
 
 // User preference models
 model UserPreference {
-  id          String   @id @default(cuid())
-  userEmail   String   @unique
-  user        User     @relation(fields: [userEmail], references: [email])
-  dietTypes   String[] @default([]) // Array of diet types: 'alkaline', 'gluten-free', 'halal', etc.
-  excludedFoods String[] @default([])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userEmail     String   @unique
+  cookingTime   String   @default("MEDIUM")  // QUICK, MEDIUM, LONG
+  servingSize   Int      @default(2)
+  mealPrep      Boolean  @default(false)
+  isVegetarian  Boolean  @default(false)
+  isVegan       Boolean  @default(false)
+  isGlutenFree  Boolean  @default(false)
+  isDairyFree   Boolean  @default(false)
+  isKosher      Boolean  @default(false)
+  isHalal       Boolean  @default(false)
+  isLowCarb     Boolean  @default(false)
+  user          User     @relation(fields: [userEmail], references: [email])
 }
 
 model UserAllergy {
@@ -201,10 +209,10 @@ model UserAllergy {
 model UserCuisinePreference {
   id              String   @id @default(cuid())
   userEmail       String
-  user            User     @relation(fields: [userEmail], references: [email])
   cuisineId       String
+  preferenceLevel String   // LOVE, LIKE, NEUTRAL, DISLIKE
+  user            User     @relation(fields: [userEmail], references: [email])
   cuisine         Cuisine  @relation(fields: [cuisineId], references: [id])
-  preferenceLevel String   // "love", "like", "neutral", "dislike"
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
