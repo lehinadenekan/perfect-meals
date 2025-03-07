@@ -2,18 +2,20 @@
 
 import React, { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import Image from 'next/image';
 import AuthModal from './AuthModal';
 
 const Navbar = () => {
   const { data: session, status } = useSession();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   return (
     <>
       <nav className="w-full bg-[#ffc800] p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="text-black text-xl font-bold">
-            Perfect Meals
+          <div className="text-black text-xl font-bold lowercase">
+            perfect meals
           </div>
           <div className="flex gap-4 items-center">
             {status === 'loading' ? (
@@ -21,12 +23,21 @@ const Navbar = () => {
             ) : session ? (
               <>
                 <div className="flex items-center gap-3">
-                  {session.user?.image && (
-                    <img
-                      src={session.user.image}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full"
-                    />
+                  {session.user?.image && !imageError ? (
+                    <div className="relative w-8 h-8">
+                      <Image
+                        src={session.user.image}
+                        alt="Profile"
+                        className="rounded-full"
+                        fill
+                        sizes="32px"
+                        onError={() => setImageError(true)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
+                      {session.user?.name?.[0]?.toUpperCase() || '?'}
+                    </div>
                   )}
                   <span className="text-black">{session.user?.name}</span>
                 </div>
