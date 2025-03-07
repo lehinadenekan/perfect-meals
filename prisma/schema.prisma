@@ -179,7 +179,7 @@ model UserPreference {
   id          String   @id @default(cuid())
   userEmail   String   @unique
   user        User     @relation(fields: [userEmail], references: [email])
-  dietType    String?  // One of: 'alkaline', 'gluten-free', 'halal', 'keto', 'kosher', 'paleo', 'vegan', 'vegetarian'
+  dietTypes   String[] @default([]) // Array of diet types: 'alkaline', 'gluten-free', 'halal', etc.
   excludedFoods String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

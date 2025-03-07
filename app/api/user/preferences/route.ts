@@ -19,7 +19,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      preferences: userPreferences || { dietType: null, excludedFoods: [] },
+      preferences: userPreferences || { dietTypes: [], excludedFoods: [] },
     });
   } catch (error) {
     console.error('Error fetching preferences:', error);
@@ -39,19 +39,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { dietType, excludedFoods } = await request.json();
+    const { dietTypes, excludedFoods } = await request.json();
 
     const updatedPreferences = await prisma.userPreference.upsert({
       where: {
         userEmail: session.user.email,
       },
       update: {
-        dietType,
+        dietTypes,
         excludedFoods,
       },
       create: {
         userEmail: session.user.email,
-        dietType,
+        dietTypes,
         excludedFoods,
       },
     });

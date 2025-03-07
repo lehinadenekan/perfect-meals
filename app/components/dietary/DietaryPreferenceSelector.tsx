@@ -46,7 +46,7 @@ const BOTTOM_ROW_DIETS: DietType[] = ['kosher', 'paleo', 'vegan', 'vegetarian'];
 
 const DietaryPreferenceSelector = () => {
   const { data: session, status } = useSession();
-  const [selectedDiet, setSelectedDiet] = useState<DietType | null>(null);
+  const [selectedDiets, setSelectedDiets] = useState<DietType[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,7 +59,8 @@ const DietaryPreferenceSelector = () => {
           const response = await fetch('/api/user/preferences');
           const data = await response.json();
           if (data.success) {
-            setSelectedDiet(data.preferences.dietType || null);
+            // Handle array of diet types
+            setSelectedDiets(data.preferences.dietTypes || []);
             setExcludedFoods(data.preferences.excludedFoods || []);
           }
         } catch (error) {
@@ -72,7 +73,7 @@ const DietaryPreferenceSelector = () => {
       loadUserPreferences();
     } else {
       // Reset preferences for non-authenticated users
-      setSelectedDiet(null);
+      setSelectedDiets([]);
       setExcludedFoods([]);
     }
   }, [session, status]);
@@ -90,7 +91,7 @@ const DietaryPreferenceSelector = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            dietType: selectedDiet,
+            dietTypes: selectedDiets,
             excludedFoods,
           }),
         });
@@ -104,7 +105,18 @@ const DietaryPreferenceSelector = () => {
     if (status === 'authenticated') {
       savePreferences();
     }
-  }, [selectedDiet, excludedFoods, session, status, isSaving]);
+  }, [selectedDiets, excludedFoods, session, status, isSaving]);
+
+  const handleDietToggle = (dietType: DietType) => {
+    setSelectedDiets(prev => {
+      const isSelected = prev.includes(dietType);
+      if (isSelected) {
+        return prev.filter(d => d !== dietType);
+      } else {
+        return [...prev, dietType];
+      }
+    });
+  };
 
   const handleClearPreferences = async () => {
     if (!session?.user?.email) return;
@@ -113,7 +125,7 @@ const DietaryPreferenceSelector = () => {
       await fetch('/api/user/preferences', {
         method: 'DELETE',
       });
-      setSelectedDiet(null);
+      setSelectedDiets([]);
       setExcludedFoods([]);
       setIsModalOpen(false);
     } catch (error) {
@@ -122,13 +134,13 @@ const DietaryPreferenceSelector = () => {
   };
 
   const handleGenerateMeals = () => {
-    // TODO: Implement meal generation logic using selectedDiet and excludedFoods
-    console.log('Generating meals with:', { selectedDiet, excludedFoods });
+    // TODO: Implement meal generation logic using selectedDiets and excludedFoods
+    console.log('Generating meals with:', { selectedDiets, excludedFoods });
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-16">Choose Your Dietary Preference</h2>
+      <h2 className="text-2xl font-bold text-center mb-16">Choose Your Dietary Preferences</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Top Row */}
         {TOP_ROW_DIETS.map((dietType) => (
@@ -136,8 +148,8 @@ const DietaryPreferenceSelector = () => {
             key={dietType}
             title={DIET_TYPES[dietType].title}
             description={DIET_TYPES[dietType].description}
-            isSelected={selectedDiet === dietType}
-            onClick={() => setSelectedDiet(dietType)}
+            isSelected={selectedDiets.includes(dietType)}
+            onClick={() => handleDietToggle(dietType)}
             tooltipPosition="top"
           />
         ))}
@@ -147,8 +159,8 @@ const DietaryPreferenceSelector = () => {
             key={dietType}
             title={DIET_TYPES[dietType].title}
             description={DIET_TYPES[dietType].description}
-            isSelected={selectedDiet === dietType}
-            onClick={() => setSelectedDiet(dietType)}
+            isSelected={selectedDiets.includes(dietType)}
+            onClick={() => handleDietToggle(dietType)}
             tooltipPosition="bottom"
           />
         ))}
@@ -177,6 +189,20 @@ const DietaryPreferenceSelector = () => {
           </button>
         )}
       </div>
+
+      {/* Selected Diets Summary */}
+      {selectedDiets.length > 0 && (
+        <div className="mt-6 text-center text-gray-600">
+          Selected diets: {selectedDiets.map(diet => DIET_TYPES[diet].title).join(', ')}
+        </div>
+      )}
+
+      {/* Excluded Foods Summary */}
+      {excludedFoods.length > 0 && (
+        <div className="mt-2 text-center text-gray-600">
+          Excluded foods: {excludedFoods.map(food => food.charAt(0).toUpperCase() + food.slice(1)).join(', ')}
+        </div>
+      )}
 
       {/* Exclusion Modal */}
       <ExclusionModal
