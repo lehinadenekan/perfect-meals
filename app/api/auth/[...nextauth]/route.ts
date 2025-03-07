@@ -1,7 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
-import NextAuth from 'next-auth';
+import NextAuth from 'next-auth/next';
 import GoogleProvider from 'next-auth/providers/google';
-import FacebookProvider from 'next-auth/providers/facebook';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import prisma from '@/lib/prisma';
 
@@ -9,12 +8,8 @@ const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: '63125153558-hup852ul7a7426fh3i05r3qko6uquv26.apps.googleusercontent.com',
-      clientSecret: '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',
-    }),
-    FacebookProvider({
-      clientId: '3121965351292535',
-      clientSecret: 'b5e832fed42bf922baaccf767c586f96',
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   session: {
