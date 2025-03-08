@@ -2,6 +2,20 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import spoonacularService from '@/app/services/spoonacularService';
+import { Recipe, Prisma } from '@prisma/client';
+
+type RecipeWithRelations = Prisma.RecipeGetPayload<{
+  include: {
+    ingredients: true;
+    nutritionFacts: true;
+    reviews: {
+      select: {
+        rating: true;
+      };
+    };
+  };
+}>;
 
 export async function GET(request: Request) {
   try {
@@ -90,12 +104,52 @@ export async function GET(request: Request) {
           },
         },
       },
-      take: 50, // Fetch more recipes for better selection
-      orderBy: [
-        { averageRating: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      take: 20, // Reduced initial fetch
     });
+
+    // If we don't have enough recipes, fetch more from Spoonacular
+    if (recipes.length < 10) {
+      const spoonacularParams: any = {
+        number: 10 - recipes.length,
+      };
+
+      // Map diet types to Spoonacular format
+      if (dietTypes.length > 0) {
+        spoonacularParams.diet = dietTypes.join(',');
+      }
+
+      // Map excluded foods
+      if (excludedFoods.length > 0) {
+        spoonacularParams.intolerances = excludedFoods.join(',');
+      }
+
+      // Add cuisine preferences if available
+      if (cuisinePreferences && cuisinePreferences.length > 0) {
+        const preferredCuisines = cuisinePreferences
+          .filter(cp => cp.preferenceLevel === 'LOVE' || cp.preferenceLevel === 'LIKE')
+          .map(cp => cp.cuisineId)
+          .join(',');
+        
+        if (preferredCuisines) {
+          spoonacularParams.cuisine = preferredCuisines;
+        }
+      }
+
+      try {
+        const spoonacularRecipes = await spoonacularService.searchRecipes(spoonacularParams);
+        const spoonacularRecipesWithRelations = spoonacularRecipes.map(recipe => ({
+          ...recipe,
+          ingredients: [],
+          nutritionFacts: null,
+          reviews: [],
+        })) as RecipeWithRelations[];
+        
+        recipes = [...recipes, ...spoonacularRecipesWithRelations];
+      } catch (error) {
+        console.error('Error fetching from Spoonacular:', error);
+        // Continue with existing recipes if Spoonacular fails
+      }
+    }
 
     // Apply smart selection algorithm
     if (recipes.length > 0) {
@@ -129,19 +183,17 @@ export async function GET(request: Request) {
         return { ...recipe, score };
       });
 
-      // Sort by score and select top 20 with variety
-      recipes = scoredRecipes
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 20);
+      // Sort by score
+      recipes = scoredRecipes.sort((a, b) => b.score - a.score);
     }
 
     // Calculate average rating for each recipe
     const recipesWithRating = recipes.map(recipe => ({
       ...recipe,
-      averageRating: recipe.reviews.length > 0
+      averageRating: recipe.reviews?.length > 0
         ? recipe.reviews.reduce((acc, review) => acc + review.rating, 0) / recipe.reviews.length
         : null,
-      totalReviews: recipe.reviews.length,
+      totalReviews: recipe.reviews?.length || 0,
       reviews: undefined, // Remove raw reviews from response
       score: undefined, // Remove score from response
     }));

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { recipes } from './seed-data/recipes';
 import { cuisineData } from './seed/cuisines';
+import { RecipeGenerator } from '../app/services/recipeGenerator';
 
 const prisma = new PrismaClient();
 
@@ -134,6 +135,46 @@ async function main() {
     console.log(`Created recipe: ${createdRecipe.title}`);
   }
 
+  console.log('Seeding initial recipes completed!');
+  
+  // Generate additional recipes using RecipeGenerator
+  console.log('Starting to generate additional recipes...');
+  const recipeGenerator = new RecipeGenerator();
+  
+  // Get all cuisine IDs
+  const cuisines = await prisma.cuisine.findMany();
+  
+  // Generate 20 recipes for each cuisine
+  for (const cuisine of cuisines) {
+    console.log(`Generating recipes for cuisine: ${cuisine.name}`);
+    
+    // Different meal types to ensure variety
+    const mealTypes = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'];
+    const difficulties = ['EASY', 'MEDIUM', 'HARD'];
+    const servingSizes = [2, 4, 6, 8];
+    
+    for (let i = 0; i < 20; i++) {
+      try {
+        const params = {
+          cuisineId: cuisine.id,
+          difficulty: difficulties[i % difficulties.length],
+          cookingTime: Math.floor(Math.random() * 120) + 15, // 15-135 minutes
+          servings: servingSizes[i % servingSizes.length],
+          mealType: mealTypes[i % mealTypes.length],
+          spiceLevel: ['MILD', 'MEDIUM', 'HOT'][Math.floor(Math.random() * 3)],
+          isFusion: Math.random() < 0.2, // 20% chance of fusion recipes
+        };
+        
+        const recipe = await recipeGenerator.generateRecipe(params);
+        console.log(`Generated recipe: ${recipe.title}`);
+      } catch (error) {
+        console.error(`Failed to generate recipe for ${cuisine.name}:`, error);
+        continue;
+      }
+    }
+  }
+
+  console.log('Additional recipe generation completed!');
   console.log('Database seeding completed!');
 }
 

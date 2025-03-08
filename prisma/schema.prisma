@@ -101,6 +101,9 @@ model Recipe {
   averageRating   Float?
   totalReviews    Int      @default(0)
   
+  generationJob RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
+  jobId         String?
+  
   @@index([cuisineId])
   @@index([cuisineType])
   @@index([authorId])
@@ -243,4 +246,16 @@ model UserCuisinePreference {
   updatedAt       DateTime @updatedAt
 
   @@unique([userEmail, cuisineId])
+}
+
+model RecipeGenerationJob {
+  id           String   @id @default(cuid())
+  status       String   // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  totalRecipes Int
+  completed    Int      @default(0)
+  failed       Int      @default(0)
+  error        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  recipes      Recipe[] @relation("JobRecipes")
 }

@@ -1,4 +1,4 @@
-import { PrismaClient, Cuisine, Recipe } from '@prisma/client';
+import { PrismaClient, Cuisine, Recipe, Prisma } from '@prisma/client';
 import OpenAI from 'openai';
 
 const prisma = new PrismaClient();
@@ -16,104 +16,82 @@ interface RecipeGenerationParams {
   mealType?: string;
 }
 
-interface RecipeIngredient {
-  name: string;
-  amount: number;
-  unit: string;
-  notes?: string;
-}
-
-interface RecipeInstruction {
-  stepNumber: number;
-  description: string;
-}
-
 interface GeneratedRecipeData {
   title: string;
   description: string;
   cookingTime: number;
   servings: number;
   difficulty: string;
-  ingredients: RecipeIngredient[];
-  instructions: string[];
   cookingMethods: string[];
-  spiceLevel: string;
-  tips: string[];
+  calories: number;
+  ingredients: {
+    name: string;
+    amount: number;
+    unit: string;
+    notes?: string;
+  }[];
+  instructions: string[];
+  nutritionFacts: {
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+  };
 }
 
 export class RecipeGenerator {
-  private async getCuisineDetails(cuisineId: string) {
-    const cuisine = await prisma.cuisine.findUnique({
+  private async getCuisineDetails(cuisineId: string): Promise<Cuisine | null> {
+    return prisma.cuisine.findUnique({
       where: { id: cuisineId },
-      include: {
-        subCuisines: true,
-        parentCuisine: true
-      }
     });
-    return cuisine;
   }
 
   private async buildPrompt(cuisine: Cuisine, params: RecipeGenerationParams): Promise<string> {
-    let prompt = `Create a ${params.difficulty || cuisine.difficultyLevel} recipe that authentically represents ${cuisine.name} cuisine.\n\n`;
+    const prompt = `Generate a recipe for ${cuisine.name} cuisine with the following requirements:
     
-    // Add cuisine context
-    prompt += `Cultural Context: ${cuisine.culturalContext}\n\n`;
+    ${params.difficulty ? `- Difficulty level: ${params.difficulty}` : ''}
+    ${params.cookingTime ? `- Cooking time: around ${params.cookingTime} minutes` : ''}
+    ${params.servings ? `- Servings: ${params.servings}` : ''}
+    ${params.spiceLevel ? `- Spice level: ${params.spiceLevel}` : ''}
+    ${params.mealType ? `- Meal type: ${params.mealType}` : ''}
+    ${params.isFusion ? `- Create a fusion dish combining ${cuisine.name} with modern techniques` : '- Create a traditional dish'}
     
-    // Add ingredient guidance
-    prompt += `Use these traditional ingredients:\n`;
-    prompt += `Common ingredients: ${cuisine.commonIngredients.join(', ')}\n`;
-    prompt += `Spice profile: ${cuisine.spiceProfile.join(', ')}\n\n`;
+    The recipe should be authentic to the ${cuisine.region} region and include:
+    - A descriptive title
+    - A brief description
+    - Cooking time in minutes
+    - Number of servings
+    - Difficulty level (EASY, MEDIUM, or HARD)
+    - A list of cooking methods used
+    - A list of ingredients with amounts and units
+    - Step-by-step instructions
+    - Estimated calories per serving
+    - Complete nutrition facts per serving
     
-    // Add cooking method guidance
-    prompt += `Utilize these traditional cooking methods: ${cuisine.cookingMethods.join(', ')}\n\n`;
-    
-    // Add dietary considerations
-    if (params.dietaryPreferences?.length) {
-      prompt += `Make this recipe suitable for these dietary preferences: ${params.dietaryPreferences.join(', ')}\n`;
-      prompt += `Consider these cuisine-specific dietary patterns: ${cuisine.dietaryConsiderations.join(', ')}\n\n`;
-    }
-
-    // Add meal type context
-    if (params.mealType) {
-      prompt += `This should be a ${params.mealType} dish. Common ${cuisine.name} ${params.mealType}s include: ${
-        cuisine.mealTypes.filter(type => type.toLowerCase().includes(params.mealType!.toLowerCase())).join(', ')
-      }\n\n`;
-    }
-
-    // Add fusion guidance if needed
-    if (params.isFusion && params.fusionCuisineIds?.length) {
-      const fusionCuisines = await Promise.all(
-        params.fusionCuisineIds.map(id => this.getCuisineDetails(id))
-      );
-      
-      prompt += `Create a fusion recipe that combines elements of ${cuisine.name} cuisine with:\n`;
-      for (const fusionCuisine of fusionCuisines) {
-        if (!fusionCuisine) continue;
-        prompt += `- ${fusionCuisine.name} cuisine (using: ${fusionCuisine.commonIngredients.slice(0, 3).join(', ')})\n`;
-      }
-      prompt += '\nEnsure the fusion is harmonious and respects both culinary traditions.\n';
-    }
-
-    // Add spice level guidance
-    if (params.spiceLevel) {
-      prompt += `Adjust spice level to ${params.spiceLevel}, considering the traditional spice profile.\n\n`;
-    }
-
-    prompt += `\nProvide the recipe in the following JSON format:
+    Please format the response as a JSON object with the following structure:
     {
-      "title": "Recipe Name",
-      "description": "Brief description including cultural context",
-      "cookingTime": number (in minutes),
+      "title": "string",
+      "description": "string",
+      "cookingTime": number,
       "servings": number,
-      "difficulty": "EASY/MEDIUM/HARD",
-      "ingredients": [
-        { "name": "ingredient", "amount": number, "unit": "unit", "notes": "optional notes" }
-      ],
-      "instructions": ["step 1", "step 2", ...],
-      "cookingMethods": ["method1", "method2"],
-      "spiceLevel": "MILD/MEDIUM/HOT",
-      "tips": ["cultural or technique tips"]
-    }`;
+      "difficulty": "string",
+      "cookingMethods": ["string"],
+      "calories": number,
+      "ingredients": [{"name": "string", "amount": number, "unit": "string", "notes": "string"}],
+      "instructions": ["string"],
+      "nutritionFacts": {
+        "protein": number,
+        "carbs": number,
+        "fat": number,
+        "fiber": number,
+        "sugar": number,
+        "sodium": number
+      }
+    }
+
+    Make sure to include all nutritional values in the nutritionFacts object, using reasonable estimates based on the ingredients.`;
 
     return prompt;
   }
@@ -129,7 +107,7 @@ export class RecipeGenerator {
       messages: [
         {
           role: "system",
-          content: "You are a master chef with deep knowledge of global cuisines. Generate authentic recipes that respect cultural traditions while accommodating modern dietary needs."
+          content: "You are a master chef and nutritionist with deep knowledge of global cuisines. Generate authentic recipes that respect cultural traditions while accommodating modern dietary needs. Always include complete nutritional information."
         },
         {
           role: "user",
@@ -142,7 +120,45 @@ export class RecipeGenerator {
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error('Failed to generate recipe');
     
-    const recipeData = JSON.parse(content) as GeneratedRecipeData;
+    let recipeData: GeneratedRecipeData;
+    try {
+      const parsedData = JSON.parse(content);
+      
+      // Ensure nutritionFacts exists with default values if missing
+      if (!parsedData.nutritionFacts) {
+        parsedData.nutritionFacts = {
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          fiber: 0,
+          sugar: 0,
+          sodium: 0
+        };
+      }
+
+      // Ensure all required nutritionFacts fields exist
+      const requiredFields = ['protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'];
+      for (const field of requiredFields) {
+        if (typeof parsedData.nutritionFacts[field] !== 'number') {
+          parsedData.nutritionFacts[field] = 0;
+        }
+      }
+
+      // Ensure calories exists
+      if (typeof parsedData.calories !== 'number') {
+        // Estimate calories from macronutrients if missing
+        parsedData.calories = Math.round(
+          (parsedData.nutritionFacts.protein * 4) +
+          (parsedData.nutritionFacts.carbs * 4) +
+          (parsedData.nutritionFacts.fat * 9)
+        );
+      }
+
+      recipeData = parsedData as GeneratedRecipeData;
+    } catch (error) {
+      console.error('Failed to parse recipe data:', error);
+      throw new Error('Failed to parse recipe data from OpenAI response');
+    }
 
     // Create recipe in database
     const recipe = await prisma.recipe.create({
@@ -153,14 +169,30 @@ export class RecipeGenerator {
         servings: params.servings || recipeData.servings,
         difficulty: params.difficulty || recipeData.difficulty,
         cuisineType: cuisine.name,
+        type: params.mealType || 'DINNER',
+        regionOfOrigin: cuisine.region,
         cuisine: {
-          connect: { id: params.cuisineId }
+          connect: {
+            id: params.cuisineId
+          }
         },
         cookingMethods: recipeData.cookingMethods,
-        spiceLevel: recipeData.spiceLevel,
-        authenticity: params.isFusion ? 'FUSION' : 'TRADITIONAL',
+        spiceLevel: params.spiceLevel || 'MEDIUM',
+        authenticity: 'TRADITIONAL',
+        calories: recipeData.calories,
+        isVegetarian: false,
+        isVegan: false,
+        isGlutenFree: false,
+        isDairyFree: false,
+        isNutFree: false,
+        totalReviews: 0,
+        author: {
+          connect: {
+            id: 'system'
+          }
+        },
         ingredients: {
-          create: recipeData.ingredients.map((ing: RecipeIngredient) => ({
+          create: recipeData.ingredients.map((ing) => ({
             name: ing.name,
             amount: ing.amount,
             unit: ing.unit,
@@ -168,14 +200,26 @@ export class RecipeGenerator {
           }))
         },
         instructions: {
-          create: recipeData.instructions.map((inst: string, index: number) => ({
+          create: recipeData.instructions.map((inst, index) => ({
             stepNumber: index + 1,
             description: inst
           }))
         },
-        author: {
-          connect: { id: 'system' }
+        nutritionFacts: {
+          create: {
+            protein: recipeData.nutritionFacts.protein,
+            carbs: recipeData.nutritionFacts.carbs,
+            fat: recipeData.nutritionFacts.fat,
+            fiber: recipeData.nutritionFacts.fiber,
+            sugar: recipeData.nutritionFacts.sugar,
+            sodium: recipeData.nutritionFacts.sodium
+          }
         }
+      } as Prisma.RecipeCreateInput,
+      include: {
+        ingredients: true,
+        instructions: true,
+        nutritionFacts: true
       }
     });
 
