@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { recipes } from './seed-data/recipes';
+import { cuisineData } from './seed/cuisines';
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,46 @@ async function main() {
   await prisma.userCuisinePreference.deleteMany();
   await prisma.userPreference.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.cuisine.deleteMany();
+
+  // Create cuisines first
+  console.log('Creating cuisines...');
+  const cuisineMap = new Map();
+  
+  // Create default cuisine first
+  const defaultCuisine = await prisma.cuisine.create({
+    data: {
+      name: 'Traditional',
+      region: 'Global',
+      difficultyLevel: 'MEDIUM',
+      averagePreparationTime: 30
+    }
+  });
+  cuisineMap.set('Traditional', defaultCuisine.id);
+  
+  for (const cuisine of cuisineData) {
+    const { subCuisines, ...mainCuisineData } = cuisine;
+    
+    const createdCuisine = await prisma.cuisine.create({
+      data: mainCuisineData
+    });
+    
+    cuisineMap.set(createdCuisine.name, createdCuisine.id);
+
+    if (subCuisines) {
+      for (const subCuisine of subCuisines) {
+        const createdSubCuisine = await prisma.cuisine.create({
+          data: {
+            ...subCuisine,
+            parentCuisine: {
+              connect: { id: createdCuisine.id }
+            }
+          }
+        });
+        cuisineMap.set(createdSubCuisine.name, createdSubCuisine.id);
+      }
+    }
+  }
 
   // Create a default user for recipes
   const defaultUser = await prisma.user.create({
@@ -40,6 +81,12 @@ async function main() {
 
   // Create recipes
   for (const recipe of recipes) {
+    // Get cuisine ID or use default
+    const cuisineId = cuisineMap.get(recipe.cuisineType) || cuisineMap.get('Traditional');
+    if (!cuisineId) {
+      console.warn(`No cuisine found for ${recipe.cuisineType}, using default`);
+    }
+    
     const createdRecipe = await prisma.recipe.create({
       data: {
         title: recipe.title,
@@ -49,6 +96,11 @@ async function main() {
         difficulty: recipe.difficulty,
         cuisineType: recipe.cuisineType,
         regionOfOrigin: recipe.regionOfOrigin,
+        cuisine: {
+          connect: {
+            id: cuisineId || defaultCuisine.id
+          }
+        },
         imageUrl: recipe.imageUrl,
         calories: recipe.calories,
         type: recipe.type,
@@ -57,7 +109,9 @@ async function main() {
         isGlutenFree: recipe.isGlutenFree,
         isDairyFree: recipe.isDairyFree,
         isNutFree: recipe.isNutFree,
-        authorId: defaultUser.id,
+        author: {
+          connect: { id: defaultUser.id }
+        },
         ingredients: {
           create: recipe.ingredients,
         },

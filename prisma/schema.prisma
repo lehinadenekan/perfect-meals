@@ -65,6 +65,13 @@ model Recipe {
   difficulty       String   // EASY, MEDIUM, HARD
   cuisineType      String   // e.g., Italian, Japanese, Nigerian, etc.
   regionOfOrigin   String?  // Specific region or cultural context
+  cuisine          Cuisine  @relation("CuisineRecipes", fields: [cuisineId], references: [id])
+  cuisineId        String
+  subCuisineType   String?  // For specific regional variations
+  fusionCuisines   Cuisine[] @relation("RecipeFusionCuisines")
+  cookingMethods   String[]  // Methods used in this recipe
+  spiceLevel       String    @default("MEDIUM") // MILD, MEDIUM, HOT, VERY_HOT
+  authenticity     String    @default("TRADITIONAL") // TRADITIONAL, MODERN, FUSION
   imageUrl         String?
   videoUrl         String?
   calories         Int?
@@ -94,6 +101,7 @@ model Recipe {
   averageRating   Float?
   totalReviews    Int      @default(0)
   
+  @@index([cuisineId])
   @@index([cuisineType])
   @@index([authorId])
   @@index([type])
@@ -167,13 +175,31 @@ model StandardIngredient {
 }
 
 model Cuisine {
-  id              String                 @id @default(cuid())
-  name            String                 @unique
-  region          String
-  imageUrl        String?
-  preferences     UserCuisinePreference[]
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String                 @unique
+  region                String
+  subRegion            String?
+  description          String?                @db.Text
+  commonIngredients    String[]
+  cookingMethods       String[]
+  spiceProfile         String[]
+  dietaryConsiderations String[]
+  mealTypes            String[]
+  difficultyLevel      String                // EASY, MEDIUM, HARD
+  averagePreparationTime Int
+  culturalContext      String?               @db.Text
+  imageUrl            String?
+  preferences         UserCuisinePreference[]
+  parentCuisine       Cuisine?              @relation("CuisineHierarchy", fields: [parentCuisineId], references: [id])
+  parentCuisineId     String?
+  subCuisines         Cuisine[]             @relation("CuisineHierarchy")
+  recipes             Recipe[]              @relation("CuisineRecipes")
+  fusionRecipes       Recipe[]             @relation("RecipeFusionCuisines")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([region, subRegion])
+  @@index([name])
 }
 
 // User preference models
