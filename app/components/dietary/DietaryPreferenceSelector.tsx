@@ -55,6 +55,8 @@ const DietaryPreferenceSelector = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
 
   // Load user preferences when session is available
   useEffect(() => {
@@ -149,19 +151,125 @@ const DietaryPreferenceSelector = () => {
     setShowCarousel(true);
 
     try {
-      const queryParams = new URLSearchParams({
-        dietTypes: selectedDiets.join(','),
-        excludedFoods: excludedFoods.join(','),
+      console.log('Generating meals with direct API access');
+      
+      // If no diet types are selected, use a broader approach
+      const effectiveDietTypes = selectedDiets.length > 0 ? selectedDiets : [];
+      
+      // Determine the endpoint based on debug mode
+      const endpoint = debugMode ? '/api/debug/recipe-generation' : '/api/recipes/generate';
+      
+      // Call the generate endpoint with forceRefresh to get recipes directly from API
+      const generateResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          forceRefresh: true,
+          includeDietTypes: effectiveDietTypes,
+          includeExcludedFoods: excludedFoods,
+          allowPartialMatch: true
+        }),
       });
+
+      const generateResult = await generateResponse.json();
+      console.log('Generate direct response:', generateResult);
+
+      if (!generateResponse.ok) {
+        throw new Error(`Failed to generate new recipes: ${generateResponse.status}`);
+      }
+
+      if (debugMode) {
+        setDiagnosticResults(generateResult);
+        console.log('Diagnostic Results:', generateResult);
+        setIsLoadingRecipes(false);
+        return;
+      }
+
+      // If recipes are directly returned from the API endpoint
+      if (generateResult.recipes && generateResult.recipes.length > 0) {
+        console.log(`Setting ${generateResult.recipes.length} recipes from direct API response`);
+        
+        // Transform Spoonacular recipes to our UI format if needed
+        const transformedRecipes = generateResult.recipes.map((recipe: any) => ({
+          id: recipe.id,
+          title: recipe.title,
+          description: recipe.description,
+          cookingTime: recipe.cookingTime,
+          servings: recipe.servings,
+          difficulty: recipe.difficulty,
+          cuisineType: recipe.cuisineType,
+          regionOfOrigin: recipe.regionOfOrigin,
+          imageUrl: recipe.imageUrl,
+          calories: recipe.calories,
+          ingredients: recipe.ingredients || [],
+          nutritionFacts: recipe.nutritionFacts || null
+        }));
+        
+        setRecipes(transformedRecipes);
+        setIsLoadingRecipes(false);
+        return;
+      }
+
+      // Fallback to the old method if no recipes were returned directly
+      console.log('No direct recipes returned, falling back to database query');
+      
+      // Short delay to allow backend processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      
+      // Only add diet types if they're selected
+      if (effectiveDietTypes.length > 0) {
+        queryParams.set('dietTypes', effectiveDietTypes.join(','));
+      }
+      
+      // Only add excluded foods if they're specified
+      if (excludedFoods.length > 0) {
+        queryParams.set('excludedFoods', excludedFoods.join(','));
+      }
+      
+      // Add a flag to force including results even when there's no perfect match
+      queryParams.set('includePartialMatches', 'true');
+      
+      // Add a timestamp to avoid caching
+      queryParams.set('_', Date.now().toString());
 
       const response = await fetch(`/api/recipes?${queryParams}`);
       if (!response.ok) throw new Error('Failed to fetch recipes');
 
       const data = await response.json();
-      setRecipes(data);
+      console.log(`Fetched ${data.length} recipes`);
+      
+      if (data.length === 0) {
+        // If still no results, try a fallback with no filters
+        const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setRecipes(fallbackData);
+        } else {
+          setRecipes([]);
+        }
+      } else {
+        setRecipes(data);
+      }
     } catch (error) {
       console.error('Error generating meals:', error);
-      setRecipes([]);
+      // Try a fallback request if the main one fails
+      try {
+        const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          setRecipes(fallbackData);
+        } else {
+          setRecipes([]);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback fetch also failed');
+        setRecipes([]);
+      }
     } finally {
       setIsLoadingRecipes(false);
     }
@@ -253,6 +361,38 @@ const DietaryPreferenceSelector = () => {
         <p className="text-center text-gray-600 mt-4">
           Log in to save your preferences
         </p>
+      )}
+
+      <div className="flex items-center space-x-2 mb-4">
+        <input
+          type="checkbox"
+          id="debugMode"
+          checked={debugMode}
+          onChange={(e) => setDebugMode(e.target.checked)}
+          className="h-4 w-4 text-blue-600"
+        />
+        <label htmlFor="debugMode" className="text-sm text-gray-700">
+          Debug Mode
+        </label>
+      </div>
+
+      {debugMode && diagnosticResults && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2">Diagnostic Results</h3>
+          <div className="space-y-2">
+            <p>Duration: {diagnosticResults.duration_ms}ms</p>
+            <p>Success: {diagnosticResults.success ? 'Yes' : 'No'}</p>
+            {diagnosticResults.error && (
+              <p className="text-red-600">Error: {diagnosticResults.error}</p>
+            )}
+            <div className="mt-4">
+              <h4 className="font-medium mb-2">Logs:</h4>
+              <pre className="bg-white p-2 rounded text-sm overflow-x-auto">
+                {JSON.stringify(diagnosticResults.logs, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

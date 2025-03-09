@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // GET /api/user/preferences
 export async function GET() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,7 +33,7 @@ export async function GET() {
 
 // POST /api/user/preferences
 export async function POST(request: Request) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,37 +45,35 @@ export async function POST(request: Request) {
       excludedFoods: string[];
     };
 
-    // First, ensure the user exists in the database
-    const user = await prisma.user.upsert({
-      where: { email: session.user.email },
-      update: {
-        name: session.user.name || null,
-        image: session.user.image || null,
-      },
-      create: {
-        email: session.user.email,
-        name: session.user.name || null,
-        image: session.user.image || null,
-      },
+    // First ensure the user exists
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
     });
 
-    // Now create or update the preferences
-    const updatedPreferences = await prisma.$transaction(async (tx) => {
-      // Delete existing preferences if any
-      await tx.userPreference.deleteMany({
-        where: { userEmail: session.user.email }
-      });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
 
-      // Create new preferences
-      return tx.userPreference.create({
-        data: {
-          user: {
-            connect: { email: session.user.email }
-          },
-          dietTypes,
-          excludedFoods
-        }
-      });
+    // Now create or update the preferences using upsert
+    const updatedPreferences = await prisma.userPreference.upsert({
+      where: {
+        userEmail: session.user.email
+      },
+      update: {
+        dietTypes: { set: dietTypes || [] },
+        excludedFoods: { set: excludedFoods || [] }
+      },
+      create: {
+        userEmail: session.user.email,
+        dietTypes: dietTypes || [],
+        excludedFoods: excludedFoods || [],
+        cookingTime: 'MEDIUM',
+        servingSize: 2,
+        mealPrep: false
+      }
     });
 
     return NextResponse.json({
@@ -92,7 +91,7 @@ export async function POST(request: Request) {
 
 // DELETE /api/user/preferences
 export async function DELETE() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

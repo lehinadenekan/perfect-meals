@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,15 +13,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -38,72 +34,63 @@ model Session {
 }
 
 model User {
-  id                String                 @id @default(cuid())
-  email             String                 @unique
-  name              String?
-  image             String?
-  emailVerified     DateTime?              @map("email_verified")
-  accounts          Account[]
-  sessions          Session[]
-  recipes           Recipe[]               @relation("AuthoredRecipes")
-  savedRecipes      Recipe[]              @relation("SavedRecipes")
-  preferences       UserPreference?
-  allergies         UserAllergy[]
+  id                 String                  @id @default(cuid())
+  email              String                  @unique
+  name               String?
+  image              String?
+  emailVerified      DateTime?               @map("email_verified")
+  accounts           Account[]
+  recipes            Recipe[]                @relation("AuthoredRecipes")
+  sessions           Session[]
+  allergies          UserAllergy[]
   cuisinePreferences UserCuisinePreference[]
+  preferences        UserPreference?
+  savedRecipes       Recipe[]                @relation("SavedRecipes")
 
   @@map("users")
 }
 
 model Recipe {
-  id               String   @id @default(cuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  title            String
-  description      String?  @db.Text
-  cookingTime      Int      // in minutes
-  servings         Int
-  difficulty       String   // EASY, MEDIUM, HARD
-  cuisineType      String   // e.g., Italian, Japanese, Nigerian, etc.
-  regionOfOrigin   String?  // Specific region or cultural context
-  cuisine          Cuisine  @relation("CuisineRecipes", fields: [cuisineId], references: [id])
-  cuisineId        String
-  subCuisineType   String?  // For specific regional variations
-  fusionCuisines   Cuisine[] @relation("RecipeFusionCuisines")
-  cookingMethods   String[]  // Methods used in this recipe
-  spiceLevel       String    @default("MEDIUM") // MILD, MEDIUM, HOT, VERY_HOT
-  authenticity     String    @default("TRADITIONAL") // TRADITIONAL, MODERN, FUSION
-  imageUrl         String?
-  videoUrl         String?
-  calories         Int?
-  type             String   @default("DINNER") // BREAKFAST, LUNCH, DINNER, SNACK
-  
-  // Recipe content
-  ingredients      Ingredient[]
-  instructions     Instruction[]
-  nutritionFacts   NutritionFacts?
-  
-  // Metadata and relationships
-  author          User     @relation("AuthoredRecipes", fields: [authorId], references: [id])
-  authorId        String
-  savedByUsers    User[]   @relation("SavedRecipes")
-  categories      Category[]
-  tags            Tag[]
-  reviews         Review[]
-  
-  // Dietary information
-  isVegetarian    Boolean  @default(false)
-  isVegan         Boolean  @default(false)
-  isGlutenFree    Boolean  @default(false)
-  isDairyFree     Boolean  @default(false)
-  isNutFree       Boolean  @default(false)
-  
-  // Metrics
-  averageRating   Float?
-  totalReviews    Int      @default(0)
-  
-  generationJob RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
-  jobId         String?
-  
+  id             String               @id @default(cuid())
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  title          String
+  description    String?
+  cookingTime    Int
+  servings       Int
+  difficulty     String
+  cuisineType    String
+  regionOfOrigin String?
+  imageUrl       String?
+  videoUrl       String?
+  calories       Int?
+  authorId       String
+  isVegetarian   Boolean              @default(false)
+  isVegan        Boolean              @default(false)
+  isGlutenFree   Boolean              @default(false)
+  isDairyFree    Boolean              @default(false)
+  isNutFree      Boolean              @default(false)
+  averageRating  Float?
+  totalReviews   Int                  @default(0)
+  type           String               @default("DINNER")
+  cuisineId      String
+  authenticity   String               @default("TRADITIONAL")
+  cookingMethods String[]
+  spiceLevel     String               @default("MEDIUM")
+  subCuisineType String?
+  jobId          String?
+  ingredients    Ingredient[]
+  instructions   Instruction[]
+  nutritionFacts NutritionFacts?
+  author         User                 @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  cuisine        Cuisine              @relation("CuisineRecipes", fields: [cuisineId], references: [id])
+  generationJob  RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
+  reviews        Review[]
+  categories     Category[]           @relation("CategoryToRecipe")
+  fusionCuisines Cuisine[]            @relation("RecipeFusionCuisines")
+  tags           Tag[]                @relation("RecipeToTag")
+  savedByUsers   User[]               @relation("SavedRecipes")
+
   @@index([cuisineId])
   @@index([cuisineType])
   @@index([authorId])
@@ -111,151 +98,144 @@ model Recipe {
 }
 
 model Ingredient {
-  id          String   @id @default(cuid())
-  name        String
-  amount      Float
-  unit        String   // e.g., grams, cups, tablespoons
-  notes       String?
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  recipeId    String
-  
+  id       String  @id @default(cuid())
+  name     String
+  amount   Float
+  unit     String
+  notes    String?
+  recipeId String
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
   @@index([recipeId])
 }
 
 model Instruction {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   stepNumber  Int
-  description String   @db.Text
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  description String
   recipeId    String
-  
+  recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
   @@index([recipeId])
 }
 
 model NutritionFacts {
-  id          String   @id @default(cuid())
-  protein     Float?   // in grams
-  carbs       Float?   // in grams
-  fat         Float?   // in grams
-  fiber       Float?   // in grams
-  sugar       Float?   // in grams
-  sodium      Float?   // in milligrams
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  recipeId    String   @unique
+  id       String @id @default(cuid())
+  protein  Float?
+  carbs    Float?
+  fat      Float?
+  fiber    Float?
+  sugar    Float?
+  sodium   Float?
+  recipeId String @unique
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  recipes     Recipe[]
+  id      String   @id @default(cuid())
+  name    String   @unique
+  recipes Recipe[] @relation("CategoryToRecipe")
 }
 
 model Tag {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  recipes     Recipe[]
+  id      String   @id @default(cuid())
+  name    String   @unique
+  recipes Recipe[] @relation("RecipeToTag")
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  rating      Int      // 1-5
-  comment     String?  @db.Text
-  createdAt   DateTime @default(now())
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  recipeId    String
-  
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
   @@index([recipeId])
 }
 
-// Reference tables for standardization
 model StandardIngredient {
   id            String        @id @default(cuid())
   name          String        @unique
-  category      String        // e.g., nuts, dairy, shellfish
-  userAllergies UserAllergy[]
+  category      String
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  userAllergies UserAllergy[]
 }
 
 model Cuisine {
-  id                    String                 @id @default(cuid())
-  name                  String                 @unique
-  region                String
-  subRegion            String?
-  description          String?                @db.Text
-  commonIngredients    String[]
-  cookingMethods       String[]
-  spiceProfile         String[]
-  dietaryConsiderations String[]
-  mealTypes            String[]
-  difficultyLevel      String                // EASY, MEDIUM, HARD
+  id                     String                  @id @default(cuid())
+  name                   String                  @unique
+  region                 String
+  createdAt              DateTime                @default(now())
+  imageUrl               String?
+  updatedAt              DateTime                @updatedAt
   averagePreparationTime Int
-  culturalContext      String?               @db.Text
-  imageUrl            String?
-  preferences         UserCuisinePreference[]
-  parentCuisine       Cuisine?              @relation("CuisineHierarchy", fields: [parentCuisineId], references: [id])
-  parentCuisineId     String?
-  subCuisines         Cuisine[]             @relation("CuisineHierarchy")
-  recipes             Recipe[]              @relation("CuisineRecipes")
-  fusionRecipes       Recipe[]             @relation("RecipeFusionCuisines")
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  commonIngredients      String[]
+  cookingMethods         String[]
+  culturalContext        String?
+  description            String?
+  dietaryConsiderations  String[]
+  difficultyLevel        String
+  mealTypes              String[]
+  parentCuisineId        String?
+  spiceProfile           String[]
+  subRegion              String?
+  parentCuisine          Cuisine?                @relation("CuisineHierarchy", fields: [parentCuisineId], references: [id])
+  subCuisines            Cuisine[]               @relation("CuisineHierarchy")
+  recipes                Recipe[]                @relation("CuisineRecipes")
+  preferences            UserCuisinePreference[]
+  fusionRecipes          Recipe[]                @relation("RecipeFusionCuisines")
 
   @@index([region, subRegion])
   @@index([name])
 }
 
-// User preference models
 model UserPreference {
   id            String   @id @default(cuid())
   userEmail     String   @unique
-  cookingTime   String   @default("MEDIUM")  // QUICK, MEDIUM, LONG
-  servingSize   Int      @default(2)
+  cookingTime   String   @default("MEDIUM")
   mealPrep      Boolean  @default(false)
-  isVegetarian  Boolean  @default(false)
-  isVegan       Boolean  @default(false)
-  isGlutenFree  Boolean  @default(false)
-  isDairyFree   Boolean  @default(false)
-  isKosher      Boolean  @default(false)
-  isHalal       Boolean  @default(false)
-  isLowCarb     Boolean  @default(false)
+  servingSize   Int      @default(2)
+  dietTypes     String[] @default([])
+  excludedFoods String[] @default([])
   user          User     @relation(fields: [userEmail], references: [email])
 }
 
 model UserAllergy {
   id           String             @id @default(cuid())
-  userEmail    String
-  user         User               @relation(fields: [userEmail], references: [email])
   ingredientId String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  severity     String
+  userEmail    String
   ingredient   StandardIngredient @relation(fields: [ingredientId], references: [id])
-  severity     String            // "mild", "moderate", "severe"
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  user         User               @relation(fields: [userEmail], references: [email])
 
   @@unique([userEmail, ingredientId])
 }
 
 model UserCuisinePreference {
   id              String   @id @default(cuid())
-  userEmail       String
   cuisineId       String
-  preferenceLevel String   // LOVE, LIKE, NEUTRAL, DISLIKE
-  user            User     @relation(fields: [userEmail], references: [email])
-  cuisine         Cuisine  @relation(fields: [cuisineId], references: [id])
+  preferenceLevel String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  userEmail       String
+  cuisine         Cuisine  @relation(fields: [cuisineId], references: [id])
+  user            User     @relation(fields: [userEmail], references: [email])
 
   @@unique([userEmail, cuisineId])
 }
 
 model RecipeGenerationJob {
   id           String   @id @default(cuid())
-  status       String   // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  status       String
   totalRecipes Int
   completed    Int      @default(0)
   failed       Int      @default(0)
-  error        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  error        String?
   recipes      Recipe[] @relation("JobRecipes")
 }
