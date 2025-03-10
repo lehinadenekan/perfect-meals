@@ -7,7 +7,8 @@ import {
   FireIcon, 
   GlobeAsiaAustraliaIcon,
   CakeIcon,
-  BeakerIcon
+  BeakerIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 interface RecipeCardProps {
@@ -44,7 +45,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
           {/* Meal Type Badge (Dessert/Beverage) */}
           {(recipe.type === 'DESSERT' || recipe.type === 'BEVERAGE') && (
             <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${typeDetails.color}`}>
-              {TypeIcon && <TypeIcon className="w-4 h-4" />}
+              {TypeIcon && <TypeIcon className="w-4 w-4" />}
               <span>{typeDetails.label}</span>
             </div>
           )}
@@ -78,15 +79,19 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
 
         {/* Recipe Metrics */}
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center text-sm text-gray-600">
-            <ClockIcon className="h-4 w-4 mr-2" />
-            {recipe.cookingTime} mins
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <UserIcon className="h-4 w-4 mr-2" />
-            {recipe.servings} servings
-          </div>
-          {recipe.calories && (
+          {typeof recipe.cookingTime === 'number' && recipe.cookingTime > 0 && (
+            <div className="flex items-center text-sm text-gray-600">
+              <ClockIcon className="h-4 w-4 mr-2" />
+              {recipe.cookingTime} mins
+            </div>
+          )}
+          {typeof recipe.servings === 'number' && recipe.servings > 0 && (
+            <div className="flex items-center text-sm text-gray-600">
+              <UserIcon className="h-4 w-4 mr-2" />
+              {recipe.servings} servings
+            </div>
+          )}
+          {typeof recipe.calories === 'number' && recipe.calories > 0 && (
             <div className="flex items-center text-sm text-gray-600">
               <FireIcon className="h-4 w-4 mr-2" />
               {recipe.calories} calories
@@ -96,6 +101,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
             <div className="flex items-center text-sm text-gray-600">
               <GlobeAsiaAustraliaIcon className="h-4 w-4 mr-2" />
               {recipe.regionOfOrigin}
+            </div>
+          )}
+          {typeof recipe.averageRating === 'number' && recipe.averageRating > 0 && (
+            <div className="flex items-center text-sm text-gray-600">
+              <StarIcon className="h-4 w-4 mr-2" />
+              {recipe.averageRating.toFixed(1)}
             </div>
           )}
         </div>

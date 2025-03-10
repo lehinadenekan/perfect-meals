@@ -213,7 +213,8 @@ const DietaryPreferenceSelector = () => {
           isDairyFree: recipe.isDairyFree,
           isNutFree: recipe.isNutFree,
           ingredients: recipe.ingredients || [],
-          nutritionFacts: recipe.nutritionFacts || null
+          nutritionFacts: recipe.nutritionFacts || null,
+          averageRating: null
         }));
         
         setRecipes(transformedRecipes);

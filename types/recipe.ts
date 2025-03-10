@@ -29,6 +29,7 @@ export interface Recipe {
   isGlutenFree: boolean;
   isDairyFree: boolean;
   isNutFree: boolean;
+  averageRating?: number | null;
   ingredients: Ingredient[];
   instructions: Instruction[];
   nutritionFacts?: NutritionFacts;

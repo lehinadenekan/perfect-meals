@@ -519,6 +519,7 @@ export class SpoonacularService {
           isGlutenFree: recipe.diets.includes('gluten free'),
           isDairyFree: recipe.diets.includes('dairy free'),
           isNutFree: !recipe.extendedIngredients.some(i => i.name.toLowerCase().includes('nut')),
+          averageRating: null,
           ingredients: recipe.extendedIngredients.map(ing => ({
             id: `temp-${ing.id}`,
             name: ing.name,
