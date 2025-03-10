@@ -71,7 +71,6 @@ model Recipe {
   isDairyFree    Boolean              @default(false)
   isNutFree      Boolean              @default(false)
   averageRating  Float?
-  totalReviews   Int                  @default(0)
   type           String               @default("DINNER")
   cuisineId      String
   authenticity   String               @default("TRADITIONAL")

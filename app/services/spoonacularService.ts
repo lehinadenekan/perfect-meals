@@ -270,7 +270,6 @@ export class SpoonacularService {
       cookingMethods: [],
       spiceLevel: 'MEDIUM',
       authenticity: 'TRADITIONAL',
-      totalReviews: 0,
       ingredients: {
         create: spoonacularRecipe.extendedIngredients.map(ing => ({
           name: ing.name,
@@ -520,7 +519,6 @@ export class SpoonacularService {
           isGlutenFree: recipe.diets.includes('gluten free'),
           isDairyFree: recipe.diets.includes('dairy free'),
           isNutFree: !recipe.extendedIngredients.some(i => i.name.toLowerCase().includes('nut')),
-          totalReviews: 0,
           ingredients: recipe.extendedIngredients.map(ing => ({
             id: `temp-${ing.id}`,
             name: ing.name,

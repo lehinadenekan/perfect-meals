@@ -180,12 +180,11 @@ export class RecipeGenerator {
         spiceLevel: params.spiceLevel || 'MEDIUM',
         authenticity: 'TRADITIONAL',
         calories: recipeData.calories,
-        isVegetarian: false,
-        isVegan: false,
-        isGlutenFree: false,
-        isDairyFree: false,
-        isNutFree: false,
-        totalReviews: 0,
+        isVegetarian: params.dietaryPreferences?.includes('vegetarian') || false,
+        isVegan: params.dietaryPreferences?.includes('vegan') || false,
+        isGlutenFree: params.dietaryPreferences?.includes('gluten-free') || false,
+        isDairyFree: params.dietaryPreferences?.includes('dairy-free') || false,
+        isNutFree: !recipeData.ingredients.some(ing => ing.name.toLowerCase().includes('nut')),
         author: {
           connect: {
             id: 'system'

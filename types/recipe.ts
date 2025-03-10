@@ -8,6 +8,8 @@ export type CookingTime = '0-30' | '30-60' | '60+';
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
 
+export type MealType = 'DESSERT' | 'BEVERAGE' | 'MAIN';
+
 export interface Recipe {
   id: string;
   title: string;
@@ -16,6 +18,7 @@ export interface Recipe {
   servings: number;
   difficulty: Difficulty;
   cuisineType: string;
+  type: MealType;
   regionOfOrigin?: string;
   imageUrl?: string;
   videoUrl?: string;
@@ -26,14 +29,11 @@ export interface Recipe {
   isGlutenFree: boolean;
   isDairyFree: boolean;
   isNutFree: boolean;
-  averageRating?: number;
-  totalReviews: number;
   ingredients: Ingredient[];
   instructions: Instruction[];
   nutritionFacts?: NutritionFacts;
   categories: Category[];
   tags: Tag[];
-  reviews: Review[];
 }
 
 export interface Ingredient {
@@ -71,14 +71,6 @@ export interface Category {
 export interface Tag {
   id: string;
   name: string;
-}
-
-export interface Review {
-  id: string;
-  rating: number;
-  comment?: string;
-  createdAt: Date;
-  recipeId: string;
 }
 
 export interface UserPreference {

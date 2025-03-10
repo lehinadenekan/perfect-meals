@@ -5,6 +5,7 @@ import ExclusionModal from './ExclusionModal';
 import MealCarousel from '../recipe/MealCarousel';
 import GeographicFilter from './GeographicFilter';
 import { Recipe } from '@/types/recipe';
+import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
 
 type DietType = 'alkaline' | 'gluten-free' | 'halal' | 'keto' | 'kosher' | 'paleo' | 'vegan' | 'vegetarian';
 
@@ -52,7 +53,6 @@ const DietaryPreferenceSelector = () => {
   const [selectedDiets, setSelectedDiets] = useState<DietType[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
@@ -60,6 +60,18 @@ const DietaryPreferenceSelector = () => {
   const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
   const [searchInput, setSearchInput] = useState('');
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+
+  // Initialize preference updates hook
+  const {
+    updatePreferences,
+    isUpdating,
+    error: updateError
+  } = usePreferenceUpdates({
+    dietTypes: selectedDiets,
+    excludedFoods,
+    selectedRegions,
+    searchInput
+  });
 
   // Load user preferences when session is available
   useEffect(() => {
@@ -69,7 +81,6 @@ const DietaryPreferenceSelector = () => {
           const response = await fetch('/api/user/preferences');
           const data = await response.json();
           if (data.success) {
-            // Handle array of diet types
             setSelectedDiets(data.preferences.dietTypes || []);
             setExcludedFoods(data.preferences.excludedFoods || []);
             setSelectedRegions(data.preferences.selectedRegions || []);
@@ -92,36 +103,17 @@ const DietaryPreferenceSelector = () => {
     }
   }, [session, status]);
 
-  // Save preferences when they change (for authenticated users only)
+  // Update preferences when they change
   useEffect(() => {
-    const savePreferences = async () => {
-      if (!session?.user?.email || isSaving) return;
-
-      setIsSaving(true);
-      try {
-        await fetch('/api/user/preferences', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            dietTypes: selectedDiets,
-            excludedFoods,
-            selectedRegions,
-            searchInput: searchInput.trim()
-          }),
-        });
-      } catch (error) {
-        console.error('Error saving preferences:', error);
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
     if (status === 'authenticated') {
-      savePreferences();
+      updatePreferences({
+        dietTypes: selectedDiets,
+        excludedFoods,
+        selectedRegions,
+        searchInput
+      });
     }
-  }, [selectedDiets, excludedFoods, selectedRegions, searchInput, session, status, isSaving]);
+  }, [selectedDiets, excludedFoods, selectedRegions, searchInput, status, updatePreferences]);
 
   const handleDietToggle = (dietType: DietType) => {
     setSelectedDiets(prev => {
@@ -211,9 +203,15 @@ const DietaryPreferenceSelector = () => {
           servings: recipe.servings,
           difficulty: recipe.difficulty,
           cuisineType: recipe.cuisineType,
+          type: recipe.type,
           regionOfOrigin: recipe.regionOfOrigin,
           imageUrl: recipe.imageUrl,
           calories: recipe.calories,
+          isVegetarian: recipe.isVegetarian,
+          isVegan: recipe.isVegan,
+          isGlutenFree: recipe.isGlutenFree,
+          isDairyFree: recipe.isDairyFree,
+          isNutFree: recipe.isNutFree,
           ingredients: recipe.ingredients || [],
           nutritionFacts: recipe.nutritionFacts || null
         }));
@@ -440,6 +438,20 @@ const DietaryPreferenceSelector = () => {
               </pre>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Show loading state */}
+      {isUpdating && (
+        <div className="text-center text-gray-600 mb-4">
+          Saving preferences...
+        </div>
+      )}
+
+      {/* Show error state */}
+      {updateError && (
+        <div className="text-center text-red-600 mb-4">
+          {updateError}
         </div>
       )}
     </div>
