@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import Card from '../shared/Card';
 import ExclusionModal from './ExclusionModal';
 import MealCarousel from '../recipe/MealCarousel';
+import GeographicFilter from './GeographicFilter';
 import { Recipe } from '@/types/recipe';
 
 type DietType = 'alkaline' | 'gluten-free' | 'halal' | 'keto' | 'kosher' | 'paleo' | 'vegan' | 'vegetarian';
@@ -57,6 +58,8 @@ const DietaryPreferenceSelector = () => {
   const [showCarousel, setShowCarousel] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 
   // Load user preferences when session is available
   useEffect(() => {
@@ -69,6 +72,8 @@ const DietaryPreferenceSelector = () => {
             // Handle array of diet types
             setSelectedDiets(data.preferences.dietTypes || []);
             setExcludedFoods(data.preferences.excludedFoods || []);
+            setSelectedRegions(data.preferences.selectedRegions || []);
+            setSearchInput(data.preferences.searchInput || '');
           }
         } catch (error) {
           console.error('Error loading preferences:', error);
@@ -82,6 +87,8 @@ const DietaryPreferenceSelector = () => {
       // Reset preferences for non-authenticated users
       setSelectedDiets([]);
       setExcludedFoods([]);
+      setSelectedRegions([]);
+      setSearchInput('');
     }
   }, [session, status]);
 
@@ -100,6 +107,8 @@ const DietaryPreferenceSelector = () => {
           body: JSON.stringify({
             dietTypes: selectedDiets,
             excludedFoods,
+            selectedRegions,
+            searchInput: searchInput.trim()
           }),
         });
       } catch (error) {
@@ -112,7 +121,7 @@ const DietaryPreferenceSelector = () => {
     if (status === 'authenticated') {
       savePreferences();
     }
-  }, [selectedDiets, excludedFoods, session, status, isSaving]);
+  }, [selectedDiets, excludedFoods, selectedRegions, searchInput, session, status, isSaving]);
 
   const handleDietToggle = (dietType: DietType) => {
     setSelectedDiets(prev => {
@@ -169,7 +178,9 @@ const DietaryPreferenceSelector = () => {
           forceRefresh: true,
           includeDietTypes: effectiveDietTypes,
           includeExcludedFoods: excludedFoods,
-          allowPartialMatch: true
+          allowPartialMatch: true,
+          selectedRegions: selectedRegions,
+          searchInput: searchInput.trim()
         }),
       });
 
@@ -230,6 +241,16 @@ const DietaryPreferenceSelector = () => {
       if (excludedFoods.length > 0) {
         queryParams.set('excludedFoods', excludedFoods.join(','));
       }
+
+      // Add selected regions if any
+      if (selectedRegions.length > 0) {
+        queryParams.set('regions', selectedRegions.join(','));
+      }
+
+      // Add search input if any
+      if (searchInput.trim()) {
+        queryParams.set('search', searchInput.trim());
+      }
       
       // Add a flag to force including results even when there's no perfect match
       queryParams.set('includePartialMatches', 'true');
@@ -275,6 +296,13 @@ const DietaryPreferenceSelector = () => {
     }
   };
 
+  const handleRegionChange = (regions: string[]) => {
+    setSelectedRegions(regions);
+    // Reset carousel when preferences change
+    setShowCarousel(false);
+    setRecipes([]);
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       <h2 className="text-2xl font-bold text-center mb-16">Choose Your Dietary Preferences</h2>
@@ -303,6 +331,26 @@ const DietaryPreferenceSelector = () => {
         ))}
       </div>
       
+      {/* Search Input */}
+      <div className="flex flex-col items-center space-y-6 mb-8">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Enter specific foods and ingredients"
+          className="w-80 px-6 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+        />
+      </div>
+
+      {/* Geographic Filter */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-center mb-6">Select Cuisine Regions</h3>
+        <GeographicFilter
+          onChange={handleRegionChange}
+          className="max-w-5xl mx-auto"
+        />
+      </div>
+
       {/* Action Buttons */}
       <div className="flex justify-center space-x-6 mb-16">
         <button
