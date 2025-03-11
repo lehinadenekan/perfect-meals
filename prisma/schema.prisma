@@ -152,7 +152,6 @@ model Review {
 
   @@index([recipeId])
 }
-
 model StandardIngredient {
   id            String        @id @default(cuid())
   name          String        @unique
@@ -238,3 +237,4 @@ model RecipeGenerationJob {
   error        String?
   recipes      Recipe[] @relation("JobRecipes")
 }
+

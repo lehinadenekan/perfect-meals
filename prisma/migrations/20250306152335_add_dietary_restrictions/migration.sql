@@ -1,8 +1,0 @@
--- AlterTable
-ALTER TABLE "UserPreference" ADD COLUMN     "isDairyFree" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isGlutenFree" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isHalal" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isKosher" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isLowCarb" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isVegan" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isVegetarian" BOOLEAN NOT NULL DEFAULT false;

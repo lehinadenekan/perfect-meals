@@ -50,8 +50,12 @@ const authOptions: NextAuthOptions = {
       return true;
     },
     async session({ session, token }) {
+      console.log('Token data:', token);
       if (session.user) {
         session.user.id = token.sub!;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.image = token.picture || token.image as string;
       }
       return session;
     },

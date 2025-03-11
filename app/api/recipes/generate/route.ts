@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import { PrismaClient, UserPreference, UserCuisinePreference } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { SpoonacularService } from '@/app/services/spoonacularService';
 
 const prisma = new PrismaClient();
-const spoonacular = new SpoonacularService();
 
 type UserPreferenceWithDiet = {
   id: string;
@@ -17,39 +15,46 @@ type UserPreferenceWithDiet = {
   excludedFoods: string[];
 };
 
-// This function will get recipes directly from Spoonacular without saving to DB
-async function getRandomRecipesDirectly(params: any) {
+// This function will get recipes from our local database
+async function getRandomRecipesFromDB(params: any) {
   try {
-    console.log('Getting recipes directly from Spoonacular with params:', JSON.stringify(params));
+    console.log('Getting recipes from local database with params:', JSON.stringify(params));
     
-    // Generate unique cache-busting parameters
-    const timestamp = Date.now();
-    const randomOffset = Math.floor(Math.random() * 1000);
-    const uniqueId = `${timestamp}-${randomOffset}-${Math.random().toString(36).substring(7)}`;
+    // Build the where clause for the query
+    const where: any = {};
     
-    const searchParams: Record<string, string> = {
-      number: String(params.number || 10),
-      addRecipeInformation: 'true',
-      addRecipeNutrition: 'true',
-      limitLicense: 'false',
-      // Add multiple cache-busting parameters
-      _: uniqueId,
-      offset: String(randomOffset),
-      random: 'true'
-    };
-
-    if (params.diet) searchParams.diet = params.diet;
-    if (params.cuisine) searchParams.cuisine = params.cuisine;
-    if (params.intolerances) searchParams.intolerances = params.intolerances;
-    if (params.tags && params.tags.length > 0) {
-      searchParams.tags = params.tags.join(',');
+    // Handle dietary restrictions
+    if (params.diet) {
+      const diets = params.diet.split(',');
+      if (diets.includes('vegetarian')) where.isVegetarian = true;
+      if (diets.includes('vegan')) where.isVegan = true;
+      if (diets.includes('gluten free')) where.isGlutenFree = true;
+      if (diets.includes('dairy free')) where.isDairyFree = true;
+      if (diets.includes('nut free')) where.isNutFree = true;
     }
-    
-    // Use the SpoonacularService to make the API call, but don't store in DB
-    const recipes = await spoonacular.getRandomRecipesRaw(searchParams);
-    return recipes;
+
+    // Handle cuisine preferences
+    if (params.cuisine) {
+      where.continent = {
+        in: params.cuisine.split(',')
+      };
+    }
+
+    // Get all matching recipes
+    const matchingRecipes = await prisma.recipe.findMany({
+      where,
+      include: {
+        ingredients: true,
+        instructions: true,
+        nutritionFacts: true
+      }
+    });
+
+    // Randomly select up to 10 recipes
+    const shuffled = matchingRecipes.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, params.number || 10);
   } catch (error) {
-    console.error('Error fetching recipes directly:', error);
+    console.error('Error fetching recipes from database:', error);
     throw error;
   }
 }
@@ -118,7 +123,6 @@ export async function POST(request: Request) {
     // Build search parameters based on user preferences
     const searchParams: any = {
       number: 10, // Number of recipes to generate
-      _: Date.now().toString() // Add timestamp to avoid caching
     };
 
     // Add dietary restrictions if any
@@ -144,18 +148,18 @@ export async function POST(request: Request) {
       }
     }
     
-    // Always fetch recipes directly from Spoonacular without saving to DB
-    console.log('Fetching recipes directly from Spoonacular.');
-    console.time('spoonacular-direct-request');
-    const directRecipes = await getRandomRecipesDirectly(searchParams);
-    console.timeEnd('spoonacular-direct-request');
-    console.log(`Generated ${directRecipes.length} recipes directly from Spoonacular`);
+    // Fetch recipes from local database
+    console.log('Fetching recipes from local database');
+    console.time('local-db-request');
+    const recipes = await getRandomRecipesFromDB(searchParams);
+    console.timeEnd('local-db-request');
+    console.log(`Retrieved ${recipes.length} recipes from local database`);
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Recipe generation completed directly',
-      recipesGenerated: directRecipes.length,
-      recipes: directRecipes
+      message: 'Recipe generation completed',
+      recipesGenerated: recipes.length,
+      recipes: recipes
     });
   } catch (error) {
     console.error('Error handling recipe generation request:', error);

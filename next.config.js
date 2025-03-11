@@ -18,6 +18,8 @@ const nextConfig = {
         pathname: '**',
       },
     ],
+    domains: ['localhost'],
+    unoptimized: true
   },
   experimental: {
     serverActions: {
