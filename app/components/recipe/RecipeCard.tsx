@@ -33,12 +33,13 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
       {/* Image Container */}
       <div className="relative w-full" style={{ height: '140px' }}>
         <Image
-          src={recipe.imageUrl || '/placeholder-recipe.jpg'}
+          src={recipe.imageUrl?.startsWith('/') ? recipe.imageUrl : (recipe.imageUrl || '/placeholder-recipe.jpg')}
           alt={recipe.title}
           fill
           className="object-cover"
           sizes="300px"
           priority
+          unoptimized={recipe.imageUrl?.startsWith('/') ?? false}
         />
         {/* All Labels Container */}
         <div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[90%]">
