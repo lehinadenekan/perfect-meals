@@ -8,7 +8,7 @@ export type CookingTime = '0-30' | '30-60' | '60+';
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
 
-export type MealType = 'DESSERT' | 'BEVERAGE' | 'MAIN';
+export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'DESSERT' | 'BEVERAGE' | 'SIDE' | 'MAIN';
 
 export interface Recipe {
   id: string;

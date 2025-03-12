@@ -118,7 +118,7 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
 
     // Select 10 recipes using weighted random selection
     const selected: typeof matchingRecipes = [];
-    const numToSelect = Math.min(10, matchingRecipes.length);
+    const numToSelect = matchingRecipes.length;
 
     while (selected.length < numToSelect) {
       // Generate a random number between 0 and 1

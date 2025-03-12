@@ -6,8 +6,13 @@ export interface RegionalCuisine {
   commonIngredients: string[];
 }
 
+// Add type definition for region mappings
+type RegionMapping = {
+  [key: string]: string[];
+};
+
 // Define continent regions for better organization
-export const CONTINENT_REGIONS = {
+export const CONTINENT_REGIONS: Record<string, RegionMapping> = {
   Asia: {
     'East Asia': ['China', 'Japan', 'Korea', 'Taiwan', 'Hong Kong'],
     'Southeast Asia': ['Thailand', 'Vietnam', 'Malaysia', 'Indonesia', 'Philippines', 'Singapore'],
@@ -619,7 +624,63 @@ export const CUISINE_MAPPINGS: Record<string, RegionalCuisine> = {
     },
     keywords: ['fijian', 'pacific islander'],
     commonIngredients: ['taro', 'cassava', 'coconut', 'fish', 'tropical fruits']
-  }
+  },
+
+  // West African Cuisines
+  'west_african_general': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Regional',
+    },
+    keywords: ['west african', 'african', 'sub-saharan'],
+    commonIngredients: ['palm oil', 'scotch bonnet', 'ginger', 'tomatoes', 'onions', 'garlic', 'rice', 'yams']
+  },
+  'nigerian_cuisine': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Nigeria'
+    },
+    keywords: ['nigerian', 'west african', 'yoruba', 'igbo', 'hausa'],
+    commonIngredients: ['egusi', 'palm oil', 'scotch bonnet', 'yam', 'cassava', 'plantains']
+  },
+  'ghanaian_cuisine': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Ghana'
+    },
+    keywords: ['ghanaian', 'west african', 'akan', 'ashanti'],
+    commonIngredients: ['palm oil', 'scotch bonnet', 'yam', 'plantains', 'cassava', 'waakye leaves']
+  },
+  'senegalese_cuisine': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Senegal'
+    },
+    keywords: ['senegalese', 'west african', 'wolof'],
+    commonIngredients: ['fish', 'rice', 'peanuts', 'palm oil', 'tamarind', 'scotch bonnet']
+  },
+  'ivorian_cuisine': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Ivory Coast'
+    },
+    keywords: ['ivorian', 'west african', 'ivory coast'],
+    commonIngredients: ['cassava', 'plantains', 'palm oil', 'fish', 'attiéké', 'scotch bonnet']
+  },
+  'liberian_cuisine': {
+    origin: {
+      continent: 'Africa',
+      region: 'West Africa',
+      country: 'Liberia'
+    },
+    keywords: ['liberian', 'west african'],
+    commonIngredients: ['rice', 'cassava', 'palm oil', 'fish', 'scotch bonnet', 'red palm oil']
+  },
 };
 
 export function getRegionsByContinent(continent: string): string[] {

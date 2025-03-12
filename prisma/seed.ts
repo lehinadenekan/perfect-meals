@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import recipes from './seed-data/recipes';
+import { recipes } from './seed-data/recipes';
 
 const prisma = new PrismaClient();
 
@@ -28,13 +28,18 @@ async function main() {
       name: 'Traditional',
       region: 'Global',
       difficultyLevel: 'MEDIUM',
-      averagePreparationTime: 30
+      averagePreparationTime: 30,
+      commonIngredients: [],
+      cookingMethods: [],
+      spiceProfile: [],
+      dietaryConsiderations: [],
+      mealTypes: ['DINNER']
     }
   });
   
   // Add all recipes
   for (const recipe of recipes) {
-    const { ingredients, instructions, nutritionFacts, ...recipeData } = recipe;
+    const { ingredients, instructions, nutritionFacts, notes, ...recipeData } = recipe;
     
     const result = await prisma.recipe.create({
       data: {

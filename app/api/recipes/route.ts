@@ -82,9 +82,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Generate random offset for pagination
-    const offset = Math.max(0, Math.floor(Math.random() * Math.max(0, totalRecipes - 10)));
-
     // Get recipes with a random offset
     const recipes = await prisma.recipe.findMany({
       where,
@@ -96,9 +93,7 @@ export async function GET(request: Request) {
             rating: true,
           },
         },
-      },
-      skip: offset,
-      take: 10,
+      }
     });
 
     // If user is logged in, record these recipes as shown

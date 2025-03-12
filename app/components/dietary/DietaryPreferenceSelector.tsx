@@ -173,7 +173,11 @@ const DietaryPreferenceSelector = () => {
           includeExcludedFoods: excludedFoods,
           allowPartialMatch: true,
           selectedRegions: selectedRegions,
-          searchInput: searchInput.trim()
+          searchInput: searchInput.trim(),
+          // Add parameters for traditional pairings and regional balance
+          considerTraditionalPairings: true,
+          balanceRegionalCuisines: true,
+          includeAllMealTypes: true
         }),
       });
 
@@ -197,7 +201,7 @@ const DietaryPreferenceSelector = () => {
       if (generateResult.recipes && generateResult.recipes.length > 0) {
         console.log(`Setting ${generateResult.recipes.length} recipes from direct API response`);
         
-        // Transform Spoonacular recipes to our UI format if needed
+        // Transform recipes to our UI format if needed
         const transformedRecipes = generateResult.recipes.map((recipe: any) => ({
           id: recipe.id,
           title: recipe.title,
@@ -216,7 +220,9 @@ const DietaryPreferenceSelector = () => {
           isDairyFree: recipe.isDairyFree,
           isNutFree: recipe.isNutFree,
           ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions || [],
           nutritionFacts: recipe.nutritionFacts || null,
+          notes: recipe.notes || [],
           averageRating: null
         }));
         
@@ -225,39 +231,29 @@ const DietaryPreferenceSelector = () => {
         return;
       }
 
-      // Fallback to the old method if no recipes were returned directly
-      console.log('No direct recipes returned, falling back to database query');
-      
-      // Short delay to allow backend processing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Prepare query parameters
+      // Prepare query parameters for fallback
       const queryParams = new URLSearchParams();
       
-      // Only add diet types if they're selected
       if (effectiveDietTypes.length > 0) {
         queryParams.set('dietTypes', effectiveDietTypes.join(','));
       }
       
-      // Only add excluded foods if they're specified
       if (excludedFoods.length > 0) {
         queryParams.set('excludedFoods', excludedFoods.join(','));
       }
 
-      // Add selected regions if any
       if (selectedRegions.length > 0) {
         queryParams.set('regions', selectedRegions.join(','));
       }
 
-      // Add search input if any
       if (searchInput.trim()) {
         queryParams.set('search', searchInput.trim());
       }
       
-      // Add a flag to force including results even when there's no perfect match
       queryParams.set('includePartialMatches', 'true');
-      
-      // Add a timestamp to avoid caching
+      queryParams.set('considerTraditionalPairings', 'true');
+      queryParams.set('balanceRegionalCuisines', 'true');
+      queryParams.set('includeAllMealTypes', 'true');
       queryParams.set('_', Date.now().toString());
 
       const response = await fetch(`/api/recipes?${queryParams}`);
@@ -267,7 +263,6 @@ const DietaryPreferenceSelector = () => {
       console.log(`Fetched ${data.length} recipes`);
       
       if (data.length === 0) {
-        // If still no results, try a fallback with no filters
         const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
@@ -280,7 +275,6 @@ const DietaryPreferenceSelector = () => {
       }
     } catch (error) {
       console.error('Error generating meals:', error);
-      // Try a fallback request if the main one fails
       try {
         const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
         if (fallbackResponse.ok) {

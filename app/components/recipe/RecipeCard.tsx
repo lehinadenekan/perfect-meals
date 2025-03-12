@@ -6,8 +6,6 @@ import {
   UserIcon, 
   FireIcon, 
   GlobeAsiaAustraliaIcon,
-  CakeIcon,
-  BeakerIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
 
@@ -16,18 +14,6 @@ interface RecipeCardProps {
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
-  const getMealTypeDetails = (type: string) => {
-    const types = {
-      DESSERT: { label: 'Dessert', color: 'bg-pink-100 text-pink-800', icon: CakeIcon },
-      BEVERAGE: { label: 'Drink', color: 'bg-cyan-100 text-cyan-800', icon: BeakerIcon },
-      MAIN: { label: '', color: '', icon: null }
-    };
-    return types[type as keyof typeof types] || { label: '', color: '', icon: null };
-  };
-
-  const typeDetails = getMealTypeDetails(recipe.type);
-  const TypeIcon = typeDetails.icon;
-
   return (
     <div className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden w-[300px] h-[400px] transition-transform hover:scale-105">
       {/* Image Container */}
@@ -43,29 +29,34 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
         />
         {/* All Labels Container */}
         <div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[90%]">
-          {/* Meal Type Badge (Dessert/Beverage) */}
-          {(recipe.type === 'DESSERT' || recipe.type === 'BEVERAGE') && (
-            <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${typeDetails.color}`}>
-              {TypeIcon && <TypeIcon className="w-4 w-4" />}
-              <span>{typeDetails.label}</span>
-            </div>
-          )}
           {/* Dietary Labels */}
-          {recipe.isVegetarian && (
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-              Vegetarian
-            </span>
-          )}
-          {recipe.isVegan && (
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-              Vegan
-            </span>
-          )}
-          {recipe.isGlutenFree && (
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-              Gluten-Free
-            </span>
-          )}
+          <div className="flex flex-wrap gap-1">
+            {recipe.isVegetarian && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                Vegetarian
+              </span>
+            )}
+            {recipe.isVegan && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                Vegan
+              </span>
+            )}
+            {recipe.isGlutenFree && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                Gluten Free
+              </span>
+            )}
+            {recipe.isDairyFree && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                Dairy Free
+              </span>
+            )}
+            {recipe.isNutFree && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                Nut Free
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -74,7 +65,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
           {recipe.title}
         </h3>
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+        <p className="text-sm text-gray-600 mb-4 line-clamp-3">
           {recipe.description}
         </p>
 
