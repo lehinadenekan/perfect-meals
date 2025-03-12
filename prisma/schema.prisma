@@ -46,6 +46,7 @@ model User {
   cuisinePreferences UserCuisinePreference[]
   preferences        UserPreference?
   savedRecipes       Recipe[]                @relation("SavedRecipes")
+  recipeHistory      UserRecipeHistory[]
 
   @@map("users")
 }
@@ -78,6 +79,7 @@ model Recipe {
   spiceLevel     String               @default("MEDIUM")
   subCuisineType String?
   jobId          String?
+  showCount      Int                  @default(0)
   ingredients    Ingredient[]
   instructions   Instruction[]
   nutritionFacts NutritionFacts?
@@ -89,11 +91,13 @@ model Recipe {
   fusionCuisines Cuisine[]            @relation("RecipeFusionCuisines")
   tags           Tag[]                @relation("RecipeToTag")
   savedByUsers   User[]               @relation("SavedRecipes")
+  shownToUsers   UserRecipeHistory[]
 
   @@index([cuisineId])
   @@index([cuisineType])
   @@index([authorId])
   @@index([type])
+  @@index([showCount])
 }
 
 model Ingredient {
@@ -236,5 +240,17 @@ model RecipeGenerationJob {
   updatedAt    DateTime @updatedAt
   error        String?
   recipes      Recipe[] @relation("JobRecipes")
+}
+
+model UserRecipeHistory {
+  id        String   @id @default(cuid())
+  userEmail String
+  recipeId  String
+  shownAt   DateTime @default(now())
+  user      User     @relation(fields: [userEmail], references: [email])
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+
+  @@index([userEmail, shownAt])
+  @@index([recipeId])
 }
 

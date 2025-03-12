@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { SpoonacularService } from '@/app/services/spoonacularService';
 import prisma from '@/lib/prisma';
 
 interface DiagnosticLog {
@@ -25,28 +24,42 @@ export async function POST(request: Request) {
     const body = await request.json();
     log('request_received', { body });
 
-    // Check Spoonacular service initialization
-    const spoonacular = new SpoonacularService();
-    log('spoonacular_service_initialized', { 
-      apiKey: process.env.SPOONACULAR_API_KEY ? 'present' : 'missing'
-    });
+    // Build query parameters
+    const where: any = {};
+    if (body.dietTypes?.length > 0) {
+      const dietConditions: any[] = [];
+      if (body.dietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
+      if (body.dietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
+      if (body.dietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
+      if (body.dietTypes.includes('dairy-free')) dietConditions.push({ isDairyFree: true });
+      if (dietConditions.length > 0) {
+        where.OR = dietConditions;
+      }
+    }
 
-    // Attempt to get recipes directly
-    log('fetching_recipes_start', { params: body });
-    const recipesResponse = await spoonacular.getRandomRecipes({
-      ...body,
-      forceRefresh: true
+    // Attempt to get recipes from local database
+    log('fetching_recipes_start', { where });
+    const recipes = await prisma.recipe.findMany({
+      where,
+      include: {
+        ingredients: true,
+        instructions: true,
+        nutritionFacts: true
+      },
+      take: 10,
+      orderBy: {
+        id: 'desc'
+      }
     });
     log('fetching_recipes_complete', { 
-      responseStatus: recipesResponse ? 'success' : 'failed',
-      recipeCount: recipesResponse?.recipes?.length || 0
+      recipeCount: recipes.length
     });
 
-    // Log recipe IDs and basic info
-    const recipeInfo = recipesResponse?.recipes?.map((r: any) => ({
+    // Log recipe info
+    const recipeInfo = recipes.map(r => ({
       id: r.id,
       title: r.title,
-      readyInMinutes: r.readyInMinutes,
+      cookingTime: r.cookingTime,
       servings: r.servings
     }));
     log('recipe_details', { recipes: recipeInfo });

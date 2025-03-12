@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { recipes } from './seed-data/recipes';
+import recipes from './seed-data/recipes';
 
 const prisma = new PrismaClient();
 
@@ -7,6 +7,7 @@ async function main() {
   console.log('Start seeding...');
   
   // Clear existing data
+  await prisma.userRecipeHistory.deleteMany();
   await prisma.ingredient.deleteMany();
   await prisma.instruction.deleteMany();
   await prisma.nutritionFacts.deleteMany();

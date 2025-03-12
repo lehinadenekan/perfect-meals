@@ -60,6 +60,7 @@ const DietaryPreferenceSelector = () => {
   const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
   const [searchInput, setSearchInput] = useState('');
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize preference updates hook
   const {
@@ -180,7 +181,9 @@ const DietaryPreferenceSelector = () => {
       console.log('Generate direct response:', generateResult);
 
       if (!generateResponse.ok) {
-        throw new Error(`Failed to generate new recipes: ${generateResponse.status}`);
+        setIsLoadingRecipes(false);
+        setError(`Failed to generate recipes: ${generateResult.error || generateResponse.status}`);
+        return;
       }
 
       if (debugMode) {
@@ -450,9 +453,9 @@ const DietaryPreferenceSelector = () => {
       )}
 
       {/* Show error state */}
-      {updateError && (
+      {error && (
         <div className="text-center text-red-600 mb-4">
-          {updateError}
+          {error}
         </div>
       )}
     </div>

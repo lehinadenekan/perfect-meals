@@ -10,6 +10,17 @@ const Navbar = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  // Add logging for session and image data
+  React.useEffect(() => {
+    if (session?.user) {
+      console.log('Session user data:', {
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image
+      });
+    }
+  }, [session]);
+
   return (
     <>
       <nav className="w-full bg-[#ffc800] p-4">
@@ -31,7 +42,10 @@ const Navbar = () => {
                         className="rounded-full"
                         fill
                         sizes="32px"
-                        onError={() => setImageError(true)}
+                        onError={(e) => {
+                          console.error('Image load error:', e);
+                          setImageError(true);
+                        }}
                       />
                     </div>
                   ) : (

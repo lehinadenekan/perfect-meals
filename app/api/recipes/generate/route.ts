@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, UserPreference, UserCuisinePreference } from '@prisma/client';
+import { PrismaClient, UserPreference, UserCuisinePreference, Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
@@ -16,43 +16,154 @@ type UserPreferenceWithDiet = {
 };
 
 // This function will get recipes from our local database
-async function getRandomRecipesFromDB(params: any) {
+async function getRandomRecipesFromDB(params: any, userEmail: string | undefined) {
   try {
     console.log('Getting recipes from local database with params:', JSON.stringify(params));
     
     // Build the where clause for the query
-    const where: any = {};
+    let whereClause: Prisma.RecipeWhereInput = {};
     
-    // Handle dietary restrictions
-    if (params.diet) {
-      const diets = params.diet.split(',');
-      if (diets.includes('vegetarian')) where.isVegetarian = true;
-      if (diets.includes('vegan')) where.isVegan = true;
-      if (diets.includes('gluten free')) where.isGlutenFree = true;
-      if (diets.includes('dairy free')) where.isDairyFree = true;
-      if (diets.includes('nut free')) where.isNutFree = true;
+    // Add dietary preferences to where clause
+    if (params.includeDietTypes?.length > 0) {
+      const dietConditions: Prisma.RecipeWhereInput[] = [];
+      
+      if (params.includeDietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
+      if (params.includeDietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
+      if (params.includeDietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
+      if (params.includeDietTypes.includes('dairy-free')) dietConditions.push({ isDairyFree: true });
+      if (params.includeDietTypes.includes('keto')) dietConditions.push({ type: 'KETO' });
+      if (params.includeDietTypes.includes('paleo')) dietConditions.push({ type: 'PALEO' });
+      if (params.includeDietTypes.includes('kosher')) dietConditions.push({ type: 'KOSHER' });
+      if (params.includeDietTypes.includes('halal')) dietConditions.push({ type: 'HALAL' });
+      if (params.includeDietTypes.includes('alkaline')) dietConditions.push({ type: 'ALKALINE' });
+      
+      if (dietConditions.length > 0) {
+        whereClause.OR = dietConditions;
+      }
     }
 
-    // Handle cuisine preferences
-    if (params.cuisine) {
-      where.continent = {
-        in: params.cuisine.split(',')
+    // Add cuisine region filters if provided
+    if (params.selectedRegions?.length > 0) {
+      whereClause.regionOfOrigin = {
+        in: params.selectedRegions
       };
     }
 
-    // Get all matching recipes
+    // Add excluded foods filter if provided
+    if (params.includeExcludedFoods?.length > 0) {
+      const excludedFoodConditions = params.includeExcludedFoods.map((food: string) => ({
+        OR: [
+          { title: { not: { contains: food, mode: 'insensitive' } } },
+          { ingredients: { none: { name: { contains: food, mode: 'insensitive' } } } }
+        ]
+      }));
+      whereClause.AND = excludedFoodConditions;
+    }
+
+    // If we have a user, exclude recipes shown in the last 4 minutes
+    if (userEmail) {
+      const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
+      const recentlyShownRecipes = await prisma.$queryRaw<{ recipeId: string }[]>`
+        SELECT "recipeId"
+        FROM "UserRecipeHistory"
+        WHERE "userEmail" = ${userEmail}
+        AND "shownAt" >= ${fourMinutesAgo}
+      `;
+
+      if (recentlyShownRecipes.length > 0) {
+        whereClause.NOT = {
+          id: {
+            in: recentlyShownRecipes.map(r => r.recipeId)
+          }
+        };
+      }
+    }
+
+    // Get all matching recipes with their show counts
     const matchingRecipes = await prisma.recipe.findMany({
-      where,
+      where: whereClause,
       include: {
         ingredients: true,
         instructions: true,
         nutritionFacts: true
+      },
+      orderBy: {
+        showCount: 'asc' // Prioritize less shown recipes
       }
     });
 
-    // Randomly select up to 10 recipes
-    const shuffled = matchingRecipes.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, params.number || 10);
+    if (matchingRecipes.length === 0) {
+      // If no matches found and allowPartialMatch is true, try without dietary preferences
+      if (params.allowPartialMatch && params.includeDietTypes?.length > 0) {
+        console.log('No matches found, trying without dietary preferences...');
+        return getRandomRecipesFromDB({ 
+          ...params, 
+          includeDietTypes: [] 
+        }, userEmail);
+      }
+      return [];
+    }
+
+    // Calculate weights based on show counts
+    const minShowCount = Math.min(...matchingRecipes.map(r => r.showCount));
+    const weights = matchingRecipes.map(r => {
+      // The weight is inversely proportional to how many times it's been shown
+      // Add 1 to avoid division by zero
+      return 1 / (r.showCount - minShowCount + 1);
+    });
+
+    // Normalize weights to sum to 1
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    const normalizedWeights = weights.map(w => w / totalWeight);
+
+    // Select 10 recipes using weighted random selection
+    const selected: typeof matchingRecipes = [];
+    const numToSelect = Math.min(10, matchingRecipes.length);
+
+    while (selected.length < numToSelect) {
+      // Generate a random number between 0 and 1
+      const r = Math.random();
+      let sum = 0;
+      
+      // Find the recipe corresponding to this random number
+      for (let i = 0; i < matchingRecipes.length; i++) {
+        sum += normalizedWeights[i];
+        if (r <= sum && !selected.includes(matchingRecipes[i])) {
+          selected.push(matchingRecipes[i]);
+          break;
+        }
+      }
+    }
+
+    // Update show counts for selected recipes
+    if (selected.length > 0) {
+      await prisma.$transaction(
+        selected.map(recipe => 
+          prisma.recipe.update({
+            where: { id: recipe.id },
+            data: { showCount: { increment: 1 } }
+          })
+        )
+      );
+
+      // Record in user history if logged in
+      if (userEmail) {
+        await prisma.$transaction(
+          selected.map(recipe => 
+            prisma.userRecipeHistory.create({
+              data: {
+                id: crypto.randomUUID(),
+                userEmail,
+                recipeId: recipe.id,
+                shownAt: new Date()
+              }
+            })
+          )
+        );
+      }
+    }
+
+    return selected;
   } catch (error) {
     console.error('Error fetching recipes from database:', error);
     throw error;
@@ -62,110 +173,41 @@ async function getRandomRecipesFromDB(params: any) {
 export async function POST(request: Request) {
   try {
     const reqBody = await request.json();
-    console.log('Recipe generation request:', reqBody);
-
-    // Get user session (optional)
     const session = await getServerSession(authOptions);
-    const userEmail = session?.user?.email;
+    const userEmail = session?.user?.email || undefined;
 
-    // Get user preferences if logged in
-    let userPreferences: UserPreferenceWithDiet | null = null;
-    let cuisinePreferences: UserCuisinePreference[] = [];
+    console.log('Recipe generation request:', {
+      userEmail: userEmail || 'anonymous',
+      params: reqBody
+    });
 
-    if (userEmail) {
-      // Get user's dietary preferences
-      userPreferences = await prisma.userPreference.findFirst({
-        where: { userEmail },
-      }) as unknown as UserPreferenceWithDiet;
-
-      // Get user's cuisine preferences
-      cuisinePreferences = await prisma.userCuisinePreference.findMany({
-        where: { userEmail },
-        include: {
-          cuisine: true,
+    const recipes = await getRandomRecipesFromDB(reqBody, userEmail);
+    
+    if (!recipes || recipes.length === 0) {
+      console.log('No recipes found matching criteria');
+      return NextResponse.json(
+        { 
+          error: 'No recipes found matching your criteria. Try adjusting your preferences.',
+          success: false
         },
-      });
+        { status: 404 }
+      );
     }
 
-    // Override preferences if provided in request
-    if (reqBody.includeDietTypes) {
-      if (!userPreferences) {
-        userPreferences = {
-          id: 'temp',
-          userEmail: userEmail || 'anonymous',
-          cookingTime: '30-60',
-          servingSize: 2,
-          mealPrep: false,
-          dietTypes: reqBody.includeDietTypes,
-          excludedFoods: [],
-        };
-      } else {
-        userPreferences.dietTypes = reqBody.includeDietTypes;
-      }
-    }
-
-    if (reqBody.includeExcludedFoods) {
-      if (!userPreferences) {
-        userPreferences = {
-          id: 'temp',
-          userEmail: userEmail || 'anonymous',
-          cookingTime: '30-60',
-          servingSize: 2,
-          mealPrep: false,
-          dietTypes: [],
-          excludedFoods: reqBody.includeExcludedFoods,
-        };
-      } else {
-        userPreferences.excludedFoods = reqBody.includeExcludedFoods;
-      }
-    }
-
-    // Build search parameters based on user preferences
-    const searchParams: any = {
-      number: 10, // Number of recipes to generate
-    };
-
-    // Add dietary restrictions if any
-    if (userPreferences?.dietTypes?.length) {
-      searchParams.diet = userPreferences.dietTypes.join(',');
-    }
-
-    // Add excluded foods if any
-    if (userPreferences?.excludedFoods?.length) {
-      searchParams.intolerances = userPreferences.excludedFoods.join(',');
-    }
-
-    // Add preferred cuisines if any
-    if (cuisinePreferences?.length) {
-      const preferredCuisines = cuisinePreferences
-        .filter(cp => cp.preferenceLevel === 'LOVE' || cp.preferenceLevel === 'LIKE')
-        .map(cp => cp.cuisineId)
-        .filter(Boolean)
-        .join(',');
-      
-      if (preferredCuisines) {
-        searchParams.cuisine = preferredCuisines;
-      }
-    }
-    
-    // Fetch recipes from local database
-    console.log('Fetching recipes from local database');
-    console.time('local-db-request');
-    const recipes = await getRandomRecipesFromDB(searchParams);
-    console.timeEnd('local-db-request');
-    console.log(`Retrieved ${recipes.length} recipes from local database`);
-    
+    console.log(`Returning ${recipes.length} recipes to user`);
     return NextResponse.json({ 
-      success: true, 
-      message: 'Recipe generation completed',
-      recipesGenerated: recipes.length,
-      recipes: recipes
+      recipes,
+      success: true
     });
   } catch (error) {
-    console.error('Error handling recipe generation request:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to process recipe generation request'
-    }, { status: 500 });
+    console.error('Error in recipe generation:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to generate recipes. Please try again.',
+        success: false,
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+      },
+      { status: 500 }
+    );
   }
 } 
