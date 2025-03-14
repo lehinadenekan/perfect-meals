@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import AuthModal from './AuthModal';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
   const { data: session, status } = useSession();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const router = useRouter();
 
   // Add logging for session and image data
   React.useEffect(() => {
@@ -33,32 +36,49 @@ const Navbar = () => {
               <div className="text-black">Loading...</div>
             ) : session ? (
               <>
-                <div className="flex items-center gap-3">
-                  {session.user?.image && !imageError ? (
-                    <div className="relative w-8 h-8">
-                      <Image
-                        src={session.user.image}
-                        alt="Profile"
-                        className="rounded-full"
-                        fill
-                        sizes="32px"
-                        priority={true}
-                        onError={(e) => {
-                          console.error('Image load error:', e);
-                          console.error('Failed image URL:', session.user?.image);
-                          setImageError(true);
-                        }}
-                        onLoadingComplete={(result) => {
-                          console.log('Image loaded successfully:', result);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
-                      {session.user?.name?.[0]?.toUpperCase() || '?'}
+                <div className="flex items-center gap-3 relative">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    {session.user?.image && !imageError ? (
+                      <div className="relative w-8 h-8">
+                        <Image
+                          src={session.user.image}
+                          alt="Profile"
+                          className="rounded-full"
+                          fill
+                          sizes="32px"
+                          onError={(e) => {
+                            console.error('Image load error:', e);
+                            setImageError(true);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
+                        {session.user?.name?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                    <span className="text-black">{session.user?.name}</span>
+                  </div>
+                  
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            router.push('/favorite-meals');
+                            setIsDropdownOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Favorite Meals
+                        </button>
+                      </div>
                     </div>
                   )}
-                  <span className="text-black">{session.user?.name}</span>
                 </div>
                 <button
                   onClick={() => signOut()}

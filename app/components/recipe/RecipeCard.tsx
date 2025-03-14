@@ -8,6 +8,7 @@ import {
   GlobeAsiaAustraliaIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
+import FavoriteButton from '@/app/components/shared/FavoriteButton';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -101,6 +102,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
               {recipe.averageRating.toFixed(1)}
             </div>
           )}
+          <div className="flex items-center justify-end mt-2">
+            <FavoriteButton recipeId={recipe.id} />
+          </div>
         </div>
       </div>
     </div>

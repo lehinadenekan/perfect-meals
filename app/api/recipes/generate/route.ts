@@ -23,7 +23,7 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
     // Build the where clause for the query
     let whereClause: Prisma.RecipeWhereInput = {};
     
-    // Add dietary preferences to where clause
+    // Add dietary preferences to where clause if they exist
     if (params.includeDietTypes?.length > 0) {
       const dietConditions: Prisma.RecipeWhereInput[] = [];
       
@@ -60,8 +60,26 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
       whereClause.AND = excludedFoodConditions;
     }
 
-    // Remove the time-based exclusion to allow recipes to be shown again
-    // Instead, we'll use showCount to cycle through all recipes evenly
+    // If we have a user, exclude recipes shown in the last 4 minutes
+    if (userEmail) {
+      const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
+      const recentlyShownRecipes = await prisma.$queryRaw<{ recipeId: string }[]>`
+        SELECT "recipeId"
+        FROM "UserRecipeHistory"
+        WHERE "userEmail" = ${userEmail}
+        AND "shownAt" >= ${fourMinutesAgo}
+      `;
+
+      if (recentlyShownRecipes.length > 0) {
+        whereClause.NOT = {
+          id: {
+            in: recentlyShownRecipes.map(r => r.recipeId)
+          }
+        };
+      }
+    }
+
+    // Get all matching recipes with their show counts
     const matchingRecipes = await prisma.recipe.findMany({
       where: whereClause,
       include: {
@@ -72,44 +90,60 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
     });
 
     if (matchingRecipes.length === 0) {
-      // If no matches found and allowPartialMatch is true, try without dietary preferences
+      // If no matches found and allowPartialMatch is true, try without any filters
       if (params.allowPartialMatch) {
-        console.log('No matches found, trying without dietary preferences...');
-        return getRandomRecipesFromDB({ 
-          ...params, 
-          includeDietTypes: [],
-          includeExcludedFoods: [] 
-        }, userEmail);
+        console.log('No matches found, trying without filters...');
+        const allRecipes = await prisma.recipe.findMany({
+          include: {
+            ingredients: true,
+            instructions: true,
+            nutritionFacts: true
+          }
+        });
+        
+        // Shuffle all recipes and take 8
+        const shuffledRecipes = allRecipes.sort(() => Math.random() - 0.5).slice(0, 8);
+        
+        // Update show counts for selected recipes
+        if (shuffledRecipes.length > 0) {
+          await prisma.$transaction(
+            shuffledRecipes.map(recipe => 
+              prisma.recipe.update({
+                where: { id: recipe.id },
+                data: { showCount: { increment: 1 } }
+              })
+            )
+          );
+
+          // Record in user history if logged in
+          if (userEmail) {
+            await prisma.$transaction(
+              shuffledRecipes.map(recipe => 
+                prisma.userRecipeHistory.create({
+                  data: {
+                    id: crypto.randomUUID(),
+                    userEmail,
+                    recipeId: recipe.id,
+                    shownAt: new Date()
+                  }
+                })
+              )
+            );
+          }
+        }
+        
+        return shuffledRecipes;
       }
       return [];
     }
 
-    // Sort recipes by show count (ascending) and then randomly within each show count group
-    const groupedByShowCount = matchingRecipes.reduce((acc, recipe) => {
-      const count = recipe.showCount || 0;
-      if (!acc[count]) acc[count] = [];
-      acc[count].push(recipe);
-      return acc;
-    }, {} as Record<number, typeof matchingRecipes>);
-
-    // Get the group with the lowest show count
-    const minShowCount = Math.min(...Object.keys(groupedByShowCount).map(Number));
-    let recipesToSelect = groupedByShowCount[minShowCount];
-
-    // If we need more recipes to reach 10, take from next show count group
-    if (recipesToSelect.length < 10) {
-      const allSortedRecipes = matchingRecipes.sort((a, b) => (a.showCount || 0) - (b.showCount || 0));
-      recipesToSelect = allSortedRecipes.slice(0, Math.max(10, Math.floor(allSortedRecipes.length / 2)));
-    }
-
-    // Shuffle the selected group and take 10
-    const shuffled = [...recipesToSelect].sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, 10);
+    // Shuffle matching recipes and take 8
+    const shuffledRecipes = matchingRecipes.sort(() => Math.random() - 0.5).slice(0, 8);
 
     // Update show counts for selected recipes
-    if (selected.length > 0) {
+    if (shuffledRecipes.length > 0) {
       await prisma.$transaction(
-        selected.map(recipe => 
+        shuffledRecipes.map(recipe => 
           prisma.recipe.update({
             where: { id: recipe.id },
             data: { showCount: { increment: 1 } }
@@ -117,10 +151,10 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
         )
       );
 
-      // Still record in user history for analytics, but don't use it for filtering
+      // Record in user history if logged in
       if (userEmail) {
         await prisma.$transaction(
-          selected.map(recipe => 
+          shuffledRecipes.map(recipe => 
             prisma.userRecipeHistory.create({
               data: {
                 id: crypto.randomUUID(),
@@ -134,7 +168,7 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
       }
     }
 
-    return selected;
+    return shuffledRecipes;
   } catch (error) {
     console.error('Error fetching recipes from database:', error);
     throw error;

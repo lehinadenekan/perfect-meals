@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "dev:custom": "ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
     "build:server": "tsc --project tsconfig.server.json",
@@ -15,7 +15,8 @@
     "prisma:studio": "prisma studio",
     "db:setup": "npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed",
     "postinstall": "prisma generate",
-    "backup:recipes": "./scripts/backup/backup-recipes.sh"
+    "backup:recipes": "./scripts/backup/backup-recipes.sh",
+    "update-images": "ts-node scripts/update-recipe-images.ts"
   },
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"

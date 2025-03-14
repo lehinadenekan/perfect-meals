@@ -66,8 +66,7 @@ const authOptions: NextAuthOptions = {
         session.user.id = user.id;
         session.user.name = user.name;
         session.user.email = user.email;
-        session.user.image = user.image || null;
-        console.log('Session user image:', user.image);
+        session.user.image = user.image;
       }
       return session;
     },
