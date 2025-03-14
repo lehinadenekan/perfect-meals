@@ -161,6 +161,9 @@ const DietaryPreferenceSelector = () => {
       // Determine the endpoint based on debug mode
       const endpoint = debugMode ? '/api/debug/recipe-generation' : '/api/recipes/generate';
       
+      // Add timestamp to force fresh results
+      const timestamp = Date.now();
+      
       // Call the generate endpoint with forceRefresh to get recipes directly from API
       const generateResponse = await fetch(endpoint, {
         method: 'POST',
@@ -174,10 +177,10 @@ const DietaryPreferenceSelector = () => {
           allowPartialMatch: true,
           selectedRegions: selectedRegions,
           searchInput: searchInput.trim(),
-          // Add parameters for traditional pairings and regional balance
           considerTraditionalPairings: true,
           balanceRegionalCuisines: true,
-          includeAllMealTypes: true
+          includeAllMealTypes: true,
+          timestamp: timestamp // Add timestamp to ensure fresh results
         }),
       });
 
@@ -185,6 +188,16 @@ const DietaryPreferenceSelector = () => {
       console.log('Generate direct response:', generateResult);
 
       if (!generateResponse.ok) {
+        // If no recipes found, try fallback immediately
+        const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${timestamp}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackData.length > 0) {
+            setRecipes(fallbackData.slice(0, 8));
+            setIsLoadingRecipes(false);
+            return;
+          }
+        }
         setIsLoadingRecipes(false);
         setError(`Failed to generate recipes: ${generateResult.error || generateResponse.status}`);
         return;
@@ -201,30 +214,32 @@ const DietaryPreferenceSelector = () => {
       if (generateResult.recipes && generateResult.recipes.length > 0) {
         console.log(`Setting ${generateResult.recipes.length} recipes from direct API response`);
         
-        // Transform recipes to our UI format if needed
-        const transformedRecipes = generateResult.recipes.map((recipe: any) => ({
-          id: recipe.id,
-          title: recipe.title,
-          description: recipe.description,
-          cookingTime: recipe.cookingTime,
-          servings: recipe.servings,
-          difficulty: recipe.difficulty,
-          cuisineType: recipe.cuisineType,
-          type: recipe.type,
-          regionOfOrigin: recipe.regionOfOrigin,
-          imageUrl: recipe.imageUrl,
-          calories: recipe.calories,
-          isVegetarian: recipe.isVegetarian,
-          isVegan: recipe.isVegan,
-          isGlutenFree: recipe.isGlutenFree,
-          isDairyFree: recipe.isDairyFree,
-          isNutFree: recipe.isNutFree,
-          ingredients: recipe.ingredients || [],
-          instructions: recipe.instructions || [],
-          nutritionFacts: recipe.nutritionFacts || null,
-          notes: recipe.notes || [],
-          averageRating: null
-        }));
+        // Transform recipes to our UI format if needed and limit to 8
+        const transformedRecipes = generateResult.recipes
+          .slice(0, 8)
+          .map((recipe: any) => ({
+            id: recipe.id,
+            title: recipe.title,
+            description: recipe.description,
+            cookingTime: recipe.cookingTime,
+            servings: recipe.servings,
+            difficulty: recipe.difficulty,
+            cuisineType: recipe.cuisineType,
+            type: recipe.type,
+            regionOfOrigin: recipe.regionOfOrigin,
+            imageUrl: recipe.imageUrl,
+            calories: recipe.calories,
+            isVegetarian: recipe.isVegetarian,
+            isVegan: recipe.isVegan,
+            isGlutenFree: recipe.isGlutenFree,
+            isDairyFree: recipe.isDairyFree,
+            isNutFree: recipe.isNutFree,
+            ingredients: recipe.ingredients || [],
+            instructions: recipe.instructions || [],
+            nutritionFacts: recipe.nutritionFacts || null,
+            notes: recipe.notes || [],
+            averageRating: null
+          }));
         
         setRecipes(transformedRecipes);
         setIsLoadingRecipes(false);
@@ -266,12 +281,12 @@ const DietaryPreferenceSelector = () => {
         const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
-          setRecipes(fallbackData);
+          setRecipes(fallbackData.slice(0, 8));
         } else {
           setRecipes([]);
         }
       } else {
-        setRecipes(data);
+        setRecipes(data.slice(0, 8));
       }
     } catch (error) {
       console.error('Error generating meals:', error);
@@ -279,7 +294,7 @@ const DietaryPreferenceSelector = () => {
         const fallbackResponse = await fetch(`/api/recipes?includePartialMatches=true&_=${Date.now()}`);
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
-          setRecipes(fallbackData);
+          setRecipes(fallbackData.slice(0, 8));
         } else {
           setRecipes([]);
         }
@@ -294,10 +309,13 @@ const DietaryPreferenceSelector = () => {
 
   const handleRegionChange = (regions: string[]) => {
     setSelectedRegions(regions);
-    // Reset carousel when preferences change
+  };
+
+  // Reset carousel and recipes when regions change
+  useEffect(() => {
     setShowCarousel(false);
     setRecipes([]);
-  };
+  }, [selectedRegions]);
 
   return (
     <div className="w-full max-w-7xl mx-auto">

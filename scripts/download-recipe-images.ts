@@ -1,54 +1,41 @@
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
+import { ImageService } from '../app/services/imageService';
 import { recipes } from '../prisma/seed-data/recipes';
 
-const PUBLIC_IMAGES_DIR = path.join(process.cwd(), 'public', 'images', 'recipes');
+async function downloadRecipeImages() {
+  const imageService = new ImageService();
+  const results: { recipe: string; success: boolean; error?: string }[] = [];
 
-// Ensure the images directory exists
-if (!fs.existsSync(PUBLIC_IMAGES_DIR)) {
-  fs.mkdirSync(PUBLIC_IMAGES_DIR, { recursive: true });
-}
+  console.log(`Starting download of ${recipes.length} recipe images...`);
 
-function titleToFilename(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '') + '.jpg';
-}
-
-async function downloadImage(url: string, filename: string) {
-  try {
-    const response = await axios({
-      url,
-      responseType: 'arraybuffer'
-    });
-    
-    const buffer = Buffer.from(response.data as ArrayBuffer);
-    const filepath = path.join(PUBLIC_IMAGES_DIR, filename);
-    fs.writeFileSync(filepath, buffer);
-    console.log(`Downloaded: ${filename}`);
-  } catch (error) {
-    console.error(`Failed to download ${url}:`, error.message);
-  }
-}
-
-async function main() {
   for (const recipe of recipes) {
-    const filename = titleToFilename(recipe.title);
-    
-    // Skip if image already exists locally
-    if (fs.existsSync(path.join(PUBLIC_IMAGES_DIR, filename))) {
-      console.log(`Skipping ${filename} - already exists`);
-      continue;
+    try {
+      console.log(`Downloading image for ${recipe.title}...`);
+      await imageService.downloadAndStoreImage(recipe.imageUrl, recipe.title);
+      results.push({ recipe: recipe.title, success: true });
+      console.log(`✓ Successfully downloaded image for ${recipe.title}`);
+    } catch (error) {
+      results.push({ 
+        recipe: recipe.title, 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+      console.error(`✗ Failed to download image for ${recipe.title}:`, error);
     }
-    
-    // Only download if it's an external URL
-    if (recipe.imageUrl && recipe.imageUrl.startsWith('http')) {
-      console.log(`Downloading ${recipe.title}...`);
-      await downloadImage(recipe.imageUrl, filename);
-    }
+  }
+
+  // Print summary
+  console.log('\nDownload Summary:');
+  console.log('----------------');
+  console.log(`Total recipes: ${recipes.length}`);
+  console.log(`Successful downloads: ${results.filter(r => r.success).length}`);
+  console.log(`Failed downloads: ${results.filter(r => !r.success).length}`);
+
+  if (results.some(r => !r.success)) {
+    console.log('\nFailed Downloads:');
+    results
+      .filter(r => !r.success)
+      .forEach(r => console.log(`- ${r.recipe}: ${r.error}`));
   }
 }
 
-main().catch(console.error); 
+downloadRecipeImages().catch(console.error); 

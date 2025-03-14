@@ -42,9 +42,14 @@ const Navbar = () => {
                         className="rounded-full"
                         fill
                         sizes="32px"
+                        priority={true}
                         onError={(e) => {
                           console.error('Image load error:', e);
+                          console.error('Failed image URL:', session.user?.image);
                           setImageError(true);
+                        }}
+                        onLoadingComplete={(result) => {
+                          console.log('Image loaded successfully:', result);
                         }}
                       />
                     </div>

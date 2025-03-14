@@ -60,80 +60,51 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
       whereClause.AND = excludedFoodConditions;
     }
 
-    // If we have a user, exclude recipes shown in the last 4 minutes
-    if (userEmail) {
-      const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
-      const recentlyShownRecipes = await prisma.$queryRaw<{ recipeId: string }[]>`
-        SELECT "recipeId"
-        FROM "UserRecipeHistory"
-        WHERE "userEmail" = ${userEmail}
-        AND "shownAt" >= ${fourMinutesAgo}
-      `;
-
-      if (recentlyShownRecipes.length > 0) {
-        whereClause.NOT = {
-          id: {
-            in: recentlyShownRecipes.map(r => r.recipeId)
-          }
-        };
-      }
-    }
-
-    // Get all matching recipes with their show counts
+    // Remove the time-based exclusion to allow recipes to be shown again
+    // Instead, we'll use showCount to cycle through all recipes evenly
     const matchingRecipes = await prisma.recipe.findMany({
       where: whereClause,
       include: {
         ingredients: true,
         instructions: true,
         nutritionFacts: true
-      },
-      orderBy: {
-        showCount: 'asc' // Prioritize less shown recipes
       }
     });
 
     if (matchingRecipes.length === 0) {
       // If no matches found and allowPartialMatch is true, try without dietary preferences
-      if (params.allowPartialMatch && params.includeDietTypes?.length > 0) {
+      if (params.allowPartialMatch) {
         console.log('No matches found, trying without dietary preferences...');
         return getRandomRecipesFromDB({ 
           ...params, 
-          includeDietTypes: [] 
+          includeDietTypes: [],
+          includeExcludedFoods: [] 
         }, userEmail);
       }
       return [];
     }
 
-    // Calculate weights based on show counts
-    const minShowCount = Math.min(...matchingRecipes.map(r => r.showCount));
-    const weights = matchingRecipes.map(r => {
-      // The weight is inversely proportional to how many times it's been shown
-      // Add 1 to avoid division by zero
-      return 1 / (r.showCount - minShowCount + 1);
-    });
+    // Sort recipes by show count (ascending) and then randomly within each show count group
+    const groupedByShowCount = matchingRecipes.reduce((acc, recipe) => {
+      const count = recipe.showCount || 0;
+      if (!acc[count]) acc[count] = [];
+      acc[count].push(recipe);
+      return acc;
+    }, {} as Record<number, typeof matchingRecipes>);
 
-    // Normalize weights to sum to 1
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    const normalizedWeights = weights.map(w => w / totalWeight);
+    // Get the group with the lowest show count
+    const minShowCount = Math.min(...Object.keys(groupedByShowCount).map(Number));
+    let recipesToSelect = groupedByShowCount[minShowCount];
 
-    // Select 10 recipes using weighted random selection
-    const selected: typeof matchingRecipes = [];
-    const numToSelect = matchingRecipes.length;
-
-    while (selected.length < numToSelect) {
-      // Generate a random number between 0 and 1
-      const r = Math.random();
-      let sum = 0;
-      
-      // Find the recipe corresponding to this random number
-      for (let i = 0; i < matchingRecipes.length; i++) {
-        sum += normalizedWeights[i];
-        if (r <= sum && !selected.includes(matchingRecipes[i])) {
-          selected.push(matchingRecipes[i]);
-          break;
-        }
-      }
+    // If we need more recipes to reach 10, take from next show count group
+    if (recipesToSelect.length < 10) {
+      const allSortedRecipes = matchingRecipes.sort((a, b) => (a.showCount || 0) - (b.showCount || 0));
+      recipesToSelect = allSortedRecipes.slice(0, Math.max(10, Math.floor(allSortedRecipes.length / 2)));
     }
+
+    // Shuffle the selected group and take 10
+    const shuffled = [...recipesToSelect].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, 10);
 
     // Update show counts for selected recipes
     if (selected.length > 0) {
@@ -146,7 +117,7 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
         )
       );
 
-      // Record in user history if logged in
+      // Still record in user history for analytics, but don't use it for filtering
       if (userEmail) {
         await prisma.$transaction(
           selected.map(recipe => 
