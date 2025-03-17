@@ -36,6 +36,62 @@ async function updateRecipeImages() {
       }
     });
 
+    // Update Shakshuka recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Shakshuka (North African Poached Eggs in Spiced Tomato Sauce)' },
+      data: {
+        imageUrl: 'https://i2.wp.com/www.downshiftology.com/wp-content/uploads/2023/12/Shakshuka-3-2.jpg'
+      }
+    });
+
+    // Update Pastilla recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Pastilla (Moroccan Sweet and Savory Chicken Pie)' },
+      data: {
+        imageUrl: 'https://silkroadrecipes.com/wp-content/uploads/2022/08/Moroccan-Pastilla-square.jpg'
+      }
+    });
+
+    // Update Shorba Libiya recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Shorba Libiya (Libyan Spiced Lamb Soup)' },
+      data: {
+        imageUrl: 'https://addictedtotahini.com/wp-content/uploads/2019/12/LIbya-Lamb-soup-348.jpg'
+      }
+    });
+
+    // Update Duqqa recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Duqqa (Egyptian Spiced Nut and Seed Blend)' },
+      data: {
+        imageUrl: 'https://i0.wp.com/veredguttman.com/wp-content/uploads/2023/01/Dukkah.jpg?w=1280&ssl=1'
+      }
+    });
+
+    // Update Zaalook recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Zaalook' },
+      data: {
+        imageUrl: 'https://www.pantsdownapronson.com/wp-content/uploads/moroccan-zaalouk-roasted-eggplant-and-tomato-dip-3.jpg'
+      }
+    });
+
+    // Update Maaqouda recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Maaqouda' },
+      data: {
+        imageUrl: 'https://o-yummy.com/wp-content/uploads/2023/10/maakouda-40-scaled.jpg'
+      }
+    });
+
+    // Update Rfissa recipe
+    await prisma.recipe.updateMany({
+      where: { title: 'Rfissa' },
+      data: {
+        imageUrl: 'https://tasteofmaroc.com/wp-content/uploads/2018/04/bormache-halimah-3-960-x-1280.jpg.webp'
+      }
+    });
+
     console.log('Successfully updated recipe images');
   } catch (error) {
     console.error('Error updating recipe images:', error);
