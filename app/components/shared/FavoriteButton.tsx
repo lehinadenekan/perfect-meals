@@ -67,7 +67,7 @@ export default function FavoriteButton({
     <button
       onClick={toggleFavorite}
       disabled={isLoading}
-      className={`p-2 rounded-full transition-colors ${
+      className={`p-1.5 rounded-full transition-all transform hover:scale-110 ${
         isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
       }`}
       aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
