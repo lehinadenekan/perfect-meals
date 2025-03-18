@@ -16,14 +16,14 @@ interface RecipeCardProps {
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
   return (
-    <div className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden w-[300px] h-[400px] transition-transform hover:scale-105">
-      {/* Image Container */}
-      <div className="relative w-full" style={{ height: '140px' }}>
+    <div className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden w-[300px] h-[435px] transition-transform hover:scale-105 relative">
+      {/* Image Container - Fixed Exact Height */}
+      <div className="relative w-full h-[130px] overflow-hidden flex-shrink-0 bg-gray-100">
         <Image
           src={recipe.imageUrl?.startsWith('/') ? recipe.imageUrl : (recipe.imageUrl || '/placeholder-recipe.jpg')}
           alt={recipe.title}
           fill
-          className="object-cover"
+          className="object-cover object-center w-full h-full"
           sizes="300px"
           priority
           unoptimized={recipe.imageUrl?.startsWith('/') ?? false}
@@ -91,9 +91,19 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
             </div>
           )}
           {recipe.regionOfOrigin && (
-            <div className="flex items-center text-sm text-gray-600">
-              <GlobeAsiaAustraliaIcon className="h-4 w-4 mr-2" />
-              {recipe.regionOfOrigin}
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center">
+                <GlobeAsiaAustraliaIcon className="h-4 w-4 mr-2" />
+                {recipe.regionOfOrigin}
+              </div>
+              <div className="ml-auto">
+                <FavoriteButton recipeId={recipe.id} />
+              </div>
+            </div>
+          )}
+          {!recipe.regionOfOrigin && (
+            <div className="flex items-center justify-end text-sm text-gray-600">
+              <FavoriteButton recipeId={recipe.id} />
             </div>
           )}
           {typeof recipe.averageRating === 'number' && recipe.averageRating > 0 && (
@@ -102,13 +112,10 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
               {recipe.averageRating.toFixed(1)}
             </div>
           )}
-          <div className="flex items-center justify-end mt-2">
-            <FavoriteButton recipeId={recipe.id} />
-          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default RecipeCard; 
+export default RecipeCard;
