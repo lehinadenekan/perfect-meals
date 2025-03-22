@@ -56,7 +56,7 @@ CREATE TABLE "Recipe" (
     "isVegetarian" BOOLEAN NOT NULL DEFAULT false,
     "isVegan" BOOLEAN NOT NULL DEFAULT false,
     "isGlutenFree" BOOLEAN NOT NULL DEFAULT false,
-    "isDairyFree" BOOLEAN NOT NULL DEFAULT false,
+    "isLactoseFree" BOOLEAN NOT NULL DEFAULT false,
     "isNutFree" BOOLEAN NOT NULL DEFAULT false,
     "averageRating" DOUBLE PRECISION,
     "type" TEXT NOT NULL DEFAULT 'DINNER',

@@ -12,11 +12,6 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '**',
       },
-      {
-        protocol: 'https',
-        hostname: 'img.spoonacular.com',
-        pathname: '**',
-      },
     ],
     domains: ['localhost'],
     unoptimized: true

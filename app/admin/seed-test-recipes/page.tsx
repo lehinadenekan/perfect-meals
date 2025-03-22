@@ -3,10 +3,22 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 
+interface Recipe {
+  id: string;
+  title: string;
+  imageUrl: string;
+}
+
+interface SeedResult {
+  message?: string;
+  recipes?: Recipe[];
+  error?: string;
+}
+
 export default function SeedTestRecipesPage() {
   const { data: session } = useSession();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SeedResult | null>(null);
 
   const handleSeed = async () => {
     try {
@@ -43,7 +55,7 @@ export default function SeedTestRecipesPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Seed Test Recipes</h1>
       <p className="mb-4">
-        This will add test recipes with Spoonacular image URLs for testing the migration process.
+        This will add test recipes with sample image URLs for testing the migration process.
       </p>
 
       <button
@@ -61,13 +73,13 @@ export default function SeedTestRecipesPage() {
       {status === 'success' && result && (
         <div className="mt-4 p-4 bg-green-100 rounded">
           <h2 className="font-semibold mb-2">Test Recipes Created</h2>
-          <p>{result.message}</p>
+          {result.message && <p>{result.message}</p>}
           
           {result.recipes && result.recipes.length > 0 && (
             <div className="mt-4">
               <h3 className="font-semibold">Created Recipes:</h3>
               <ul className="list-disc pl-4 mt-2">
-                {result.recipes.map((recipe: any) => (
+                {result.recipes.map((recipe) => (
                   <li key={recipe.id} className="mb-2">
                     <p className="font-medium">{recipe.title}</p>
                     <p className="text-sm text-gray-600 break-all">{recipe.imageUrl}</p>

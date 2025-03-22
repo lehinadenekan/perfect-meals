@@ -14,7 +14,7 @@ interface DashboardData {
     isVegetarian: boolean;
     isVegan: boolean;
     isGlutenFree: boolean;
-    isDairyFree: boolean;
+    isLactoseFree: boolean;
     isKosher: boolean;
     isHalal: boolean;
     isLowCarb: boolean;
@@ -102,7 +102,7 @@ export default function Dashboard() {
     if (prefs?.isVegetarian) restrictions.push('Vegetarian');
     if (prefs?.isVegan) restrictions.push('Vegan');
     if (prefs?.isGlutenFree) restrictions.push('Gluten-free');
-    if (prefs?.isDairyFree) restrictions.push('Dairy-free');
+    if (prefs?.isLactoseFree) restrictions.push('Dairy-free');
     if (prefs?.isKosher) restrictions.push('Kosher');
     if (prefs?.isHalal) restrictions.push('Halal');
     if (prefs?.isLowCarb) restrictions.push('Low-carb');

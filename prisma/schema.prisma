@@ -69,7 +69,7 @@ model Recipe {
   isVegetarian   Boolean              @default(false)
   isVegan        Boolean              @default(false)
   isGlutenFree   Boolean              @default(false)
-  isDairyFree    Boolean              @default(false)
+  isLactoseFree    Boolean              @default(false)
   isNutFree      Boolean              @default(false)
   averageRating  Float?
   type           String               @default("DINNER")
