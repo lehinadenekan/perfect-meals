@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       if (body.dietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
       if (body.dietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
       if (body.dietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
-      if (body.dietTypes.includes('dairy-free')) dietConditions.push({ isDairyFree: true });
+      if (body.dietTypes.includes('dairy-free')) dietConditions.push({ isLactoseFree: true });
       if (dietConditions.length > 0) {
         where.OR = dietConditions;
       }

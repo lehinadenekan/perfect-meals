@@ -7,46 +7,87 @@ import GeographicFilter from './GeographicFilter';
 import { Recipe } from '@/types/recipe';
 import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
 
-type DietType = 'alkaline' | 'gluten-free' | 'halal' | 'keto' | 'kosher' | 'paleo' | 'vegan' | 'vegetarian';
+type DietType = 'gluten-free' | 'lactose-free' | 'low-FODMAP' | 'nut-free' | 'pescatarian' | 'pork-free' | 'vegan' | 'vegetarian';
 
 const DIET_TYPES: Record<DietType, { title: string; description: string }> = {
-  alkaline: {
-    title: 'Alkaline',
-    description: 'Focus on foods that promote a balanced pH level in the body.',
-  },
   'gluten-free': {
     title: 'Gluten-Free',
-    description: 'Excludes wheat, barley, rye, and their derivatives.',
+    description: 'No wheat, barley, rye, or their derivatives',
   },
-  halal: {
-    title: 'Halal',
-    description: 'Adheres to Islamic dietary laws and preparation methods.',
+  'lactose-free': {
+    title: 'Lactose-Free',
+    description: 'No milk products or lactose-containing foods',
   },
-  keto: {
-    title: 'Keto',
-    description: 'High-fat, low-carb diet that induces ketosis for weight loss.',
+  'low-FODMAP': {
+    title: 'Low-FODMAP',
+    description: 'Excludes fermentable carbs that may cause digestive issues',
   },
-  kosher: {
-    title: 'Kosher',
-    description: 'Follows Jewish dietary laws and food preparation guidelines.',
+  'nut-free': {
+    title: 'Nut-Free',
+    description: 'No nuts or nut-derived ingredients',
   },
-  paleo: {
-    title: 'Paleo',
-    description: 'Based on foods presumed eaten during the Paleolithic era.',
+  'pescatarian': {
+    title: 'Pescatarian',
+    description: 'No meat or poultry, but includes fish and seafood',
   },
-  vegan: {
+  'pork-free': {
+    title: 'Pork-Free',
+    description: 'No pork or pork-derived ingredients',
+  },
+  'vegan': {
     title: 'Vegan',
-    description: 'Excludes all animal products and byproducts.',
+    description: 'No animal products whatsoever',
   },
-  vegetarian: {
+  'vegetarian': {
     title: 'Vegetarian',
-    description: 'Plant-based diet that may include dairy and eggs.',
+    description: 'No meat, fish, or poultry',
   },
 };
 
 // Define the order of diet types for top and bottom rows
-const TOP_ROW_DIETS: DietType[] = ['alkaline', 'gluten-free', 'halal', 'keto'];
-const BOTTOM_ROW_DIETS: DietType[] = ['kosher', 'paleo', 'vegan', 'vegetarian'];
+const TOP_ROW_DIETS: DietType[] = ['gluten-free', 'lactose-free', 'low-FODMAP', 'nut-free'];
+const BOTTOM_ROW_DIETS: DietType[] = ['pescatarian', 'pork-free', 'vegan', 'vegetarian'];
+
+interface GeneratedRecipe {
+  id: string;
+  title: string;
+  description?: string;
+  cookingTime: number;
+  servings: number;
+  difficulty: string;
+  cuisineType: string;
+  type: string;
+  regionOfOrigin?: string;
+  imageUrl?: string;
+  calories?: number;
+  isVegetarian: boolean;
+  isVegan: boolean;
+  isGlutenFree: boolean;
+  isLactoseFree: boolean;
+  isNutFree: boolean;
+  ingredients: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    unit: string;
+    notes?: string;
+  }>;
+  instructions: Array<{
+    id: string;
+    stepNumber: number;
+    description: string;
+  }>;
+  nutritionFacts?: {
+    id: string;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+  };
+  notes?: string[];
+}
 
 const DietaryPreferenceSelector = () => {
   const { data: session, status } = useSession();
@@ -57,7 +98,7 @@ const DietaryPreferenceSelector = () => {
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
-  const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
+  const [diagnosticResults, setDiagnosticResults] = useState<{ duration_ms: number; success: boolean; error?: string; logs: Record<string, unknown> } | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +106,7 @@ const DietaryPreferenceSelector = () => {
   // Initialize preference updates hook
   const {
     updatePreferences,
-    isUpdating,
-    error: updateError
+    isUpdating
   } = usePreferenceUpdates({
     dietTypes: selectedDiets,
     excludedFoods,
@@ -202,7 +242,7 @@ const DietaryPreferenceSelector = () => {
         console.log(`Setting ${generateResult.recipes.length} recipes from direct API response`);
         
         // Transform recipes to our UI format if needed
-        const transformedRecipes = generateResult.recipes.map((recipe: any) => ({
+        const transformedRecipes = generateResult.recipes.map((recipe: GeneratedRecipe) => ({
           id: recipe.id,
           title: recipe.title,
           description: recipe.description,
@@ -217,7 +257,7 @@ const DietaryPreferenceSelector = () => {
           isVegetarian: recipe.isVegetarian,
           isVegan: recipe.isVegan,
           isGlutenFree: recipe.isGlutenFree,
-          isDairyFree: recipe.isDairyFree,
+          isLactoseFree: recipe.isLactoseFree,
           isNutFree: recipe.isNutFree,
           ingredients: recipe.ingredients || [],
           instructions: recipe.instructions || [],
@@ -283,7 +323,7 @@ const DietaryPreferenceSelector = () => {
         } else {
           setRecipes([]);
         }
-      } catch (fallbackError) {
+      } catch {
         console.error('Fallback fetch also failed');
         setRecipes([]);
       }

@@ -16,7 +16,6 @@ export interface GeographicOrigin {
 export type ConfidenceScore = number; // 0-1
 
 export interface APIConfidenceScores {
-  spoonacular: ConfidenceScore;
   edamam: ConfidenceScore;
   mealDB: ConfidenceScore;
   fatSecret: ConfidenceScore;
@@ -24,7 +23,7 @@ export interface APIConfidenceScores {
 }
 
 export interface ValidationMetadata {
-  primarySource: 'spoonacular' | 'edamam' | 'mealDB' | 'fatSecret';
+  primarySource: 'edamam' | 'mealDB' | 'fatSecret';
   crossReferences: string[];
   lastVerified: Date;
 }

@@ -27,7 +27,7 @@ export interface Recipe {
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;
-  isDairyFree: boolean;
+  isLactoseFree: boolean;
   isNutFree: boolean;
   averageRating?: number | null;
   ingredients: Ingredient[];
@@ -84,7 +84,7 @@ export interface UserPreference {
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;
-  isDairyFree: boolean;
+  isLactoseFree: boolean;
   isKosher: boolean;
   isHalal: boolean;
   isLowCarb: boolean;

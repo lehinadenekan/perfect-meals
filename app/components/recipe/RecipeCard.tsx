@@ -47,9 +47,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
                 Gluten Free
               </span>
             )}
-            {recipe.isDairyFree && (
+            {recipe.isLactoseFree && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                Dairy Free
+                Lactose Free
               </span>
             )}
             {recipe.isNutFree && (

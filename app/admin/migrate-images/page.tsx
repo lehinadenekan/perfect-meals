@@ -3,10 +3,17 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 
+interface MigrationResults {
+  total: number;
+  success: number;
+  failed: number;
+  errors: string[];
+}
+
 export default function MigrateImagesPage() {
   const { data: session } = useSession();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<MigrationResults | null>(null);
 
   const handleMigration = async () => {
     try {
@@ -42,7 +49,7 @@ export default function MigrateImagesPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Migrate Recipe Images</h1>
       <p className="mb-4">
-        This will download all Spoonacular recipe images and store them locally.
+        This will download all external recipe images and store them locally.
       </p>
 
       <button

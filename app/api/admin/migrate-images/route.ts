@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import imageService from '@/app/services/imageService';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -12,26 +12,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all recipes with Spoonacular image URLs - using broader matching patterns
+    // Get all recipes with external image URLs
     const recipes = await prisma.recipe.findMany({
       where: {
         OR: [
-          { imageUrl: { contains: 'spoonacular.com' } },
-          { imageUrl: { contains: 'spoonacular.io' } }, 
-          { imageUrl: { contains: 'spoonacular' } },
-          // If the images are stored with a CDN domain
-          { imageUrl: { startsWith: 'https://images.spoonacular' } },
-          { imageUrl: { startsWith: 'https://cdn.spoonacular' } },
-          // Check for specific spoonacular URL patterns
-          { imageUrl: { contains: '-312x231.jpg' } }, // Common Spoonacular image size pattern
-          { imageUrl: { contains: '-556x370.jpg' } }, // Another common Spoonacular image size
-          // More general check for external URLs
-          { imageUrl: { startsWith: 'http' } }
+          // Check for any external URLs
+          { imageUrl: { startsWith: 'http://' } },
+          { imageUrl: { startsWith: 'https://' } },
+          // Exclude local URLs
+          { NOT: { imageUrl: { startsWith: '/images/' } } },
+          { NOT: { imageUrl: { startsWith: '/static/' } } }
         ]
       }
     });
 
-    console.log(`Found ${recipes.length} recipes with potential external images`);
+    console.log(`Found ${recipes.length} recipes with external images`);
 
     // Log the URLs for debugging
     recipes.forEach(recipe => {

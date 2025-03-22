@@ -31,9 +31,9 @@ const DIETARY_RESTRICTIONS: DietaryRestriction[] = [
     description: 'No wheat, barley, rye, or their derivatives',
   },
   {
-    id: 'dairy-free',
-    name: 'Dairy-Free',
-    description: 'No milk products',
+    id: 'lactose-free',
+    name: 'Lactose-Free',
+    description: 'No lactose-containing foods',
   },
   {
     id: 'kosher',
@@ -66,7 +66,7 @@ export default function DietaryRestrictions() {
         
         const data = await response.json();
         if (data) {
-          setSelectedRestrictions(data.map((restriction: any) => restriction.id));
+          setSelectedRestrictions(data.map((restriction: DietaryRestriction) => restriction.id));
         }
       } catch (error) {
         console.error('Error fetching dietary restrictions:', error);

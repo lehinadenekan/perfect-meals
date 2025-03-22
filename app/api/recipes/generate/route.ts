@@ -1,27 +1,24 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, UserPreference, UserCuisinePreference, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 const prisma = new PrismaClient();
 
-type UserPreferenceWithDiet = {
-  id: string;
-  userEmail: string;
-  cookingTime: string;
-  servingSize: number;
-  mealPrep: boolean;
-  dietTypes: string[];
-  excludedFoods: string[];
+type RecipeParams = {
+  includeDietTypes: string[];
+  selectedRegions: string[];
+  includeExcludedFoods: string[];
+  allowPartialMatch: boolean;
 };
 
 // This function will get recipes from our local database
-async function getRandomRecipesFromDB(params: any, userEmail: string | undefined) {
+async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | undefined) {
   try {
     console.log('Getting recipes from local database with params:', JSON.stringify(params));
     
     // Build the where clause for the query
-    let whereClause: Prisma.RecipeWhereInput = {};
+    const whereClause: Prisma.RecipeWhereInput = {};
     
     // Add dietary preferences to where clause if they exist
     if (params.includeDietTypes?.length > 0) {
@@ -30,12 +27,11 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
       if (params.includeDietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
       if (params.includeDietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
       if (params.includeDietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
-      if (params.includeDietTypes.includes('dairy-free')) dietConditions.push({ isDairyFree: true });
-      if (params.includeDietTypes.includes('keto')) dietConditions.push({ type: 'KETO' });
-      if (params.includeDietTypes.includes('paleo')) dietConditions.push({ type: 'PALEO' });
-      if (params.includeDietTypes.includes('kosher')) dietConditions.push({ type: 'KOSHER' });
-      if (params.includeDietTypes.includes('halal')) dietConditions.push({ type: 'HALAL' });
-      if (params.includeDietTypes.includes('alkaline')) dietConditions.push({ type: 'ALKALINE' });
+      if (params.includeDietTypes.includes('lactose-free')) dietConditions.push({ isLactoseFree: true });
+      if (params.includeDietTypes.includes('nut-free')) dietConditions.push({ isNutFree: true });
+      if (params.includeDietTypes.includes('pork-free')) dietConditions.push({ type: 'PORK_FREE' });
+      if (params.includeDietTypes.includes('low-FODMAP')) dietConditions.push({ type: 'LOW_FODMAP' });
+      if (params.includeDietTypes.includes('pescatarian')) dietConditions.push({ type: 'PESCATARIAN' });
       
       if (dietConditions.length > 0) {
         whereClause.OR = dietConditions;
@@ -51,10 +47,26 @@ async function getRandomRecipesFromDB(params: any, userEmail: string | undefined
 
     // Add excluded foods filter if provided
     if (params.includeExcludedFoods?.length > 0) {
-      const excludedFoodConditions = params.includeExcludedFoods.map((food: string) => ({
-        OR: [
-          { title: { not: { contains: food, mode: 'insensitive' } } },
-          { ingredients: { none: { name: { contains: food, mode: 'insensitive' } } } }
+      const excludedFoodConditions: Prisma.RecipeWhereInput[] = params.includeExcludedFoods.map((food: string) => ({
+        AND: [
+          {
+            title: {
+              not: {
+                contains: food,
+                mode: Prisma.QueryMode.insensitive
+              }
+            }
+          },
+          {
+            ingredients: {
+              none: {
+                name: {
+                  contains: food,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            }
+          }
         ]
       }));
       whereClause.AND = excludedFoodConditions;

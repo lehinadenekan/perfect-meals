@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         if (dietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
         if (dietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
         if (dietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
-        if (dietTypes.includes('dairy-free')) dietConditions.push({ isDairyFree: true });
+        if (dietTypes.includes('dairy-free')) dietConditions.push({ isLactoseFree: true });
         if (dietTypes.includes('keto')) dietConditions.push({ type: 'KETO' });
         if (dietTypes.includes('paleo')) dietConditions.push({ type: 'PALEO' });
         if (dietTypes.includes('kosher')) dietConditions.push({ type: 'KOSHER' });

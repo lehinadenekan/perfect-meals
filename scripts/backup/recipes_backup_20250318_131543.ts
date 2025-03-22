@@ -37,7 +37,7 @@ interface Recipe {
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;
-  isDairyFree: boolean;
+  isLactoseFree: boolean;
   isNutFree: boolean;
   ingredients: Ingredient[];
   instructions: Instruction[];
@@ -60,7 +60,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: false,
     ingredients: [
       { name: 'Quinoa', amount: 1, unit: 'cup', notes: 'rinsed and drained' },
@@ -118,7 +118,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Dashi Stock', amount: 4, unit: 'cups', notes: 'kombu and shiitake based for vegan version' },
@@ -171,7 +171,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Silken Tofu', amount: 400, unit: 'g', notes: 'drained and cut into large chunks' },
@@ -225,7 +225,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Pork Ribs', amount: 1, unit: 'kg', notes: 'preferably meaty prime ribs, cut into individual pieces' },
@@ -281,7 +281,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Short Grain Rice', amount: 2, unit: 'cups', notes: 'preferably Korean rice, rinsed until water runs clear' },
@@ -334,7 +334,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Flour', amount: 300, unit: 'g' },
@@ -375,7 +375,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Khanom Jeen Noodles', amount: 500, unit: 'g', notes: 'fresh or dried fermented rice noodles' },
@@ -432,7 +432,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken Thigh', amount: 300, unit: 'g', notes: 'skinless, cut into bite-sized pieces' },
@@ -487,7 +487,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Soft Tofu', amount: 400, unit: 'g', notes: 'cut into 1-inch cubes' },
@@ -545,7 +545,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Soft Tofu', amount: 400, unit: 'g', notes: 'cut into 1-inch cubes' },
@@ -607,7 +607,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Spaghetti', amount: 400, unit: 'g', notes: 'high-quality durum wheat' },
@@ -658,7 +658,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Carnaroli Rice', amount: 320, unit: 'g', notes: 'or Vialone Nano' },
@@ -713,7 +713,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: '00 Flour', amount: 500, unit: 'g', notes: 'plus extra for dusting' },
@@ -768,7 +768,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Veal Shanks', amount: 4, unit: 'pieces', notes: 'about 3 inches thick' },
@@ -826,7 +826,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Cannellini Beans', amount: 400, unit: 'g', notes: 'dried, soaked overnight' },
@@ -884,7 +884,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: false,
     ingredients: [
       { name: 'Basil Leaves', amount: 100, unit: 'g', notes: 'young Genovese basil' },
@@ -941,7 +941,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Mascarpone', amount: 500, unit: 'g' },
@@ -996,7 +996,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Ground Beef', amount: 500, unit: 'g', notes: 'coarsely ground' },
@@ -1060,7 +1060,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Eggplants', amount: 1000, unit: 'g', notes: 'cut into 2.5cm cubes' },
@@ -1118,7 +1118,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Veal', amount: 1000, unit: 'g', notes: 'girello/eye round' },
@@ -1179,7 +1179,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: "Chicken or Pork", amount: 1, unit: "kg", notes: "cut into 1-inch cubes" },
@@ -1225,7 +1225,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: "Grape Leaves", amount: 50, unit: "pieces", notes: "preserved" },
@@ -1271,7 +1271,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: "Penne or Bucatini", amount: 500, unit: "grams" },
@@ -1320,7 +1320,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: "Chicken Stock", amount: 2, unit: "liters" },
@@ -1366,7 +1366,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Long Grain Rice', amount: 3, unit: 'cups', notes: 'rinsed until water runs clear' },
@@ -1426,7 +1426,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       // For Fufu
@@ -1490,7 +1490,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken', amount: 1.5, unit: 'kg', notes: 'whole chicken cut into pieces' },
@@ -1546,7 +1546,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Long Grain Rice', amount: 2, unit: 'cups', notes: 'rinsed' },
@@ -1602,7 +1602,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: false,
     ingredients: [
       { name: 'Beef Sirloin', amount: 1, unit: 'kg', notes: 'thinly sliced against the grain' },
@@ -1661,7 +1661,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Whole Fish', amount: 2, unit: 'kg', notes: 'grouper or sea bass, cleaned and cut into steaks' },
@@ -1726,7 +1726,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Cornmeal', amount: 2, unit: 'cups', notes: 'finely ground' },
@@ -1780,7 +1780,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Ground Beef', amount: 500, unit: 'grams', notes: 'lean' },
@@ -1837,7 +1837,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Samp', amount: 2, unit: 'cups', notes: 'finely ground' },
@@ -1891,7 +1891,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Dried Fish', amount: 100, unit: 'grams', notes: 'soaked and cleaned' },
@@ -1945,7 +1945,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Sweet Potatoes', amount: 2, unit: 'medium', notes: 'peeled and diced' },
@@ -2000,7 +2000,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Spinach', amount: 2, unit: 'cups', notes: 'washed and chopped' },
@@ -2052,7 +2052,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: false,
     ingredients: [
       { name: 'Beef Sirloin', amount: 1, unit: 'kg', notes: 'thinly sliced against the grain' },
@@ -2097,7 +2097,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Tomatoes', amount: 2, unit: 'medium', notes: 'peeled and diced' },
@@ -2144,7 +2144,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken', amount: 1, unit: 'kg', notes: 'boneless, skinless' },
@@ -2200,7 +2200,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Lamb', amount: 1, unit: 'kg', notes: 'cut into pieces' },
@@ -2252,7 +2252,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Herbs', amount: 1, unit: 'cup', notes: 'finely chopped' },
@@ -2294,7 +2294,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Eggplants', amount: 1000, unit: 'g', notes: 'cut into 2.5cm cubes' },
@@ -2352,7 +2352,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Potatoes', amount: 400, unit: 'g', notes: 'peeled and cubed' },
@@ -2400,7 +2400,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken', amount: 1.5, unit: 'kg', notes: 'whole chicken, cut into 8 pieces' },
@@ -2473,7 +2473,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken Breasts', amount: 4, unit: 'pieces', notes: 'boneless, skinless, about 6 oz each' },
@@ -2539,7 +2539,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: false,
     ingredients: [
       { name: 'Medjool Dates', amount: 12, unit: 'pieces', notes: 'pitted (about 1 cup packed)' },
@@ -2597,7 +2597,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Cauliflower', amount: 2, unit: 'heads', notes: 'cut into small, even-sized florets (about 8 cups)' },
@@ -2659,7 +2659,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: false,
     ingredients: [
       // Noodles & Proteins
@@ -2731,7 +2731,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       // First Marinade
@@ -2805,7 +2805,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       // Sushi Rice
@@ -2878,7 +2878,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       // Tofu & Vegetables
@@ -2949,7 +2949,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: "Bacon", amount: 4, unit: "slices", notes: "streaky or back bacon" },
@@ -3001,7 +3001,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: "White fish fillets", amount: 2, unit: "pieces", notes: "cod or haddock, skinless" },
@@ -3052,7 +3052,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: "Minced lamb", amount: 500, unit: "g" },
@@ -3106,7 +3106,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Semolina', amount: 2, unit: 'cups' },
@@ -3149,7 +3149,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chicken', amount: 1, unit: 'whole', notes: 'cut into pieces' },
@@ -3193,7 +3193,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: "Maftoul", amount: 2, unit: "cups", notes: "hand-rolled couscous" },
@@ -3237,7 +3237,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Beef fillet', amount: 500, unit: 'g', notes: 'center-cut' },
@@ -3287,7 +3287,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Sausages', amount: 8, unit: 'pieces', notes: 'pork or Cumberland' },
@@ -3332,7 +3332,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Plain flour', amount: 140, unit: 'g' },
@@ -3378,7 +3378,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Pork sausages', amount: 8, unit: 'pieces', notes: 'good quality' },
@@ -3428,7 +3428,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Ground beef', amount: 1, unit: 'kg', notes: 'lean' },
@@ -3480,7 +3480,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Beef roasting joint', amount: 2, unit: 'kg', notes: 'topside or sirloin' },
@@ -3533,7 +3533,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Beef chuck', amount: 700, unit: 'g', notes: 'cut into 2.5cm chunks' },
@@ -3585,7 +3585,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Potatoes', amount: 500, unit: 'g', notes: 'peeled and thinly sliced' },
@@ -3635,7 +3635,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Chickpeas', amount: 500, unit: 'g', notes: 'dried, soaked overnight' },
@@ -3696,7 +3696,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Fabes', amount: 500, unit: 'g', notes: 'dried large white beans, soaked overnight' },
@@ -3751,7 +3751,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Tomatoes', amount: 1, unit: 'kg', notes: 'ripe, cored and chopped' },
@@ -3808,7 +3808,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Octopus', amount: 2, unit: 'kg', notes: 'cleaned' },
@@ -3858,7 +3858,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       // For Churros
@@ -3918,7 +3918,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Tomatoes', amount: 6, unit: 'large', notes: 'ripe, diced' },
@@ -3972,7 +3972,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Fish Fillets', amount: 1, unit: 'kg', notes: 'firm white fish like tilapia or snapper, cut into 4 pieces' },
@@ -4028,7 +4028,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: true,
     isGlutenFree: true,
-    isDairyFree: true,
+    isLactoseFree: true,
     isNutFree: true,
     ingredients: [
       { name: 'Kidney Beans', amount: 2, unit: 'cans', notes: '15 oz cans, drained and rinsed' },
@@ -4077,7 +4077,7 @@ export const recipes: Recipe[] = [
     isVegetarian: true,
     isVegan: false,
     isGlutenFree: false,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Cardamom Pods', amount: 6, unit: 'pieces', notes: 'crushed' },
@@ -4126,7 +4126,7 @@ export const recipes: Recipe[] = [
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: true,
-    isDairyFree: false,
+    isLactoseFree: false,
     isNutFree: true,
     ingredients: [
       { name: 'Olive Oil', amount: 2, unit: 'tbsp' },
@@ -4179,7 +4179,7 @@ export const recipes: Recipe[] = [
     "isVegetarian": true,
     "isVegan": true,
     "isGlutenFree": true,
-    "isDairyFree": true,
+    "isLactoseFree": true,
     "isNutFree": true,
     "ingredients": [
       { "name": "Black-eyed Peas", "amount": 2, "unit": "cups", "notes": "dried" },
@@ -4231,7 +4231,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Yam Flour (Elubo)", "amount": 2, "unit": "cups", "notes": "for amala" },
@@ -4290,7 +4290,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Attiéké", "amount": 500, "unit": "g", "notes": "pre-made cassava couscous, available at African markets" },
@@ -4351,7 +4351,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Beef", "amount": 1, "unit": "kg", "notes": "cut into 1-inch cubes" },
@@ -4423,7 +4423,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Dried Hibiscus Flowers", "amount": 2, "unit": "cups", "notes": "also called sorrel or roselle" },
@@ -4479,7 +4479,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": false,
   "isGlutenFree": false,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": false,
   "ingredients": [
     { "name": "Frozen Açaí Berry Pulp", "amount": 200, "unit": "g", "notes": "2 packs, unsweetened" },
@@ -4536,7 +4536,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Chitol Fish", "amount": 1, "unit": "kg", "notes": "clown knife fish, cleaned and with skin removed" },
@@ -4607,7 +4607,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Chitol Fish", "amount": 1, "unit": "kg", "notes": "clown knife fish, cleaned and with skin removed" },
@@ -4678,7 +4678,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Garri (Cassava Flour)", "amount": 3, "unit": "cups", "notes": "white or yellow, finely processed" },
@@ -4745,7 +4745,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Ripe Plantains", "amount": 4, "unit": "large", "notes": "yellow with black spots, not too soft" },
@@ -4802,7 +4802,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Hilsa Fish", "amount": 800, "unit": "g", "notes": "cut into 2-inch steaks (with bone)" },
@@ -4861,7 +4861,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": true,
   "ingredients": [
     { "name": "Tomatoes", "amount": 4, "unit": "large", "notes": "ripe, cut into wedges or large chunks" },
@@ -4920,7 +4920,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": false,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": false,
   "ingredients": [
     { "name": "Short-grain Rice", "amount": 2, "unit": "cups", "notes": "uncooked" },
@@ -4986,7 +4986,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": false,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Pita Bread", "amount": 2, "unit": "large", "notes": "day-old or toasted until crisp" },
@@ -5047,7 +5047,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": true,
   "ingredients": [
     { "name": "Rice", "amount": 2, "unit": "cups", "notes": "white, uncooked, or 3 cups rice flour" },
@@ -5107,7 +5107,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": false,
   "ingredients": [
     { "name": "Beef Chuck", "amount": 1.5, "unit": "lbs", "notes": "cut into 1-inch cubes (can substitute with chicken or lamb)" },
@@ -5175,7 +5175,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": true,
   "ingredients": [
     { "name": "Corn Tortillas", "amount": 12, "unit": "medium", "notes": "cut into triangles or strips" },
@@ -5237,7 +5237,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Black-eyed Peas", "amount": 2, "unit": "cups", "notes": "dried, for moin moin" },
@@ -5301,7 +5301,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": false,
   "ingredients": [
     { "name": "Lamb Shoulder", "amount": 2, "unit": "lbs", "notes": "boneless, cut into 1.5-inch cubes" },
@@ -5373,7 +5373,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Ofada Rice", "amount": 3, "unit": "cups", "notes": "unpolished, brown local rice (or substitute with short-grain brown rice)" },
@@ -5437,7 +5437,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Rice", "amount": 2, "unit": "cups", "notes": "preferably local varieties like Govindabhog or Kalijira, but any short or medium grain works" },
@@ -5499,7 +5499,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Chicken", "amount": 3, "unit": "lbs", "notes": "whole cut into pieces, or chicken thighs" },
@@ -5562,7 +5562,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": false,
   "ingredients": [
     { "name": "Fish Steaks", "amount": 1.5, "unit": "lbs", "notes": "rohu, hilsa, or pomfret, cleaned and scored" },
@@ -5623,7 +5623,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Bomba Rice", "amount": 2, "unit": "cups", "notes": "or other short-grain Spanish rice" },
@@ -5696,7 +5696,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": false,
   "isGlutenFree": false,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": true,
   "ingredients": [
     { "name": "All-Purpose Flour", "amount": 500, "unit": "g", "notes": "plus extra for dusting" },
@@ -5760,7 +5760,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": true,
   "isVegan": true,
   "isGlutenFree": false,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": false,
   "ingredients": [
     { "name": "Dried Shiitake Mushrooms", "amount": 1, "unit": "oz", "notes": "about 10 mushrooms" },
@@ -5831,7 +5831,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": true,
+  "isLactoseFree": true,
   "isNutFree": true,
   "ingredients": [
     { "name": "Beef Bones", "amount": 5, "unit": "lbs", "notes": "preferably knuckle, marrow, and oxtail bones" },
@@ -5906,7 +5906,7 @@ export const recipes: Recipe[] = [
   "isVegetarian": false,
   "isVegan": false,
   "isGlutenFree": true,
-  "isDairyFree": false,
+  "isLactoseFree": false,
   "isNutFree": true,
   "ingredients": [
     { "name": "Beef Chuck", "amount": 1.5, "unit": "kg", "notes": "cut into 5cm cubes" },

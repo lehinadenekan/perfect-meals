@@ -3,16 +3,16 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-// Spoonacular sample image URLs
+// Sample image URLs for testing
 const SAMPLE_IMAGES = [
-  'https://spoonacular.com/recipeImages/716429-556x370.jpg',
-  'https://spoonacular.com/recipeImages/715538-556x370.jpg',
-  'https://spoonacular.com/recipeImages/715421-556x370.jpg',
-  'https://spoonacular.com/recipeImages/716276-556x370.jpg',
-  'https://spoonacular.com/recipeImages/667917-556x370.jpg'
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38',
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445',
+  'https://images.unsplash.com/photo-1565958011703-44f9829ba187',
+  'https://images.unsplash.com/photo-1482049016688-2d3e1b311543'
 ];
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Check authentication for the API call
     const session = await getServerSession(authOptions);
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     console.log(`Using user ${authorUser.name} (${authorUser.email}) for recipe creation`);
 
-    // Add test recipes with Spoonacular images
+    // Add test recipes with sample images
     const createdRecipes = [];
     
     for (let i = 0; i < SAMPLE_IMAGES.length; i++) {
@@ -73,9 +73,8 @@ export async function POST(request: Request) {
           isVegetarian: false,
           isVegan: false,
           isGlutenFree: false,
-          isDairyFree: false,
+          isLactoseFree: false,
           isNutFree: true,
-          totalReviews: 0,
           author: {
             connect: { id: authorUser.id }
           },
@@ -124,7 +123,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: `Created ${createdRecipes.length} test recipes with Spoonacular images`,
+      message: `Created ${createdRecipes.length} test recipes with sample images`,
       recipes: createdRecipes
     });
   } catch (error) {
