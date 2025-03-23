@@ -1,26 +1,36 @@
 import '@testing-library/jest-dom'
 import { server } from './mocks/server'
 import { TextEncoder, TextDecoder } from 'util'
+import { toHaveNoViolations } from 'jest-axe'
+import { PrismaClient } from '@prisma/client'
+import { mockDeep } from 'jest-mock-extended'
 
-// Add type declarations for the global object
-declare global {
-  var TextEncoder: typeof TextEncoder
-  var TextDecoder: typeof TextDecoder
+expect.extend(toHaveNoViolations)
+
+// Extend the NodeJS global type
+type CustomNodeJsGlobal = typeof globalThis & {
+  TextEncoder: typeof TextEncoder
+  TextDecoder: typeof TextDecoder
 }
 
 // Polyfill TextEncoder/TextDecoder if they don't exist
-if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = TextEncoder as typeof global.TextEncoder
+const customGlobal = global as CustomNodeJsGlobal
+if (typeof customGlobal.TextEncoder === 'undefined') {
+  customGlobal.TextEncoder = TextEncoder
 }
 
-if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = TextDecoder as typeof global.TextDecoder
+if (typeof customGlobal.TextDecoder === 'undefined') {
+  customGlobal.TextDecoder = TextDecoder
 }
 
 // Mock PrismaClient
+const mockPrisma = mockDeep<PrismaClient>()
 jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn()
+  PrismaClient: jest.fn(() => mockPrisma)
 }))
+
+// Export mockPrisma for use in tests
+export { mockPrisma }
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -46,6 +56,7 @@ beforeAll(() => {
 
 afterEach(() => {
   server.resetHandlers()
+  jest.clearAllMocks()
 })
 
 afterAll(() => {
