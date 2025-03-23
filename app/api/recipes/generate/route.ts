@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
 
 const prisma = new PrismaClient();
 
@@ -34,7 +33,7 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
       if (params.includeDietTypes.includes('pescatarian')) dietConditions.push({ type: 'PESCATARIAN' });
       
       if (dietConditions.length > 0) {
-        whereClause.OR = dietConditions;
+        whereClause.AND = dietConditions;
       }
     }
 
@@ -190,7 +189,7 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
 export async function POST(request: Request) {
   try {
     const reqBody = await request.json();
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const userEmail = session?.user?.email || undefined;
 
     console.log('Recipe generation request:', {

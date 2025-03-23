@@ -1,121 +1,47 @@
 import React from 'react';
+import { Recipe } from '@prisma/client';
 import Image from 'next/image';
-import { Recipe } from '@/types/recipe';
-import { 
-  ClockIcon, 
-  UserIcon, 
-  FireIcon, 
-  GlobeAsiaAustraliaIcon,
-  StarIcon
-} from '@heroicons/react/24/outline';
-import FavoriteButton from '@/app/components/shared/FavoriteButton';
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
-const RecipeCard: React.FC<RecipeCardProps> = ({ recipe }) => {
+export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
-    <div className="flex flex-col bg-white rounded-xl shadow-lg overflow-hidden w-[300px] h-[435px] transition-transform hover:scale-105 relative">
-      {/* Image Container - Fixed Exact Height */}
-      <div className="relative w-full h-[130px] overflow-hidden flex-shrink-0 bg-gray-100">
-        <Image
-          src={recipe.imageUrl?.startsWith('/') ? recipe.imageUrl : (recipe.imageUrl || '/placeholder-recipe.jpg')}
-          alt={recipe.title}
-          fill
-          className="object-cover object-center w-full h-full"
-          sizes="300px"
-          priority
-          unoptimized={recipe.imageUrl?.startsWith('/') ?? false}
-        />
-        {/* All Labels Container */}
-        <div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[90%]">
-          {/* Dietary Labels */}
-          <div className="flex flex-wrap gap-1">
-            {recipe.isVegetarian && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                Vegetarian
-              </span>
-            )}
-            {recipe.isVegan && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                Vegan
-              </span>
-            )}
-            {recipe.isGlutenFree && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                Gluten Free
-              </span>
-            )}
-            {recipe.isLactoseFree && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                Lactose Free
-              </span>
-            )}
-            {recipe.isNutFree && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                Nut Free
-              </span>
-            )}
-          </div>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden" role="article">
+      {recipe.imageUrl && (
+        <div className="relative h-48">
+          <Image
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            fill
+            className="object-cover"
+          />
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-col flex-grow p-4">
+      )}
+      <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
           {recipe.title}
         </h3>
-        <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+        <p className="text-gray-600 text-sm mb-2 line-clamp-2">
           {recipe.description}
         </p>
-
-        {/* Recipe Metrics */}
-        <div className="mt-auto flex flex-col gap-2">
-          {typeof recipe.cookingTime === 'number' && recipe.cookingTime > 0 && (
-            <div className="flex items-center text-sm text-gray-600">
-              <ClockIcon className="h-4 w-4 mr-2" />
-              {recipe.cookingTime} mins
-            </div>
+        <div className="flex flex-wrap gap-2">
+          {recipe.isVegetarian && (
+            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              Vegetarian
+            </span>
           )}
-          {typeof recipe.servings === 'number' && recipe.servings > 0 && (
-            <div className="flex items-center text-sm text-gray-600">
-              <UserIcon className="h-4 w-4 mr-2" />
-              {recipe.servings} servings
-            </div>
+          {recipe.isVegan && (
+            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              Vegan
+            </span>
           )}
-          {typeof recipe.calories === 'number' && recipe.calories > 0 && (
-            <div className="flex items-center text-sm text-gray-600">
-              <FireIcon className="h-4 w-4 mr-2" />
-              {recipe.calories} calories
-            </div>
-          )}
-          {recipe.regionOfOrigin && (
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <div className="flex items-center">
-                <GlobeAsiaAustraliaIcon className="h-4 w-4 mr-2" />
-                {recipe.regionOfOrigin}
-              </div>
-              <div className="ml-auto">
-                <FavoriteButton recipeId={recipe.id} />
-              </div>
-            </div>
-          )}
-          {!recipe.regionOfOrigin && (
-            <div className="flex items-center justify-end text-sm text-gray-600">
-              <FavoriteButton recipeId={recipe.id} />
-            </div>
-          )}
-          {typeof recipe.averageRating === 'number' && recipe.averageRating > 0 && (
-            <div className="flex items-center text-sm text-gray-600">
-              <StarIcon className="h-4 w-4 mr-2" />
-              {recipe.averageRating.toFixed(1)}
-            </div>
-          )}
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+            {recipe.cuisineType}
+          </span>
         </div>
       </div>
     </div>
   );
-};
-
-export default RecipeCard;
+}

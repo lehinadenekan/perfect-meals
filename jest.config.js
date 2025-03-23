@@ -1,14 +1,31 @@
-module.exports = {
+/** @type {import('jest').Config} */
+const config = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/src/test/utils/'
+  ],
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx|mjs)$': ['babel-jest', { 
+      presets: [
+        ['@babel/preset-env', { targets: { node: 'current' } }],
+        '@babel/preset-typescript',
+        ['@babel/preset-react', { runtime: 'automatic' }]
+      ]
+    }]
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(next-auth|@next-auth|preact-render-to-string|jose|openid-client|@panva|uuid)/)',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^@test-utils$': '<rootDir>/src/test/utils/test-utils',
+    '^@prisma/client$': '<rootDir>/src/test/utils/prisma-mock.ts',
+    '^@/lib/prisma$': '<rootDir>/src/test/utils/prisma-mock.ts'
   },
-  transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
-  },
+  moduleDirectories: ['node_modules', '<rootDir>'],
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     '!app/**/*.d.ts',
@@ -24,4 +41,17 @@ module.exports = {
       statements: 80,
     },
   },
-}; 
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true
+    }
+  }
+};
+
+module.exports = config; 
