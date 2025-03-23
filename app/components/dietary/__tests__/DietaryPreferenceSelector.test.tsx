@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useSession } from 'next-auth/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+import '@testing-library/jest-dom';
 import DietaryPreferenceSelector from '../DietaryPreferenceSelector';
 import { server } from '../../../../mocks/server';
 
@@ -40,18 +40,20 @@ describe('DietaryPreferenceSelector Component', () => {
     beforeEach(() => {
       mockUseSession.mockReturnValue({
         data: null,
-        status: 'unauthenticated',
+        status: 'unauthenticated'
       });
+      mockLocalStorage.getItem.mockReturnValue(null);
     });
 
-    it('renders correctly for unauthenticated users', () => {
+    it('renders correctly for unauthenticated users', async () => {
       render(<DietaryPreferenceSelector />);
       
       expect(screen.getByText('Choose Your Dietary Preferences')).toBeInTheDocument();
-      expect(screen.getByText('Log in to save your preferences')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Gluten-Free' })).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'Vegan' })).toHaveAttribute('aria-pressed', 'false');
     });
 
-    it('loads preferences from local storage', () => {
+    it('loads preferences from local storage', async () => {
       const storedPreferences = {
         selectedDiets: ['vegan', 'gluten-free'],
         excludedFoods: ['peanuts'],
@@ -72,21 +74,28 @@ describe('DietaryPreferenceSelector Component', () => {
 
       render(<DietaryPreferenceSelector />);
       
-      expect(screen.getByText('Selected Diets: Vegan, Gluten-Free')).toBeInTheDocument();
-      expect(screen.getByText('Excluded Foods: Peanuts')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Selected Diets: Vegan, Gluten-free')).toBeInTheDocument();
+        expect(screen.getByText('Excluded Foods: Peanuts')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Vegan' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('button', { name: 'Gluten-Free' })).toHaveAttribute('aria-pressed', 'true');
+      });
     });
 
     it('saves preferences to local storage when updated', async () => {
+      mockLocalStorage.getItem.mockReturnValue(null);
+
       render(<DietaryPreferenceSelector />);
       
-      const veganCard = screen.getByRole('button', { name: /vegan/i });
-      fireEvent.click(veganCard);
+      const veganButton = screen.getByRole('button', { name: /vegan/i });
+      fireEvent.click(veganButton);
 
       await waitFor(() => {
         expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
           'dietary-preferences-selected-diets',
           JSON.stringify(['vegan'])
         );
+        expect(veganButton).toHaveAttribute('aria-pressed', 'true');
       });
     });
   });
@@ -94,8 +103,13 @@ describe('DietaryPreferenceSelector Component', () => {
   describe('Authenticated User', () => {
     beforeEach(() => {
       mockUseSession.mockReturnValue({
-        data: { user: { email: 'test@example.com' } },
-        status: 'authenticated',
+        data: {
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com'
+          }
+        },
+        status: 'authenticated'
       });
     });
 
@@ -103,15 +117,18 @@ describe('DietaryPreferenceSelector Component', () => {
       render(<DietaryPreferenceSelector />);
       
       await waitFor(() => {
-        expect(screen.getByText('Selected Diets: Vegan, Gluten-Free')).toBeInTheDocument();
+        expect(screen.getByText('Selected Diets: Vegan, Gluten-free')).toBeInTheDocument();
+        expect(screen.getByText('Excluded Foods: Peanuts')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Vegan' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('button', { name: 'Gluten-Free' })).toHaveAttribute('aria-pressed', 'true');
       });
     });
 
     it('saves preferences to API when updated', async () => {
       render(<DietaryPreferenceSelector />);
       
-      const veganCard = screen.getByRole('button', { name: /vegan/i });
-      fireEvent.click(veganCard);
+      const veganButton = screen.getByRole('button', { name: /vegan/i });
+      fireEvent.click(veganButton);
 
       await waitFor(() => {
         expect(screen.getByText('Saving preferences...')).toBeInTheDocument();
@@ -125,23 +142,38 @@ describe('DietaryPreferenceSelector Component', () => {
       fireEvent.click(clearButton);
 
       await waitFor(() => {
-        expect(screen.queryByText(/Selected Diets:/)).not.toBeInTheDocument();
+        expect(screen.queryByText('Selected Diets: Vegan, Gluten-free')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Vegan' })).toHaveAttribute('aria-pressed', 'false');
+        expect(screen.getByRole('button', { name: 'Gluten-Free' })).toHaveAttribute('aria-pressed', 'false');
       });
+    });
+
+    it('generates recipes when button is clicked', async () => {
+      render(<DietaryPreferenceSelector />);
+
+      // Wait for preferences to load
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Vegan' })).toHaveAttribute('aria-pressed', 'true');
+      });
+
+      // Click the generate button
+      const generateButton = screen.getByRole('button', { name: /Generate Meals/i });
+      fireEvent.click(generateButton);
+
+      // Check loading state
+      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+      // Wait for recipe to appear
+      await waitFor(() => {
+        const recipeCard = screen.getByRole('article');
+        expect(recipeCard).toBeInTheDocument();
+        expect(recipeCard).toHaveTextContent('Vegan Pasta');
+        expect(recipeCard).toHaveTextContent('A delicious vegan pasta dish');
+      }, { timeout: 3000 });
     });
   });
 
   describe('Recipe Generation', () => {
-    it('generates recipes when button is clicked', async () => {
-      render(<DietaryPreferenceSelector />);
-      
-      const generateButton = screen.getByRole('button', { name: /generate meals/i });
-      fireEvent.click(generateButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('Vegan Pasta')).toBeInTheDocument();
-      });
-    });
-
     it('shows loading state during recipe generation', async () => {
       render(<DietaryPreferenceSelector />);
       
@@ -172,7 +204,6 @@ describe('DietaryPreferenceSelector Component', () => {
   describe('Accessibility', () => {
     it('has no accessibility violations', async () => {
       const { container } = render(<DietaryPreferenceSelector />);
-      
       const results = await axe(container);
       expect(results).toHaveNoViolations();
     });
