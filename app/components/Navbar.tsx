@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import AuthModal from './AuthModal';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const Navbar = () => {
   const { data: session, status } = useSession();
@@ -28,8 +29,16 @@ const Navbar = () => {
     <>
       <nav className="w-full bg-[#ffc800] p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="text-black text-xl font-bold lowercase">
-            perfect meals
+          <div className="flex items-center gap-6">
+            <Link href="/" className="text-black text-xl font-bold lowercase">
+              perfect meals
+            </Link>
+            <Link 
+              href="/recipes" 
+              className="text-black hover:text-gray-800 transition-colors"
+            >
+              Search Recipes
+            </Link>
           </div>
           <div className="flex gap-4 items-center">
             {status === 'loading' ? (
