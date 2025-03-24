@@ -10,7 +10,10 @@ expect.extend(toHaveNoViolations)
 // Extend the NodeJS global type
 type CustomNodeJsGlobal = typeof globalThis & {
   TextEncoder: typeof TextEncoder
-  TextDecoder: typeof TextDecoder
+  TextDecoder: {
+    new(label?: string, options?: TextDecoderOptions): TextDecoder
+    prototype: TextDecoder
+  }
 }
 
 // Polyfill TextEncoder/TextDecoder if they don't exist
@@ -20,17 +23,16 @@ if (typeof customGlobal.TextEncoder === 'undefined') {
 }
 
 if (typeof customGlobal.TextDecoder === 'undefined') {
-  customGlobal.TextDecoder = TextDecoder
+  customGlobal.TextDecoder = TextDecoder as unknown as CustomNodeJsGlobal['TextDecoder']
 }
 
 // Mock PrismaClient
-const mockPrisma = mockDeep<PrismaClient>()
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => mockPrisma)
-}))
-
-// Export mockPrisma for use in tests
-export { mockPrisma }
+export const mockPrisma = mockDeep<PrismaClient>()
+jest.mock('@prisma/client', () => {
+  return {
+    PrismaClient: jest.fn().mockImplementation(() => mockPrisma)
+  }
+})
 
 // Mock Next.js router
 jest.mock('next/router', () => ({

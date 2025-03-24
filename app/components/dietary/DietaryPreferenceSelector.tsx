@@ -3,14 +3,14 @@ import { useSession } from 'next-auth/react';
 import { DietType, DIET_TYPES } from '@/types/diet';
 import GeographicFilter from './GeographicFilter';
 import MealCarousel from '../recipe/MealCarousel';
-import { Recipe } from '@/types/recipe';
+import { Recipe } from '@/app/types/recipe';
 import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
 import { ExcludedFoodsInput } from './ExcludedFoodsInput';
 import { SearchInput } from './SearchInput';
 
 // Define the order of diet types for top and bottom rows
-const TOP_ROW_DIETS: DietType[] = ['gluten-free', 'lactose-free', 'low-FODMAP', 'nut-free'];
-const BOTTOM_ROW_DIETS: DietType[] = ['pescatarian', 'pork-free', 'vegan', 'vegetarian'];
+const TOP_ROW_DIETS: DietType[] = ['fermented', 'gluten-free', 'lactose-free', 'low-FODMAP'];
+const BOTTOM_ROW_DIETS: DietType[] = ['nut-free', 'pescatarian', 'vegan', 'vegetarian'];
 
 const DietaryPreferenceSelector: React.FC = () => {
   const { data: session, status } = useSession();

@@ -1,112 +1,99 @@
 import React from 'react';
 import { Recipe } from '@/app/types/recipe';
 import Image from 'next/image';
-import { GlobeAltIcon } from '@heroicons/react/24/outline';
+import { GlobeAltIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { analyzeDietary } from '@/app/utils/dietary-classification';
+import DietaryInfo from './DietaryInfo';
+import { DietaryFeedback } from './DietaryFeedback';
 
 interface RecipeCardProps {
   recipe: Recipe;
+  isLoggedIn?: boolean;
 }
 
-export default function RecipeCard({ recipe }: RecipeCardProps) {
-  return (
-    <div 
-      className="w-[300px] min-w-[300px] max-w-[300px] h-[700px] min-h-[700px] max-h-[700px] bg-white rounded-lg shadow-md overflow-hidden relative" 
-      role="article"
-      style={{ width: '300px', height: '700px' }}
-    >
-      {recipe.imageUrl && (
-        <div className="w-[300px] min-w-[300px] max-w-[300px] h-[250px] min-h-[250px] max-h-[250px] relative overflow-hidden">
-          <Image
-            src={recipe.imageUrl}
-            alt={recipe.title}
-            width={300}
-            height={250}
-            className="object-cover"
-            style={{ width: '300px', height: '250px' }}
-            priority
-          />
-        </div>
-      )}
-      <div className="p-6 h-[450px] min-h-[450px] max-h-[450px] flex flex-col">
-        <h3 className="text-2xl font-semibold text-gray-900 mb-3 line-clamp-2">
-          {recipe.title}
-        </h3>
-        
-        <p className="text-base text-gray-600 mb-4 line-clamp-4">
-          {recipe.description}
-        </p>
-        
-        {/* Dietary preferences */}
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2">
-            {recipe.isVegetarian && (
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full whitespace-nowrap">
-                Vegetarian
-              </span>
-            )}
-            {recipe.isVegan && (
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full whitespace-nowrap">
-                Vegan
-              </span>
-            )}
-            {recipe.isGlutenFree && (
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full whitespace-nowrap">
-                Gluten-Free
-              </span>
-            )}
-            {recipe.isLactoseFree && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full whitespace-nowrap">
-                Lactose-Free
-              </span>
-            )}
-            {recipe.isNutFree && (
-              <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full whitespace-nowrap">
-                Nut-Free
-              </span>
-            )}
-            {recipe.isLowFodmap && (
-              <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full whitespace-nowrap">
-                Low FODMAP
-              </span>
-            )}
-            {recipe.isPescatarian && (
-              <span className="px-2 py-1 bg-cyan-100 text-cyan-800 text-xs rounded-full whitespace-nowrap">
-                Pescatarian
-              </span>
-            )}
-            {recipe.isFermented && (
-              <span className="px-2 py-1 bg-rose-100 text-rose-800 text-xs rounded-full whitespace-nowrap">
-                Fermented
-              </span>
-            )}
-          </div>
-        </div>
-        
-        {/* Footer with nutritional info and region */}
-        <div className="mt-auto">
-          {/* Nutritional information - vertical layout */}
-          <div className="flex flex-col gap-2 mb-3">
-            <div className="flex items-center whitespace-nowrap">
-              <div className="w-3 h-3 rounded-full bg-blue-700 flex-shrink-0 mr-2"></div>
-              <span className="text-xs text-gray-700 whitespace-nowrap">Carbs: ~{Math.round((recipe.calories || 0) * 0.5)}g</span>
-            </div>
-            <div className="flex items-center whitespace-nowrap">
-              <div className="w-3 h-3 rounded-full bg-green-700 flex-shrink-0 mr-2"></div>
-              <span className="text-xs text-gray-700 whitespace-nowrap">Protein: ~{Math.round((recipe.calories || 0) * 0.25)}g</span>
-            </div>
-            <div className="flex items-center whitespace-nowrap">
-              <div className="w-3 h-3 rounded-full bg-yellow-700 flex-shrink-0 mr-2"></div>
-              <span className="text-xs text-gray-700 whitespace-nowrap">Fat: ~{Math.round((recipe.calories || 0) * 0.25)}g</span>
-            </div>
-          </div>
+export default function RecipeCard({ recipe, isLoggedIn = false }: RecipeCardProps) {
+  const dietaryAnalysis = analyzeDietary(recipe);
 
-          {/* Region of origin with globe icon - positioned below nutritional info */}
-          {recipe.regionOfOrigin && (
-            <div className="flex items-center">
-              <GlobeAltIcon className="w-4 h-4 mr-1 text-blue-500 flex-shrink-0" />
-              <span className="text-xs text-gray-700 whitespace-nowrap">{recipe.regionOfOrigin}</span>
+  // Calculate approximate macros based on calories if available
+  const calories = recipe.calories || 0;
+  const approximateCarbs = Math.round(calories * 0.5 / 4); // 50% of calories from carbs, 4 calories per gram
+  const approximateProtein = Math.round(calories * 0.25 / 4); // 25% of calories from protein, 4 calories per gram
+  const approximateFat = Math.round(calories * 0.25 / 9); // 25% of calories from fat, 9 calories per gram
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden w-[240px] h-[555px] transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px]">
+      {/* Image container with gradient overlay */}
+      <div className="relative h-[140px] w-full">
+        <Image
+          src={recipe.imageUrl || '/images/default-recipe.jpg'}
+          alt={recipe.title}
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex flex-col h-[415px]">
+        {/* Title section - fixed height for up to 6 lines */}
+        <div className="h-[144px] mb-4 flex flex-col justify-between">
+          <h3 className="font-semibold text-lg break-words">
+            {recipe.title}
+          </h3>
+          {/* Description - now part of the title container for consistent positioning */}
+          <p className="text-sm text-gray-600 line-clamp-2 break-words mt-auto" title={recipe.description}>
+            {recipe.description}
+          </p>
+        </div>
+
+        {/* Dietary Information - fixed height */}
+        <div className="h-[80px] mb-4">
+          <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
+        </div>
+
+        {/* Nutritional Information - fixed height */}
+        <div className="h-[72px] mb-4">
+          <div className="flex flex-col space-y-2 text-sm text-gray-600">
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              <span>Carbs: {approximateCarbs}g</span>
             </div>
-          )}
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span>Protein: {approximateProtein}g</span>
+            </div>
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+              <span>Fat: {approximateFat}g</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Region of origin - aligned with the bullet points */}
+        <div className="mb-4">
+          <div className="flex items-center space-x-2 whitespace-nowrap">
+            <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+            <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'Global'}</span>
+          </div>
+        </div>
+
+        {/* Bottom row with flag and heart icons - aligned with bullet points */}
+        <div className="flex items-center justify-between w-full h-[24px]">
+          <div className="flex items-center whitespace-nowrap">
+            <DietaryFeedback 
+              recipeId={recipe.id} 
+              dietaryAnalysis={dietaryAnalysis}
+            />
+          </div>
+          <button 
+            className="text-gray-500 hover:text-red-500 transition-colors duration-200 mr-1 group relative"
+            aria-label="Save your favourite recipes"
+          >
+            <HeartIcon className="w-5 h-5" />
+            <span className="invisible group-hover:visible absolute -top-8 right-0 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1">
+              Save your favourite recipes
+            </span>
+          </button>
         </div>
       </div>
     </div>

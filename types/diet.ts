@@ -1,6 +1,10 @@
-export type DietType = 'gluten-free' | 'lactose-free' | 'low-FODMAP' | 'nut-free' | 'pescatarian' | 'pork-free' | 'vegan' | 'vegetarian';
+export type DietType = 'fermented' | 'gluten-free' | 'lactose-free' | 'low-FODMAP' | 'nut-free' | 'pescatarian' | 'vegan' | 'vegetarian';
 
 export const DIET_TYPES: Record<DietType, { title: string; description: string }> = {
+  'fermented': {
+    title: 'Fermented',
+    description: 'Includes foods produced or preserved through fermentation',
+  },
   'gluten-free': {
     title: 'Gluten-Free',
     description: 'No wheat, barley, rye, or their derivatives',
@@ -20,10 +24,6 @@ export const DIET_TYPES: Record<DietType, { title: string; description: string }
   'pescatarian': {
     title: 'Pescatarian',
     description: 'No meat or poultry, but includes fish and seafood',
-  },
-  'pork-free': {
-    title: 'Pork-Free',
-    description: 'No pork or pork-derived ingredients',
   },
   'vegan': {
     title: 'Vegan',

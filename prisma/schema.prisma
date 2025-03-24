@@ -52,52 +52,29 @@ model User {
 }
 
 model Recipe {
-  id             String               @id @default(cuid())
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  title          String
-  description    String?
-  cookingTime    Int
-  servings       Int
-  difficulty     String
-  cuisineType    String
-  regionOfOrigin String?
-  imageUrl       String?
-  videoUrl       String?
-  calories       Int?
-  authorId       String
-  isVegetarian   Boolean              @default(false)
-  isVegan        Boolean              @default(false)
-  isGlutenFree   Boolean              @default(false)
-  isLactoseFree    Boolean              @default(false)
-  isNutFree      Boolean              @default(false)
-  averageRating  Float?
-  type           String               @default("DINNER")
-  cuisineId      String
-  authenticity   String               @default("TRADITIONAL")
-  cookingMethods String[]
-  spiceLevel     String               @default("MEDIUM")
-  subCuisineType String?
-  jobId          String?
-  showCount      Int                  @default(0)
-  ingredients    Ingredient[]
-  instructions   Instruction[]
-  nutritionFacts NutritionFacts?
-  author         User                 @relation("AuthoredRecipes", fields: [authorId], references: [id])
-  cuisine        Cuisine              @relation("CuisineRecipes", fields: [cuisineId], references: [id])
-  generationJob  RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
-  reviews        Review[]
-  categories     Category[]           @relation("CategoryToRecipe")
-  fusionCuisines Cuisine[]            @relation("RecipeFusionCuisines")
-  tags           Tag[]                @relation("RecipeToTag")
-  savedByUsers   User[]               @relation("SavedRecipes")
-  shownToUsers   UserRecipeHistory[]
-
-  @@index([cuisineId])
-  @@index([cuisineType])
-  @@index([authorId])
-  @@index([type])
-  @@index([showCount])
+  id                String   @id @default(cuid())
+  title             String
+  description       String?
+  ingredients       Ingredient[]
+  instructions      Instruction[]
+  author           User     @relation(fields: [authorId], references: [id])
+  authorId         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cookingTime      Int?
+  servings         Int?
+  difficulty       String?
+  cuisineType      String?
+  isVegetarian     Boolean? @default(false)
+  isVegan          Boolean? @default(false)
+  isGlutenFree     Boolean? @default(false)
+  isNutFree        Boolean? @default(false)
+  isLowFodmap      Boolean? @default(false)
+  isPescatarian    Boolean? @default(false)
+  isFermented      Boolean? @default(false)
+  isLactoseFree    Boolean? @default(false)
+  needsDietaryReview Boolean @default(false)
+  dietaryFeedback  DietaryFeedback[]
 }
 
 model Ingredient {
@@ -251,6 +228,21 @@ model UserRecipeHistory {
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
 
   @@index([userEmail, shownAt])
+  @@index([recipeId])
+}
+
+model DietaryFeedback {
+  id                   String   @id @default(cuid())
+  recipe               Recipe   @relation(fields: [recipeId], references: [id])
+  recipeId             String
+  lowFodmapIncorrect   Boolean
+  fermentedIncorrect   Boolean
+  pescatarianIncorrect Boolean
+  comment              String?
+  currentAnalysis      Json
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
   @@index([recipeId])
 }
 
