@@ -14,6 +14,11 @@ export interface Instruction {
   recipeId: string;
 }
 
+export interface Author {
+  name: string;
+  image?: string;
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -27,6 +32,7 @@ export interface Recipe {
   videoUrl?: string;
   calories?: number;
   authorId: string;
+  author?: Author;
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;
