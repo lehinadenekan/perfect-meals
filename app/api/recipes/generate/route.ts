@@ -28,7 +28,14 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
       if (params.includeDietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
       if (params.includeDietTypes.includes('lactose-free')) dietConditions.push({ isLactoseFree: true });
       if (params.includeDietTypes.includes('nut-free')) dietConditions.push({ isNutFree: true });
-      if (params.includeDietTypes.includes('fermented')) dietConditions.push({ OR: [{ type: 'FERMENTED' }] });
+      if (params.includeDietTypes.includes('fermented')) {
+        dietConditions.push({
+          OR: [
+            { isFermented: true },
+            { ingredients: { some: { isFermented: true } } }
+          ]
+        });
+      }
       if (params.includeDietTypes.includes('low-FODMAP')) dietConditions.push({ type: 'LOW_FODMAP' });
       if (params.includeDietTypes.includes('pescatarian')) dietConditions.push({ type: 'PESCATARIAN' });
       

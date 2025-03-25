@@ -2,10 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useDebounce } from './useDebounce';
 
 interface PreferenceData {
-  dietTypes: string[];
-  excludedFoods: string[];
-  selectedRegions: string[];
-  searchInput: string;
+  cookingTime?: string;
+  servingSize?: number;
+  mealPrep?: boolean;
+  dietTypes?: string[];
+  excludedFoods?: string[];
+  selectedRegions?: string[];
+  searchInput?: string;
 }
 
 interface UsePreferenceUpdatesResult {
@@ -49,20 +52,31 @@ export function usePreferenceUpdates(
       setError(null);
 
       try {
-        const response = await fetch('/api/user/preferences', {
-          method: 'POST',
+        const response = await fetch('/api/preferences', {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(debouncedPreferences),
+          body: JSON.stringify({
+            cookingTime: debouncedPreferences.cookingTime || 'MEDIUM',
+            servingSize: debouncedPreferences.servingSize || 2,
+            mealPrep: debouncedPreferences.mealPrep || false,
+            dietTypes: debouncedPreferences.dietTypes || [],
+            excludedFoods: debouncedPreferences.excludedFoods || [],
+            selectedRegions: debouncedPreferences.selectedRegions || [],
+            searchInput: debouncedPreferences.searchInput || ''
+          }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to save preferences');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save preferences');
         }
 
-        // Update initial preferences after successful save
-        initialPreferences = { ...debouncedPreferences };
+        const data = await response.json();
+        if (!data) {
+          throw new Error('No data received from server');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save preferences');
         console.error('Error saving preferences:', err);
@@ -72,7 +86,7 @@ export function usePreferenceUpdates(
     };
 
     savePreferences();
-  }, [debouncedPreferences]);
+  }, [debouncedPreferences, initialPreferences]);
 
   return {
     updatePreferences,

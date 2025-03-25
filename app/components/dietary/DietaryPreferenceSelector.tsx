@@ -7,6 +7,7 @@ import { Recipe } from '@/app/types/recipe';
 import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
 import { ExcludedFoodsInput } from './ExcludedFoodsInput';
 import { SearchInput } from './SearchInput';
+import { DIET_ICONS } from '@/app/config/dietaryIcons';
 
 // Define the order of diet types for top and bottom rows
 const TOP_ROW_DIETS: DietType[] = ['fermented', 'gluten-free', 'lactose-free', 'low-FODMAP'];
@@ -31,16 +32,28 @@ const DietaryPreferenceSelector: React.FC = () => {
   useEffect(() => {
     if (session?.user) {
       // Load user preferences from the server
-      fetch('http://localhost:3000/api/preferences')
-        .then(response => response.json())
+      fetch('/api/preferences')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          setSelectedDiets(data.dietTypes || []);
-          setExcludedFoods(data.excludedFoods || []);
-          setSelectedRegions(data.selectedRegions || []);
-          setSearchInput(data.searchInput || '');
+          if (data && typeof data === 'object') {
+            setSelectedDiets(Array.isArray(data.dietTypes) ? data.dietTypes : []);
+            setExcludedFoods(Array.isArray(data.excludedFoods) ? data.excludedFoods : []);
+            setSelectedRegions(Array.isArray(data.selectedRegions) ? data.selectedRegions : []);
+            setSearchInput(typeof data.searchInput === 'string' ? data.searchInput : '');
+          }
         })
         .catch(error => {
           console.error('Error loading preferences:', error);
+          // Reset to defaults on error
+          setSelectedDiets([]);
+          setExcludedFoods([]);
+          setSelectedRegions([]);
+          setSearchInput('');
         });
     } else {
       // Load from localStorage for unauthenticated users
@@ -105,7 +118,7 @@ const DietaryPreferenceSelector: React.FC = () => {
   const handleGenerateRecipes = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/recipes/generate', {
+      const response = await fetch('/api/recipes/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,8 +216,12 @@ const DietaryPreferenceSelector: React.FC = () => {
                 selectedDiets.includes(dietType) ? 'border-yellow-400' : 'border-transparent hover:border-yellow-200'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex-1 text-center">
+              <div className="flex flex-col items-center justify-center gap-3">
+                {React.createElement(DIET_ICONS[dietType], {
+                  className: `w-6 h-6 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'}`,
+                  'aria-hidden': true
+                })}
+                <h3 className="text-lg font-semibold text-center">
                   {DIET_TYPES[dietType].title}
                 </h3>
               </div>
@@ -228,8 +245,12 @@ const DietaryPreferenceSelector: React.FC = () => {
                 selectedDiets.includes(dietType) ? 'border-yellow-400' : 'border-transparent hover:border-yellow-200'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex-1 text-center">
+              <div className="flex flex-col items-center justify-center gap-3">
+                {React.createElement(DIET_ICONS[dietType], {
+                  className: `w-6 h-6 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'}`,
+                  'aria-hidden': true
+                })}
+                <h3 className="text-lg font-semibold text-center">
                   {DIET_TYPES[dietType].title}
                 </h3>
               </div>

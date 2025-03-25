@@ -57,7 +57,7 @@ model Recipe {
   description       String?
   ingredients       Ingredient[]
   instructions      Instruction[]
-  author           User     @relation(fields: [authorId], references: [id])
+  author           User     @relation("AuthoredRecipes", fields: [authorId], references: [id])
   authorId         String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -75,16 +75,30 @@ model Recipe {
   isLactoseFree    Boolean? @default(false)
   needsDietaryReview Boolean @default(false)
   dietaryFeedback  DietaryFeedback[]
+  nutritionFacts   NutritionFacts?
+  categories       Category[]    @relation("CategoryToRecipe")
+  tags             Tag[]         @relation("RecipeToTag")
+  reviews          Review[]
+  savedBy          User[]        @relation("SavedRecipes")
+  cuisines         Cuisine[]     @relation("CuisineRecipes")
+  fusionCuisines   Cuisine[]     @relation("RecipeFusionCuisines")
+  generationJob    RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
+  jobId            String?
+  recipeHistory    UserRecipeHistory[]
+
+  @@index([authorId])
+  @@index([jobId])
 }
 
 model Ingredient {
-  id       String  @id @default(cuid())
-  name     String
-  amount   Float
-  unit     String
-  notes    String?
-  recipeId String
-  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  id           String  @id @default(cuid())
+  name         String
+  amount       Float
+  unit         String
+  notes        String?
+  isFermented  Boolean @default(false)
+  recipeId     String
+  recipe       Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@index([recipeId])
 }
