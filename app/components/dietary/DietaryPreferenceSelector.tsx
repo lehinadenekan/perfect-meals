@@ -117,6 +117,7 @@ const DietaryPreferenceSelector: React.FC = () => {
 
   const handleGenerateRecipes = async () => {
     setIsLoading(true);
+    setRecipes([]);
     try {
       const response = await fetch('/api/recipes/generate', {
         method: 'POST',
@@ -130,10 +131,22 @@ const DietaryPreferenceSelector: React.FC = () => {
           searchInput,
         }),
       });
+
       const data = await response.json();
-      setRecipes(data.recipes || []);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate recipes');
+      }
+
+      if (!data.success || !Array.isArray(data.recipes)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      setRecipes(data.recipes);
     } catch (error) {
       console.error('Error generating recipes:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate recipes';
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -291,7 +304,7 @@ const DietaryPreferenceSelector: React.FC = () => {
           className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
           disabled={isLoading}
         >
-          {isLoading ? 'Loading...' : 'Generate Meals'}
+          {isLoading ? 'Loading...' : recipes.length > 0 ? 'Generate New Recipes' : 'Generate Recipes'}
         </button>
       </div>
 
@@ -308,9 +321,14 @@ const DietaryPreferenceSelector: React.FC = () => {
       )}
 
       {recipes.length > 0 && (
-        <div className="mt-16">
-          <MealCarousel recipes={recipes} />
-        </div>
+        <>
+          <p className="text-center mt-4 text-gray-600">
+            Click "Generate New Recipes" anytime to see different recipes!
+          </p>
+          <div className="mt-8">
+            <MealCarousel recipes={recipes} />
+          </div>
+        </>
       )}
     </div>
   );
