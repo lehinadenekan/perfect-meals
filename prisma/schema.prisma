@@ -45,60 +45,62 @@ model User {
   allergies          UserAllergy[]
   cuisinePreferences UserCuisinePreference[]
   preferences        UserPreference?
-  savedRecipes       Recipe[]                @relation("SavedRecipes")
   recipeHistory      UserRecipeHistory[]
+  savedRecipes       Recipe[]                @relation("SavedRecipes")
 
   @@map("users")
 }
 
 model Recipe {
-  id                String   @id @default(cuid())
-  title             String
-  description       String?
-  ingredients       Ingredient[]
-  instructions      Instruction[]
-  author           User     @relation("AuthoredRecipes", fields: [authorId], references: [id])
-  authorId         String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  cookingTime      Int?
-  servings         Int?
-  difficulty       String?
-  cuisineType      String?
-  isVegetarian     Boolean? @default(false)
-  isVegan          Boolean? @default(false)
-  isGlutenFree     Boolean? @default(false)
-  isNutFree        Boolean? @default(false)
-  isLowFodmap      Boolean? @default(false)
-  isPescatarian    Boolean? @default(false)
-  isFermented      Boolean? @default(false)
-  isLactoseFree    Boolean? @default(false)
-  needsDietaryReview Boolean @default(false)
-  dietaryFeedback  DietaryFeedback[]
-  nutritionFacts   NutritionFacts?
-  categories       Category[]    @relation("CategoryToRecipe")
-  tags             Tag[]         @relation("RecipeToTag")
-  reviews          Review[]
-  savedBy          User[]        @relation("SavedRecipes")
-  cuisines         Cuisine[]     @relation("CuisineRecipes")
-  fusionCuisines   Cuisine[]     @relation("RecipeFusionCuisines")
-  generationJob    RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
-  jobId            String?
-  recipeHistory    UserRecipeHistory[]
+  id                 String               @id @default(cuid())
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  title              String
+  description        String?
+  cookingTime        Int?
+  servings           Int?
+  difficulty         String?
+  cuisineType        String?
+  regionOfOrigin     String?
+  imageUrl           String?
+  authorId           String
+  isVegetarian       Boolean?             @default(false)
+  isVegan            Boolean?             @default(false)
+  isGlutenFree       Boolean?             @default(false)
+  isNutFree          Boolean?             @default(false)
+  jobId              String?
+  isFermented        Boolean?             @default(false)
+  isLactoseFree      Boolean?             @default(false)
+  isLowFodmap        Boolean?             @default(false)
+  isPescatarian      Boolean?             @default(false)
+  needsDietaryReview Boolean              @default(false)
+  dietaryFeedback    DietaryFeedback[]
+  ingredients        Ingredient[]
+  instructions       Instruction[]
+  nutritionFacts     NutritionFacts?
+  author             User                 @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  generationJob      RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
+  reviews            Review[]
+  recipeHistory      UserRecipeHistory[]
+  categories         Category[]           @relation("CategoryToRecipe")
+  cuisines           Cuisine[]            @relation("CuisineRecipes")
+  fusionCuisines     Cuisine[]            @relation("RecipeFusionCuisines")
+  tags               Tag[]                @relation("RecipeToTag")
+  savedBy            User[]               @relation("SavedRecipes")
 
   @@index([authorId])
   @@index([jobId])
 }
 
 model Ingredient {
-  id           String  @id @default(cuid())
-  name         String
-  amount       Float
-  unit         String
-  notes        String?
-  isFermented  Boolean @default(false)
-  recipeId     String
-  recipe       Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  id          String  @id @default(cuid())
+  name        String
+  amount      Float
+  unit        String
+  notes       String?
+  recipeId    String
+  isFermented Boolean @default(false)
+  recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@index([recipeId])
 }
@@ -147,6 +149,7 @@ model Review {
 
   @@index([recipeId])
 }
+
 model StandardIngredient {
   id            String        @id @default(cuid())
   name          String        @unique
@@ -176,8 +179,8 @@ model Cuisine {
   subRegion              String?
   parentCuisine          Cuisine?                @relation("CuisineHierarchy", fields: [parentCuisineId], references: [id])
   subCuisines            Cuisine[]               @relation("CuisineHierarchy")
-  recipes                Recipe[]                @relation("CuisineRecipes")
   preferences            UserCuisinePreference[]
+  recipes                Recipe[]                @relation("CuisineRecipes")
   fusionRecipes          Recipe[]                @relation("RecipeFusionCuisines")
 
   @@index([region, subRegion])
@@ -238,8 +241,8 @@ model UserRecipeHistory {
   userEmail String
   recipeId  String
   shownAt   DateTime @default(now())
-  user      User     @relation(fields: [userEmail], references: [email])
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  user      User     @relation(fields: [userEmail], references: [email])
 
   @@index([userEmail, shownAt])
   @@index([recipeId])
@@ -247,7 +250,6 @@ model UserRecipeHistory {
 
 model DietaryFeedback {
   id                   String   @id @default(cuid())
-  recipe               Recipe   @relation(fields: [recipeId], references: [id])
   recipeId             String
   lowFodmapIncorrect   Boolean
   fermentedIncorrect   Boolean
@@ -256,7 +258,7 @@ model DietaryFeedback {
   currentAnalysis      Json
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  recipe               Recipe   @relation(fields: [recipeId], references: [id])
 
   @@index([recipeId])
 }
-
