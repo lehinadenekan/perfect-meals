@@ -36,8 +36,8 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
           ]
         });
       }
-      if (params.includeDietTypes.includes('low-FODMAP')) dietConditions.push({ type: 'LOW_FODMAP' });
-      if (params.includeDietTypes.includes('pescatarian')) dietConditions.push({ type: 'PESCATARIAN' });
+      if (params.includeDietTypes.includes('low-FODMAP')) dietConditions.push({ isLowFodmap: true });
+      if (params.includeDietTypes.includes('pescatarian')) dietConditions.push({ isPescatarian: true });
       
       if (dietConditions.length > 0) {
         whereClause.AND = dietConditions;
@@ -46,8 +46,12 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
 
     // Add cuisine region filters if provided
     if (params.selectedRegions?.length > 0) {
-      whereClause.regionOfOrigin = {
-        in: params.selectedRegions
+      whereClause.cuisines = {
+        some: {
+          region: {
+            in: params.selectedRegions
+          }
+        }
       };
     }
 
@@ -122,32 +126,20 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
         // Shuffle all recipes and take 8
         const shuffledRecipes = allRecipes.sort(() => Math.random() - 0.5).slice(0, 8);
         
-        // Update show counts for selected recipes
-        if (shuffledRecipes.length > 0) {
+        // Record in user history if logged in
+        if (userEmail && shuffledRecipes.length > 0) {
           await prisma.$transaction(
             shuffledRecipes.map(recipe => 
-              prisma.recipe.update({
-                where: { id: recipe.id },
-                data: { showCount: { increment: 1 } }
+              prisma.userRecipeHistory.create({
+                data: {
+                  id: crypto.randomUUID(),
+                  userEmail,
+                  recipeId: recipe.id,
+                  shownAt: new Date()
+                }
               })
             )
           );
-
-          // Record in user history if logged in
-          if (userEmail) {
-            await prisma.$transaction(
-              shuffledRecipes.map(recipe => 
-                prisma.userRecipeHistory.create({
-                  data: {
-                    id: crypto.randomUUID(),
-                    userEmail,
-                    recipeId: recipe.id,
-                    shownAt: new Date()
-                  }
-                })
-              )
-            );
-          }
         }
         
         return shuffledRecipes;
@@ -158,32 +150,20 @@ async function getRandomRecipesFromDB(params: RecipeParams, userEmail: string | 
     // Shuffle matching recipes and take 8
     const shuffledRecipes = matchingRecipes.sort(() => Math.random() - 0.5).slice(0, 8);
 
-    // Update show counts for selected recipes
-    if (shuffledRecipes.length > 0) {
+    // Record in user history if logged in
+    if (userEmail && shuffledRecipes.length > 0) {
       await prisma.$transaction(
         shuffledRecipes.map(recipe => 
-          prisma.recipe.update({
-            where: { id: recipe.id },
-            data: { showCount: { increment: 1 } }
+          prisma.userRecipeHistory.create({
+            data: {
+              id: crypto.randomUUID(),
+              userEmail,
+              recipeId: recipe.id,
+              shownAt: new Date()
+            }
           })
         )
       );
-
-      // Record in user history if logged in
-      if (userEmail) {
-        await prisma.$transaction(
-          shuffledRecipes.map(recipe => 
-            prisma.userRecipeHistory.create({
-              data: {
-                id: crypto.randomUUID(),
-                userEmail,
-                recipeId: recipe.id,
-                shownAt: new Date()
-              }
-            })
-          )
-        );
-      }
     }
 
     return shuffledRecipes;
