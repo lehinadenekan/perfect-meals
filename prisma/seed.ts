@@ -47,8 +47,8 @@ async function main() {
         author: {
           connect: { id: defaultUser.id }
         },
-        cuisine: {
-          connect: { id: defaultCuisine.id }
+        cuisines: {
+          connect: [{ id: defaultCuisine.id }]
         },
         ingredients: {
           create: ingredients

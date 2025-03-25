@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
-  const session = await getServerSession();
+  const session = await auth();
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,7 +16,16 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(userPreferences);
+    // Return default preferences if none exist
+    return NextResponse.json(userPreferences || {
+      dietTypes: [],
+      excludedFoods: [],
+      selectedRegions: [],
+      searchInput: '',
+      cookingTime: 'MEDIUM',
+      servingSize: 2,
+      mealPrep: false
+    });
   } catch (error) {
     console.error('Error fetching user preferences:', error);
     return NextResponse.json(
@@ -27,7 +36,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession();
+  const session = await auth();
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,25 +44,33 @@ export async function PUT(request: Request) {
 
   try {
     const data = await request.json();
-    const { cookingTime, skillLevel, servingSize, mealPrep } = data;
+    const { 
+      cookingTime, 
+      servingSize, 
+      mealPrep,
+      dietTypes,
+      excludedFoods
+    } = data;
 
     const updatedPreferences = await prisma.userPreference.upsert({
       where: {
         userEmail: session.user.email,
       },
       update: {
-        cookingTime,
-        skillLevel,
-        servingSize,
-        mealPrep,
+        cookingTime: cookingTime || 'MEDIUM',
+        servingSize: servingSize || 2,
+        mealPrep: mealPrep || false,
+        dietTypes: { set: dietTypes || [] },
+        excludedFoods: { set: excludedFoods || [] }
       },
       create: {
         userEmail: session.user.email,
-        cookingTime,
-        skillLevel,
-        servingSize,
-        mealPrep,
-      },
+        cookingTime: cookingTime || 'MEDIUM',
+        servingSize: servingSize || 2,
+        mealPrep: mealPrep || false,
+        dietTypes: dietTypes || [],
+        excludedFoods: excludedFoods || []
+      }
     });
 
     return NextResponse.json(updatedPreferences);
