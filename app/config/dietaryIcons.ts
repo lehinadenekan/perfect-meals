@@ -10,12 +10,17 @@ import {
 import FermentedIcon from '../components/icons/FermentedIcon';
 import { DietType } from '@/types/diet';
 
+type IconProps = {
+  className?: string;
+  'aria-hidden'?: boolean;
+};
+
 /**
  * Configuration for dietary preference icons
  * This file serves as a central repository for all dietary icons used in the application
  */
 export const DIETARY_ICONS: Record<DietType, {
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<IconProps>;
   description: string;
   source: string;
 }> = {
@@ -65,10 +70,10 @@ export const DIETARY_ICONS: Record<DietType, {
  * Helper function to get just the icon components
  * This maintains backward compatibility with the current implementation
  */
-export const DIET_ICONS: Record<DietType, React.ComponentType<any>> = Object.entries(DIETARY_ICONS).reduce(
+export const DIET_ICONS: Record<DietType, React.ComponentType<IconProps>> = Object.entries(DIETARY_ICONS).reduce(
   (acc, [key, value]) => ({
     ...acc,
     [key]: value.icon
   }), 
-  {} as Record<DietType, React.ComponentType<any>>
+  {} as Record<DietType, React.ComponentType<IconProps>>
 ); 

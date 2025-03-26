@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { Recipe } from '@/app/types/recipe';
+import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
 const prisma = new PrismaClient();
 
@@ -82,13 +83,21 @@ async function getRandomRecipesFromDB(
   params: RecipeParams,
   userId?: string,
 ): Promise<Recipe[]> {
-  const whereClause: Prisma.RecipeWhereInput = {};
+  console.log('Starting recipe generation with params:', {
+    dietTypes: params.dietTypes?.length || 0,
+    selectedRegions: params.selectedRegions?.length || 0,
+    excludedFoods: params.excludedFoods,
+    userId: userId || 'anonymous',
+    timestamp: new Date().toISOString()
+  });
+
+  // Step 1: Build base query without excluded foods
+  const baseWhereClause: Prisma.RecipeWhereInput = {};
 
   // Add dietary preferences to where clause if they exist
   if (params.dietTypes?.length > 0) {
     const dietConditions: Prisma.RecipeWhereInput[] = [];
     
-    // Handle each dietary preference
     params.dietTypes.forEach(diet => {
       console.log(`Processing dietary preference: ${diet}`);
       const normalizedDiet = diet.toLowerCase();
@@ -128,91 +137,27 @@ async function getRandomRecipesFromDB(
 
     if (dietConditions.length > 0) {
       console.log('Diet conditions:', JSON.stringify(dietConditions, null, 2));
-      // Use AND to combine multiple dietary preferences
-      whereClause.AND = dietConditions;
+      baseWhereClause.AND = dietConditions;
     }
   }
 
   // Add cuisine region filters if provided
   if (params.selectedRegions?.length > 0) {
-    console.log('Adding region filters:', params.selectedRegions);
-    whereClause.cuisineType = {
+    console.log('Region filter metrics:', {
+      count: params.selectedRegions.length,
+      regions: params.selectedRegions,
+      timestamp: new Date().toISOString()
+    });
+    baseWhereClause.cuisineType = {
       in: params.selectedRegions
     };
   }
 
-  // Add excluded foods filter if provided
-  if (params.excludedFoods?.length > 0) {
-    console.log('Adding excluded foods filters:', params.excludedFoods);
-    const excludedFoodConditions = params.excludedFoods.map((food: string) => ({
-      AND: [
-        {
-          title: {
-            not: {
-              contains: food,
-              mode: Prisma.QueryMode.insensitive
-            }
-          }
-        },
-        {
-          ingredients: {
-            none: {
-              name: {
-                contains: food,
-                mode: Prisma.QueryMode.insensitive
-              }
-            }
-          }
-        }
-      ]
-    }));
-
-    // Combine with existing AND conditions if they exist
-    if (Array.isArray(whereClause.AND)) {
-      whereClause.AND = [...whereClause.AND, ...excludedFoodConditions];
-    } else if (whereClause.AND) {
-      whereClause.AND = [whereClause.AND, ...excludedFoodConditions];
-    } else {
-      whereClause.AND = excludedFoodConditions;
-    }
-  }
-
-  // Log the constructed where clause for debugging
-  console.log('Final query where clause:', JSON.stringify(whereClause, null, 2));
-
   try {
-    // First, count matching recipes
-    const recipeCount = await prisma.recipe.count({
-      where: whereClause
-    });
-
-    console.log(`Found ${recipeCount} recipes matching criteria`);
-
-    // Log individual counts for each dietary preference
-    if (params.dietTypes?.length > 0) {
-      for (const diet of params.dietTypes) {
-        const normalizedDiet = diet.toLowerCase();
-        const singleDietCount = await prisma.recipe.count({
-          where: {
-            [normalizedDiet === 'fermented' ? 'isFermented' : 
-             normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
-             normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
-             normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
-             normalizedDiet === 'nut-free' ? 'isNutFree' :
-             normalizedDiet === 'pescatarian' ? 'isPescatarian' :
-             `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`]: true
-          }
-        });
-        console.log(`Found ${singleDietCount} recipes for dietary preference: ${diet}`);
-      }
-    }
-
-    if (recipeCount === 0) {
-      return [];
-    }
-
+    // Step 2: Get initial set of recipes (limited to 100 for performance)
+    console.log('Fetching initial recipe set with base filters');
     let dbRecipes = await prisma.recipe.findMany({
-      where: whereClause,
+      where: baseWhereClause,
       include: {
         ingredients: true,
         instructions: true,
@@ -221,21 +166,87 @@ async function getRandomRecipesFromDB(
         cuisines: true,
         tags: true,
       },
+      take: 100, // Limit initial fetch for performance
     }) as unknown as DbRecipe[];
 
-    // Shuffle the recipes
-    dbRecipes = dbRecipes.sort(() => Math.random() - 0.5);
+    console.log('Initial recipe fetch metrics:', {
+      fetchedCount: dbRecipes.length,
+      hasExcludedFoods: params.excludedFoods?.length > 0,
+      timestamp: new Date().toISOString()
+    });
 
-    // Take only 8 recipes after shuffling
+    // Step 3: Apply excluded foods filtering in memory
+    if (params.excludedFoods?.length > 0) {
+      console.log('Applying excluded foods filtering:', params.excludedFoods);
+      
+      // Create an array of all terms to check (original terms + variations)
+      const termsToExclude = params.excludedFoods.reduce((acc: string[], food) => {
+        const foodLower = food.toLowerCase();
+        const variations = FOOD_VARIATIONS[foodLower] || [];
+        console.log(`Excluding terms for ${foodLower}:`, [foodLower, ...variations]);
+        return [...acc, foodLower, ...variations];
+      }, []);
+
+      console.log('All terms being excluded:', termsToExclude);
+      
+      dbRecipes = dbRecipes.filter(recipe => {
+        // Check if any excluded term appears in title or ingredients
+        const hasExcludedFood = termsToExclude.some(term => {
+          const titleContainsTerm = recipe.title.toLowerCase().includes(term);
+          const ingredientsContainTerm = recipe.ingredients.some(
+            ingredient => ingredient.name.toLowerCase().includes(term)
+          );
+          const descriptionContainsTerm = recipe.description?.toLowerCase().includes(term) || false;
+
+          if (titleContainsTerm || ingredientsContainTerm || descriptionContainsTerm) {
+            console.log(`Excluding recipe ${recipe.title} due to term: ${term}`);
+            if (titleContainsTerm) console.log(`- Found in title`);
+            if (ingredientsContainTerm) console.log(`- Found in ingredients`);
+            if (descriptionContainsTerm) console.log(`- Found in description`);
+          }
+
+          return titleContainsTerm || ingredientsContainTerm || descriptionContainsTerm;
+        });
+
+        // Keep recipe if it doesn't contain any excluded terms
+        return !hasExcludedFood;
+      });
+
+      console.log('Post-exclusion filtering metrics:', {
+        remainingRecipes: dbRecipes.length,
+        excludedFoods: params.excludedFoods,
+        totalExcludedTerms: termsToExclude.length,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Step 4: Handle no results case
+    if (dbRecipes.length === 0) {
+      console.log('No recipes found after all filters. Context:', {
+        baseFilters: JSON.stringify(baseWhereClause, null, 2),
+        excludedFoods: params.excludedFoods,
+        timestamp: new Date().toISOString()
+      });
+      return [];
+    }
+
+    // Step 5: Shuffle and limit results
+    dbRecipes = dbRecipes.sort(() => Math.random() - 0.5);
     dbRecipes = dbRecipes.slice(0, 8);
+
+    console.log('Final recipe selection:', {
+      selectedCount: dbRecipes.length,
+      sampleRecipeId: dbRecipes[0]?.id,
+      timestamp: new Date().toISOString()
+    });
 
     // Convert database recipes to frontend Recipe type
     const frontendRecipes = dbRecipes.map((dbRecipe): Recipe => ({
       id: dbRecipe.id,
       title: dbRecipe.title,
       description: dbRecipe.description || undefined,
-      cookingTime: dbRecipe.cookingTime || 30, // Default to 30 minutes if null
-      servings: dbRecipe.servings || 4, // Default to 4 servings if null
+      cookingTime: dbRecipe.cookingTime || 30,
+      servings: dbRecipe.servings || 4,
       difficulty: dbRecipe.difficulty || 'medium',
       cuisineType: dbRecipe.cuisineType || dbRecipe.cuisines[0]?.name || 'Global',
       regionOfOrigin: dbRecipe.regionOfOrigin || dbRecipe.cuisines[0]?.region || 'Global',
@@ -262,10 +273,10 @@ async function getRandomRecipesFromDB(
       showCount: 0,
       hasFeatureFermented: dbRecipe.isFermented || false,
       hasFermentedIngredients: dbRecipe.ingredients.some(i => i.isFermented),
-      hasFish: false, // This would need to be determined by ingredient analysis
+      hasFish: false,
       ingredients: dbRecipe.ingredients.map(i => ({
         ...i,
-        notes: i.notes || undefined // Convert null to undefined
+        notes: i.notes || undefined
       })),
       instructions: dbRecipe.instructions,
       createdAt: dbRecipe.createdAt,
@@ -273,9 +284,15 @@ async function getRandomRecipesFromDB(
     }));
 
     return frontendRecipes;
-  } catch (error) {
-    console.error('Error in database query:', error);
-    throw error; // Let the caller handle the error
+  } catch (error: unknown) {
+    console.error('Recipe generation error context:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      baseQuery: JSON.stringify(baseWhereClause, null, 2),
+      excludedFoods: params.excludedFoods,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
   }
 }
 

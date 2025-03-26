@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDebounce } from './useDebounce';
 
 interface PreferenceData {
@@ -24,6 +24,7 @@ export function usePreferenceUpdates(
   const [preferences, setPreferences] = useState<PreferenceData>(initialPreferences);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialPreferencesRef = useRef(initialPreferences);
 
   // Debounce the preferences
   const debouncedPreferences = useDebounce(preferences, delay);
@@ -43,7 +44,7 @@ export function usePreferenceUpdates(
       // Don't save if nothing has changed
       if (
         JSON.stringify(debouncedPreferences) === 
-        JSON.stringify(initialPreferences)
+        JSON.stringify(initialPreferencesRef.current)
       ) {
         return;
       }
@@ -86,7 +87,7 @@ export function usePreferenceUpdates(
     };
 
     savePreferences();
-  }, [debouncedPreferences, initialPreferences]);
+  }, [debouncedPreferences]); // Remove initialPreferences from deps array
 
   return {
     updatePreferences,
