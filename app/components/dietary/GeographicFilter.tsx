@@ -29,23 +29,26 @@ const GeographicFilter: React.FC<GeographicFilterProps> = ({
   };
 
   return (
-    <div className="w-full mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Regional Preferences</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="w-full mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {REGIONS.map((region) => (
           <button
             key={region}
             onClick={() => handleRegionClick(region)}
-            className={`relative flex flex-col items-center justify-center p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
+            className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
               selectedRegions.includes(region)
-                ? 'border-yellow-400 text-gray-900'
-                : 'border-transparent hover:border-yellow-200 text-gray-700'
+                ? 'border-yellow-400 text-yellow-500 shadow-lg'
+                : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
             }`}
           >
             <span className="font-medium">{region}</span>
           </button>
         ))}
       </div>
+
+      <p className="mt-3 text-sm text-gray-600">
+        Select regions to filter recipes by their origin
+      </p>
     </div>
   );
 };
