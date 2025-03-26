@@ -5,7 +5,7 @@ import {
   Sandwich,
   Nut,
   Fish,
-  Leaf,
+  Egg,
 } from 'lucide-react';
 import FermentedIcon from '../components/icons/FermentedIcon';
 import { DietType } from '@/types/diet';
@@ -60,9 +60,9 @@ export const DIETARY_ICONS: Record<DietType, {
     source: 'lucide-react/Sprout'
   },
   'vegetarian': {
-    icon: Leaf,
-    description: 'Leaf icon from Lucide representing vegetarian diet',
-    source: 'lucide-react/Leaf'
+    icon: Egg,
+    description: 'Egg icon from Lucide representing vegetarian diet',
+    source: 'lucide-react/Egg'
   }
 };
 
