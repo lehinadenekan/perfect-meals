@@ -1,17 +1,19 @@
 import React from 'react';
 import { Recipe } from '@/app/types/recipe';
 import Image from 'next/image';
-import { GlobeAltIcon, HeartIcon } from '@heroicons/react/24/outline';
+import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { analyzeDietary } from '@/app/utils/dietary-classification';
 import DietaryInfo from './DietaryInfo';
 import { DietaryFeedback } from './DietaryFeedback';
+import FavoriteButton from '../shared/FavoriteButton';
 
 interface RecipeCardProps {
   recipe: Recipe;
   isLoggedIn?: boolean;
+  onFlagClick?: () => void;
 }
 
-export default function RecipeCard({ recipe, isLoggedIn = false }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onFlagClick }: RecipeCardProps) {
   const dietaryAnalysis = analyzeDietary(recipe);
 
   // Calculate approximate macros based on calories if available
@@ -80,20 +82,9 @@ export default function RecipeCard({ recipe, isLoggedIn = false }: RecipeCardPro
         {/* Bottom row with flag and heart icons - aligned with bullet points */}
         <div className="flex items-center justify-between w-full h-[24px]">
           <div className="flex items-center whitespace-nowrap">
-            <DietaryFeedback 
-              recipeId={recipe.id} 
-              dietaryAnalysis={dietaryAnalysis}
-            />
+            <DietaryFeedback recipe={recipe} onFlagClick={onFlagClick} />
           </div>
-          <button 
-            className="text-gray-500 hover:text-red-500 transition-colors duration-200 mr-1 group relative"
-            aria-label="Save your favourite recipes"
-          >
-            <HeartIcon className="w-5 h-5" />
-            <span className="invisible group-hover:visible absolute -top-8 right-0 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1">
-              Save your favourite recipes
-            </span>
-          </button>
+          <FavoriteButton recipeId={recipe.id} />
         </div>
       </div>
     </div>
