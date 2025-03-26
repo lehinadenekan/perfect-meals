@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Recipe } from '@/app/types/recipe';
 import RecipeCard from './RecipeCard';
+import FlagSubmission from './FlagSubmission';
 
 interface MealCarouselProps {
   recipes: Recipe[];
@@ -12,6 +13,7 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ recipes, isLoading = false 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftButton, setShowLeftButton] = useState(false);
   const [showRightButton, setShowRightButton] = useState(true);
+  const [flaggedRecipe, setFlaggedRecipe] = useState<Recipe | null>(null);
 
   // Card dimensions
   const cardWidth = 240; // width of the card
@@ -83,6 +85,18 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ recipes, isLoading = false 
 
   return (
     <div className="relative">
+      {/* Flag Submission Modal */}
+      {flaggedRecipe && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <FlagSubmission
+              recipe={flaggedRecipe}
+              onBack={() => setFlaggedRecipe(null)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Left Navigation Button */}
       {showLeftButton && (
         <button
@@ -117,7 +131,10 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ recipes, isLoading = false 
             className="flex-none animate-fadeIn transition-transform duration-300"
             style={{ width: `${cardWidth}px` }}
           >
-            <RecipeCard recipe={recipe} />
+            <RecipeCard 
+              recipe={recipe} 
+              onFlagClick={() => setFlaggedRecipe(recipe)}
+            />
           </div>
         ))}
       </div>
