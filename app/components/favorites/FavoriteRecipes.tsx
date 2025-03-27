@@ -4,16 +4,54 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
-import { Recipe as AppRecipe } from '@/app/types/recipe';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-interface Recipe extends Partial<AppRecipe> {
+interface Recipe {
   id: string;
   title: string;
   description: string;
   imageUrl: string;
   cookingTime: number;
   difficulty: string;
+  ingredients: {
+    id: string;
+    name: string;
+    amount: number;
+    unit: string;
+    notes?: string;
+  }[];
+  instructions: {
+    id: string;
+    stepNumber: number;
+    description: string;
+  }[];
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  };
+  servings: number;
+  isVegetarian?: boolean;
+  isVegan?: boolean;
+  isGlutenFree?: boolean;
+  isNutFree?: boolean;
+  isFermented?: boolean;
+  isLactoseFree?: boolean;
+  isLowFodmap?: boolean;
+  isPescatarian?: boolean;
+  nutritionFacts?: {
+    id: string;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+  };
+  categories: { id: string; name: string; }[];
+  cuisines: { id: string; name: string; }[];
+  tags: { id: string; name: string; }[];
 }
 
 interface FavoriteRecipesProps {
