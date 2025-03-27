@@ -244,30 +244,34 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
   let fodmapScore = 0;
   const fodmapDetails: IngredientAnalysisDetails[] = [];
   
-  recipe.ingredients.forEach(ingredient => {
-    const analysis = analyzeIngredient(ingredient, allHighFodmapIngredients);
-    if (analysis.found && analysis.details) {
-      fodmapScore += analysis.score;
-      fodmapDetails.push(analysis.details);
-    }
-  });
+  if (recipe?.ingredients) {
+    recipe.ingredients.forEach(ingredient => {
+      const analysis = analyzeIngredient(ingredient, allHighFodmapIngredients);
+      if (analysis.found && analysis.details) {
+        fodmapScore += analysis.score;
+        fodmapDetails.push(analysis.details);
+      }
+    });
+  }
 
   // Fermentation analysis
   let fermentationScore = 0;
   const mainFermentedIngredients: string[] = [];
   const fermentedFlavorings: string[] = [];
   
-  recipe.ingredients.forEach(ingredient => {
-    const analysis = analyzeIngredient(ingredient, allFermentedFoods);
-    if (analysis.found && analysis.details && analysis.details.role) {
-      fermentationScore += analysis.details.role === 'main' ? 1 : 0.5;
-      if (analysis.details.role === 'main') {
-        mainFermentedIngredients.push(analysis.details.name);
-      } else {
-        fermentedFlavorings.push(analysis.details.name);
+  if (recipe?.ingredients) {
+    recipe.ingredients.forEach(ingredient => {
+      const analysis = analyzeIngredient(ingredient, allFermentedFoods);
+      if (analysis.found && analysis.details && analysis.details.role) {
+        fermentationScore += analysis.details.role === 'main' ? 1 : 0.5;
+        if (analysis.details.role === 'main') {
+          mainFermentedIngredients.push(analysis.details.name);
+        } else {
+          fermentedFlavorings.push(analysis.details.name);
+        }
       }
-    }
-  });
+    });
+  }
 
   // Check for fermentation in preparation
   const hasFementation = recipe.description?.toLowerCase().includes('ferment') || false;
@@ -279,13 +283,15 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
   let pescatarianScore = 0;
   const nonPescatarianFound: string[] = [];
   
-  recipe.ingredients.forEach(ingredient => {
-    const analysis = analyzeIngredient(ingredient, allNonPescatarianFoods);
-    if (analysis.found) {
-      pescatarianScore += analysis.score;
-      nonPescatarianFound.push(ingredient.name);
-    }
-  });
+  if (recipe?.ingredients) {
+    recipe.ingredients.forEach(ingredient => {
+      const analysis = analyzeIngredient(ingredient, allNonPescatarianFoods);
+      if (analysis.found) {
+        pescatarianScore += analysis.score;
+        nonPescatarianFound.push(ingredient.name);
+      }
+    });
+  }
 
   return {
     isLowFodmap: fodmapScore < 1,

@@ -2,11 +2,11 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
-import FavoriteButton from '@/app/components/shared/FavoriteButton';
+import RecipeCard from '@/app/components/recipe/RecipeCard';
+import { Recipe as AppRecipe } from '@/app/types/recipe';
 
-interface Recipe {
+interface Recipe extends Partial<AppRecipe> {
   id: string;
   title: string;
   description: string;
@@ -36,16 +36,18 @@ export default function FavoriteMealsPage() {
 
     if (session?.user?.email) {
       fetchFavoriteRecipes();
+    } else {
+      setIsLoading(false);
     }
   }, [session?.user?.email]);
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-yellow-400 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Please sign in to view your favorite meals
+              Please sign in to view your favourite recipes
             </h2>
           </div>
         </div>
@@ -54,58 +56,35 @@ export default function FavoriteMealsPage() {
   }
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-yellow-400 py-12 flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-yellow-400 py-12 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Your Favorite Meals
+            Your Favourite Recipes
           </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-            Here are all the recipes you've saved as favorites
+          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-700 sm:mt-4">
+            Here are all the recipes you&apos;ve saved
           </p>
         </div>
 
         {favoriteRecipes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-lg text-gray-600">
-              You haven't saved any recipes as favorites yet.
+            <p className="text-lg text-gray-800">
+              You haven&apos;t saved any recipes as favourites yet.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {favoriteRecipes.map((recipe) => (
-              <div
-                key={recipe.id}
-                className="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow"
-              >
-                <div className="relative h-48">
-                  <Image
-                    src={recipe.imageUrl || '/placeholder-recipe.jpg'}
-                    alt={recipe.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-2 right-2 z-10">
-                    <FavoriteButton recipeId={recipe.id} initialIsFavorite={true} />
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {recipe.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500 line-clamp-2">
-                    {recipe.description}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-                    <span>{recipe.cookingTime} mins</span>
-                    <span className="capitalize">{recipe.difficulty.toLowerCase()}</span>
-                  </div>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+            {favoriteRecipes.map(recipe => (
+              <RecipeCard key={recipe.id} recipe={recipe as unknown as import('@/app/types/recipe').Recipe} isLoggedIn={true} />
             ))}
           </div>
         )}

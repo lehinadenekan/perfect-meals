@@ -61,8 +61,6 @@ model Recipe {
   servings           Int?
   difficulty         String?
   cuisineType        String?
-  regionOfOrigin     String?
-  imageUrl           String?
   authorId           String
   isVegetarian       Boolean?             @default(false)
   isVegan            Boolean?             @default(false)
@@ -74,6 +72,8 @@ model Recipe {
   isLowFodmap        Boolean?             @default(false)
   isPescatarian      Boolean?             @default(false)
   needsDietaryReview Boolean              @default(false)
+  imageUrl           String?
+  regionOfOrigin     String?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]
   instructions       Instruction[]

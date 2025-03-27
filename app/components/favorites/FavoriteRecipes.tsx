@@ -5,54 +5,10 @@ import { useEffect, useState } from 'react';
 import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import FlagSubmission from '../recipe/FlagSubmission';
+import { Recipe as AppRecipe } from '@/app/types/recipe';
 
-interface Recipe {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  cookingTime: number;
-  difficulty: string;
-  ingredients: {
-    id: string;
-    name: string;
-    amount: number;
-    unit: string;
-    notes?: string;
-  }[];
-  instructions: {
-    id: string;
-    stepNumber: number;
-    description: string;
-  }[];
-  author: {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-  };
-  servings: number;
-  isVegetarian?: boolean;
-  isVegan?: boolean;
-  isGlutenFree?: boolean;
-  isNutFree?: boolean;
-  isFermented?: boolean;
-  isLactoseFree?: boolean;
-  isLowFodmap?: boolean;
-  isPescatarian?: boolean;
-  nutritionFacts?: {
-    id: string;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-    fiber?: number;
-    sugar?: number;
-    sodium?: number;
-  };
-  categories: { id: string; name: string; }[];
-  cuisines: { id: string; name: string; }[];
-  tags: { id: string; name: string; }[];
-}
+type Recipe = AppRecipe;
 
 interface FavoriteRecipesProps {
   isVisible: boolean;
@@ -63,6 +19,7 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
   const { data: session } = useSession();
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [flaggedRecipe, setFlaggedRecipe] = useState<Recipe | null>(null);
 
   useEffect(() => {
     const fetchFavoriteRecipes = async () => {
@@ -110,6 +67,18 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
 
   return (
     <div className="w-full py-12 transition-all duration-300">
+      {/* Flag Submission Modal */}
+      {flaggedRecipe && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <FlagSubmission
+              recipe={flaggedRecipe}
+              onBack={() => setFlaggedRecipe(null)}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative">
           <button
@@ -136,7 +105,12 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {favoriteRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe as unknown as import('@/app/types/recipe').Recipe} isLoggedIn={true} />
+              <RecipeCard 
+                key={recipe.id} 
+                recipe={recipe} 
+                isLoggedIn={true}
+                onFlagClick={() => setFlaggedRecipe(recipe)}
+              />
             ))}
           </div>
         )}

@@ -26,7 +26,7 @@ export const ExcludedFoodsInput: React.FC<ExcludedFoodsInputProps> = ({
 
   return (
     <div className="w-full">
-      <div className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-transparent bg-white shadow-md transition-all duration-200 hover:border-yellow-300">
+      <div className="w-full border-2 border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-transparent bg-white shadow-md transition-all duration-200 hover:border-yellow-300">
         <input
           id="excluded-foods"
           type="text"
@@ -34,7 +34,7 @@ export const ExcludedFoodsInput: React.FC<ExcludedFoodsInputProps> = ({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleInputKeyDown}
           placeholder="Type foods to exclude and press Enter (e.g. pork, mushrooms)"
-          className="w-full border-none p-0 focus:ring-0 focus:outline-none text-sm placeholder-gray-400"
+          className="w-full border-none py-2 px-4 focus:ring-0 focus:outline-none placeholder-gray-400"
           aria-label="Enter foods to exclude"
         />
       </div>

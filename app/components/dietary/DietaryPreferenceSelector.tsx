@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useSession } from 'next-auth/react';
 import { DietType, DIET_TYPES } from '@/types/diet';
 import GeographicFilter from './GeographicFilter';
@@ -13,60 +13,52 @@ import DataPills from './DataPills';
 const TOP_ROW_DIETS: DietType[] = ['fermented', 'gluten-free', 'lactose-free', 'low-FODMAP'];
 const BOTTOM_ROW_DIETS: DietType[] = ['nut-free', 'pescatarian', 'vegan', 'vegetarian'];
 
-const DietaryPreferenceSelector: React.FC = () => {
+interface DietaryPreferenceSelectorProps {
+  selectedDiets: DietType[];
+  setSelectedDiets: Dispatch<SetStateAction<DietType[]>>;
+  excludedFoods: string[];
+  setExcludedFoods: Dispatch<SetStateAction<string[]>>;
+  selectedRegions: string[];
+  setSelectedRegions: Dispatch<SetStateAction<string[]>>;
+  recipes: Recipe[];
+  setRecipes: Dispatch<SetStateAction<Recipe[]>>;
+  currentStep: number;
+  setCurrentStep: Dispatch<SetStateAction<number>>;
+}
+
+const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
+  selectedDiets,
+  setSelectedDiets,
+  excludedFoods,
+  setExcludedFoods,
+  selectedRegions,
+  setSelectedRegions,
+  recipes,
+  setRecipes,
+  currentStep,
+  setCurrentStep
+}) => {
   const { data: session, status } = useSession();
-  const [selectedDiets, setSelectedDiets] = useState<DietType[]>([]);
-  const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const { updatePreferences } = usePreferenceUpdates({
     dietTypes: [],
     excludedFoods: [],
     selectedRegions: [],
   });
 
-  // Load preferences from server/localStorage (existing code)
+  // Reset all selections when component mounts
   useEffect(() => {
-    if (session?.user) {
-      fetch('/api/preferences')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data && typeof data === 'object') {
-            setSelectedDiets(Array.isArray(data.dietTypes) ? data.dietTypes : []);
-            setExcludedFoods(Array.isArray(data.excludedFoods) ? data.excludedFoods : []);
-            setSelectedRegions(Array.isArray(data.selectedRegions) ? data.selectedRegions : []);
-          }
-        })
-        .catch(error => {
-          console.error('Error loading preferences:', error);
-          setSelectedDiets([]);
-          setExcludedFoods([]);
-          setSelectedRegions([]);
-        });
-    } else {
-      const storedDiets = localStorage.getItem('dietary-preferences-selected-diets');
-      const storedFoods = localStorage.getItem('dietary-preferences-excluded-foods');
-      const storedRegions = localStorage.getItem('dietary-preferences-selected-regions');
-
-      if (storedDiets) setSelectedDiets(JSON.parse(storedDiets));
-      if (storedFoods) setExcludedFoods(JSON.parse(storedFoods));
-      if (storedRegions) setSelectedRegions(JSON.parse(storedRegions));
-    }
-  }, [session]);
+    setSelectedDiets([]);
+    setExcludedFoods([]);
+    setSelectedRegions([]);
+  }, []); // Empty dependency array means this runs once on mount
 
   // Existing handlers
   const handleDietToggle = async (dietType: DietType) => {
-    setSelectedDiets(prev => {
+    setSelectedDiets((prev: DietType[]) => {
       const newDiets = prev.includes(dietType)
-        ? prev.filter(d => d !== dietType)
+        ? prev.filter((d: DietType) => d !== dietType)
         : [...prev, dietType];
 
       if (session?.user) {
@@ -76,8 +68,6 @@ const DietaryPreferenceSelector: React.FC = () => {
           excludedFoods,
           selectedRegions,
         })).finally(() => setIsSaving(false));
-      } else {
-        localStorage.setItem('dietary-preferences-selected-diets', JSON.stringify(newDiets));
       }
 
       return newDiets;
@@ -159,11 +149,19 @@ const DietaryPreferenceSelector: React.FC = () => {
 
   // Step navigation handlers
   const handleNext = () => {
-    setCurrentStep(prev => Math.min(prev + 1, 3));
+    setCurrentStep((prev: number) => Math.min(prev + 1, 3));
   };
 
   const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev: number) => Math.max(prev - 1, 1));
+  };
+
+  const onRemoveRegion = (region: string) => {
+    setSelectedRegions((prev: string[]) => prev.filter(r => r !== region));
+  };
+
+  const onRemoveExcludedFood = (food: string) => {
+    setExcludedFoods((prev: string[]) => prev.filter((f: string) => f !== food));
   };
 
   // Render step content
@@ -174,8 +172,8 @@ const DietaryPreferenceSelector: React.FC = () => {
         selectedRegions={currentStep >= 2 ? selectedRegions : []}
         excludedFoods={currentStep === 3 ? excludedFoods : []}
         onRemoveDiet={handleDietToggle}
-        onRemoveRegion={currentStep >= 2 ? (region) => setSelectedRegions(prev => prev.filter(r => r !== region)) : undefined}
-        onRemoveExcludedFood={currentStep === 3 ? (food) => setExcludedFoods(prev => prev.filter(f => f !== food)) : undefined}
+        onRemoveRegion={currentStep >= 2 ? onRemoveRegion : undefined}
+        onRemoveExcludedFood={currentStep === 3 ? onRemoveExcludedFood : undefined}
         showRegions={currentStep >= 2}
         showExcludedFoods={currentStep === 3}
       />
@@ -186,7 +184,7 @@ const DietaryPreferenceSelector: React.FC = () => {
         return (
           <div className="space-y-8">
             {dataPills}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {TOP_ROW_DIETS.map((dietType, index) => (
                 <div key={dietType} className="group relative">
                   <div className="absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 -top-12">
@@ -199,18 +197,20 @@ const DietaryPreferenceSelector: React.FC = () => {
                     aria-pressed={selectedDiets.includes(dietType)}
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    className={`relative p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
-                      selectedDiets.includes(dietType) ? 'border-yellow-400' : 'border-transparent hover:border-yellow-200'
+                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
+                      selectedDiets.includes(dietType)
+                        ? 'border-yellow-400 text-yellow-500 shadow-lg'
+                        : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
                     }`}
                   >
-                    <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="flex items-center justify-center">
                       {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-6 h-6 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'}`,
+                        className: `w-5 h-5 mr-3 ${
+                          selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
+                        }`,
                         'aria-hidden': true
                       })}
-                      <h3 className="text-lg font-semibold text-center">
-                        {DIET_TYPES[dietType].title}
-                      </h3>
+                      <span className="font-medium">{DIET_TYPES[dietType].title}</span>
                     </div>
                   </div>
                 </div>
@@ -227,18 +227,20 @@ const DietaryPreferenceSelector: React.FC = () => {
                     aria-pressed={selectedDiets.includes(dietType)}
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index + TOP_ROW_DIETS.length)}
-                    className={`relative p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
-                      selectedDiets.includes(dietType) ? 'border-yellow-400' : 'border-transparent hover:border-yellow-200'
+                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
+                      selectedDiets.includes(dietType)
+                        ? 'border-yellow-400 text-yellow-500 shadow-lg'
+                        : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
                     }`}
                   >
-                    <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="flex items-center justify-center">
                       {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-6 h-6 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'}`,
+                        className: `w-5 h-5 mr-3 ${
+                          selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
+                        }`,
                         'aria-hidden': true
                       })}
-                      <h3 className="text-lg font-semibold text-center">
-                        {DIET_TYPES[dietType].title}
-                      </h3>
+                      <span className="font-medium">{DIET_TYPES[dietType].title}</span>
                     </div>
                   </div>
                 </div>
@@ -296,16 +298,16 @@ const DietaryPreferenceSelector: React.FC = () => {
             />
           ))}
         </div>
-        <span className="ml-4 text-sm text-gray-600">
-          Step {currentStep} of 3
-        </span>
       </div>
 
-      <h2 className="text-2xl font-bold text-center mb-16">
-        {currentStep === 1 && 'Choose Your Dietary Preferences'}
-        {currentStep === 2 && 'Select Regional Preferences'}
-        {currentStep === 3 && 'Exclude Specific Foods'}
-      </h2>
+      <div className="text-center mb-16">
+        <h2 className="text-2xl font-bold">
+          {currentStep === 1 && 'Choose Your Dietary Preferences'}
+          {currentStep === 2 && 'Select Regional Preferences'}
+          {currentStep === 3 && 'Exclude Specific Foods'}
+        </h2>
+        <p className="text-gray-600 italic mt-2">(optional)</p>
+      </div>
 
       {/* Step Content */}
       {renderStepContent()}
@@ -330,7 +332,7 @@ const DietaryPreferenceSelector: React.FC = () => {
         ) : (
           <button
             onClick={handleGenerateRecipes}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors duration-200"
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors duration-200"
             disabled={isLoading}
           >
             {isLoading ? 'Loading...' : recipes.length > 0 ? 'Generate New Recipes' : 'Generate Recipes'}
