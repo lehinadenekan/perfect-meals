@@ -92,7 +92,31 @@ async function getRandomRecipesFromDB(
   });
 
   // Step 1: Build base query without excluded foods
-  const baseWhereClause: Prisma.RecipeWhereInput = {};
+  const conditions: Prisma.RecipeWhereInput[] = [];
+
+  // Add search term filter if provided
+  if (params.searchInput) {
+    const searchTerm = params.searchInput.toLowerCase();
+    
+    // Add both singular and plural forms to search
+    const searchTerms = [searchTerm];
+    if (searchTerm.endsWith('s')) {
+      // If plural, add singular
+      searchTerms.push(searchTerm.slice(0, -1));
+    } else {
+      // If singular, add plural
+      searchTerms.push(`${searchTerm}s`);
+    }
+    
+    // First get a broader set of potential matches
+    conditions.push({
+      OR: [
+        { title: { contains: searchTerm, mode: 'insensitive' } },
+        { description: { contains: searchTerm, mode: 'insensitive' } },
+        { ingredients: { some: { name: { contains: searchTerm, mode: 'insensitive' } } } }
+      ]
+    });
+  }
 
   // Add dietary preferences to where clause if they exist
   if (params.dietTypes?.length > 0) {
@@ -137,7 +161,7 @@ async function getRandomRecipesFromDB(
 
     if (dietConditions.length > 0) {
       console.log('Diet conditions:', JSON.stringify(dietConditions, null, 2));
-      baseWhereClause.AND = dietConditions;
+      conditions.push({ AND: dietConditions });
     }
   }
 
@@ -148,10 +172,17 @@ async function getRandomRecipesFromDB(
       regions: params.selectedRegions,
       timestamp: new Date().toISOString()
     });
-    baseWhereClause.cuisineType = {
-      in: params.selectedRegions
-    };
+    conditions.push({
+      cuisineType: {
+        in: params.selectedRegions
+      }
+    });
   }
+
+  // Combine all conditions with AND
+  const baseWhereClause: Prisma.RecipeWhereInput = {
+    AND: conditions
+  };
 
   try {
     // Step 2: Get initial set of recipes (limited to 100 for performance)
@@ -174,6 +205,91 @@ async function getRandomRecipesFromDB(
       hasExcludedFoods: params.excludedFoods?.length > 0,
       timestamp: new Date().toISOString()
     });
+
+    // Apply word boundary filter if search term is provided
+    if (params.searchInput) {
+      const searchTerm = params.searchInput.toLowerCase();
+      
+      // Add both singular and plural forms to search
+      const searchTerms = [searchTerm];
+      if (searchTerm.endsWith('s')) {
+        // If plural, add singular
+        searchTerms.push(searchTerm.slice(0, -1));
+      } else {
+        // If singular, add plural
+        searchTerms.push(`${searchTerm}s`);
+      }
+      
+      console.log('Filtering with word boundaries for terms:', searchTerms);
+      
+      dbRecipes = dbRecipes.filter(recipe => {
+        // Check title for whole word match
+        const titleMatch = searchTerms.some(term => {
+          const regex = new RegExp(`\\b${term}\\b`, 'i');
+          return regex.test(recipe.title);
+        });
+        
+        // Check ingredients for whole word match
+        const ingredientMatch = recipe.ingredients.some(ingredient => {
+          return searchTerms.some(term => {
+            const regex = new RegExp(`\\b${term}\\b`, 'i');
+            return regex.test(ingredient.name);
+          });
+        });
+        
+        // Check description for whole word match
+        const descriptionMatch = recipe.description ? searchTerms.some(term => {
+          const regex = new RegExp(`\\b${term}\\b`, 'i');
+          return regex.test(recipe.description || '');
+        }) : false;
+        
+        return titleMatch || ingredientMatch || descriptionMatch;
+      });
+      
+      console.log('After word boundary filtering:', {
+        remainingRecipes: dbRecipes.length,
+        searchTerms
+      });
+      
+      // Sort results by relevance
+      dbRecipes = dbRecipes.sort((a, b) => {
+        // Calculate relevance score for each recipe
+        const getScore = (recipe: DbRecipe): number => {
+          let score = 0;
+          
+          // Title match (highest priority)
+          if (searchTerms.some(term => {
+            const regex = new RegExp(`\\b${term}\\b`, 'i');
+            return regex.test(recipe.title);
+          })) {
+            score += 100;
+          }
+          
+          // Ingredient match (medium priority)
+          if (recipe.ingredients.some(i => {
+            return searchTerms.some(term => {
+              const regex = new RegExp(`\\b${term}\\b`, 'i');
+              return regex.test(i.name);
+            });
+          })) {
+            score += 50;
+          }
+          
+          // Description match (lowest priority)
+          if (recipe.description && searchTerms.some(term => {
+            const regex = new RegExp(`\\b${term}\\b`, 'i');
+            return regex.test(recipe.description || '');
+          })) {
+            score += 25;
+          }
+          
+          return score;
+        };
+        
+        // Sort by score (higher first)
+        return getScore(b) - getScore(a);
+      });
+    }
 
     // Step 3: Apply excluded foods filtering in memory
     if (params.excludedFoods?.length > 0) {

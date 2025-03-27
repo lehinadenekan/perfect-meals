@@ -80,7 +80,7 @@ const ExclusionModal: React.FC<ExclusionModalProps> = ({
           Customise Food Exclusions
         </h2>
         <p className="text-gray-600 mb-4">
-          Use the customisation window to exclude foods you don't like or are allergic to
+          Use the customisation window to exclude foods you don&apos;t like or are allergic to
         </p>
 
         <form onSubmit={handleAddFood} className="mb-4">
