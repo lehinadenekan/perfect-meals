@@ -282,13 +282,25 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
   // Pescatarian analysis
   let pescatarianScore = 0;
   const nonPescatarianFound: string[] = [];
+  let hasFish = false;
   
   if (recipe?.ingredients) {
     recipe.ingredients.forEach(ingredient => {
-      const analysis = analyzeIngredient(ingredient, allNonPescatarianFoods);
-      if (analysis.found) {
-        pescatarianScore += analysis.score;
+      // Check for non-pescatarian ingredients (meat)
+      const meatAnalysis = analyzeIngredient(ingredient, allNonPescatarianFoods);
+      if (meatAnalysis.found) {
+        pescatarianScore += meatAnalysis.score;
         nonPescatarianFound.push(ingredient.name);
+      }
+
+      // Check for fish ingredients
+      const fishTerms = ['fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'bass', 'trout', 'seafood'];
+      const hasMatchingFish = fishTerms.some(term => 
+        ingredient.name.toLowerCase().includes(term) ||
+        (ingredient.notes?.toLowerCase().includes(term) ?? false)
+      );
+      if (hasMatchingFish) {
+        hasFish = true;
       }
     });
   }
@@ -304,7 +316,7 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
       flavorings: fermentedFlavorings,
       preparationMethod: hasFementation
     },
-    isPescatarian: pescatarianScore === 0,
+    isPescatarian: pescatarianScore === 0 && hasFish,
     pescatarianScore,
     nonPescatarianIngredients: nonPescatarianFound
   };
