@@ -6,30 +6,34 @@ import Image from 'next/image';
 import AuthModal from './AuthModal';
 import { Search, Home } from 'lucide-react';
 
-const Navbar = () => {
+interface NavbarProps {
+  onHomeClick: () => void;
+  onSearch: (term: string) => Promise<void>;
+}
+
+const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
   const { data: session, status } = useSession();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  console.log("Navbar session data:", session);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
-    
-    // Dispatch custom event instead of navigating
-    window.dispatchEvent(new CustomEvent('searchRecipes', {
-      detail: { searchTerm: searchTerm.trim() }
-    }));
-    
-    // Clear the search input
-    setSearchTerm('');
+    const trimmedSearchTerm = searchTerm.trim();
+    if (!trimmedSearchTerm) return;
+
+    await onSearch(trimmedSearchTerm);
   };
 
   const HomeButton = () => (
     <button
       onClick={() => {
-        window.location.href = '/';
+        onHomeClick();
+        // Dispatch event to hide favorites if showing
+        window.dispatchEvent(new CustomEvent('hideFavoriteRecipes'));
       }}
       className="px-4 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-2"
     >

@@ -7,8 +7,11 @@ import RecipeCard from '@/app/components/recipe/RecipeCard';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import FlagSubmission from '../recipe/FlagSubmission';
 import { Recipe as AppRecipe } from '@/app/types/recipe';
+import AlbumManager from '../albums/AlbumManager';
 
 type Recipe = AppRecipe;
+
+type Tab = 'all' | 'albums';
 
 interface FavoriteRecipesProps {
   isVisible: boolean;
@@ -20,6 +23,7 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [flaggedRecipe, setFlaggedRecipe] = useState<Recipe | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('all');
 
   useEffect(() => {
     const fetchFavoriteRecipes = async () => {
@@ -90,29 +94,60 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
           </button>
         </div>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             Favourite Recipes
           </h1>
         </div>
 
-        {favoriteRecipes.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-800">
-              You haven&apos;t saved any recipes as favourites yet.
-            </p>
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
+            <button
+              className={`${
+                activeTab === 'all'
+                  ? 'bg-white text-black shadow'
+                  : 'text-gray-600 hover:text-gray-800'
+              } px-4 py-2 rounded-lg transition-colors duration-200`}
+              onClick={() => setActiveTab('all')}
+            >
+              All Favorites
+            </button>
+            <button
+              className={`${
+                activeTab === 'albums'
+                  ? 'bg-white text-black shadow'
+                  : 'text-gray-600 hover:text-gray-800'
+              } px-4 py-2 rounded-lg transition-colors duration-200`}
+              onClick={() => setActiveTab('albums')}
+            >
+              Albums
+            </button>
           </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'all' ? (
+          favoriteRecipes.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-gray-800">
+                You haven&apos;t saved any recipes as favourites yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+              {favoriteRecipes.map(recipe => (
+                <RecipeCard 
+                  key={recipe.id} 
+                  recipe={recipe} 
+                  isLoggedIn={true}
+                  onFlagClick={() => setFlaggedRecipe(recipe)}
+                />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
-            {favoriteRecipes.map(recipe => (
-              <RecipeCard 
-                key={recipe.id} 
-                recipe={recipe} 
-                isLoggedIn={true}
-                onFlagClick={() => setFlaggedRecipe(recipe)}
-              />
-            ))}
-          </div>
+          <AlbumManager />
         )}
       </div>
     </div>

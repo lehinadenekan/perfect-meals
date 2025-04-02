@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from './components/Navbar';
 import TypewriterHeader from './components/TypewriterHeader';
 import DietaryPreferenceSelector from './components/dietary/DietaryPreferenceSelector';
@@ -19,58 +20,76 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const searchParams = useSearchParams();
 
+  const performSearch = useCallback(async (term: string) => {
+    setShowFavorites(false); // Hide favorites when searching
+    setIsSearching(true);
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/recipes/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dietTypes: [],
+          selectedRegions: [],
+          excludedFoods: [],
+          searchInput: term,
+          allowPartialMatch: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch recipes');
+      }
+      const data = await response.json();
+      setRecipes(data.recipes || []);
+    } catch (error) {
+      console.error('Error searching recipes:', error);
+      alert('Failed to search recipes. Please try again.');
+      setRecipes([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Handle search params changes
   useEffect(() => {
-    // Listen for the custom event from the navbar
+    const query = searchParams.get('q');
+    if (query) {
+      setSearchTerm(query);
+      performSearch(query);
+    } else {
+      setIsSearching(false);
+      setSearchTerm('');
+    }
+  }, [searchParams, performSearch]);
+
+  // Handle favorite recipes event
+  useEffect(() => {
     const handleShowFavorites = () => {
       setShowFavorites(true);
+      setIsSearching(false);
+      setSearchTerm('');
     };
 
-    const handleSearch = async (event: Event) => {
-      const customEvent = event as CustomEvent<{ searchTerm: string }>;
-      const searchTerm = customEvent.detail.searchTerm;
-      setSearchTerm(searchTerm); // Store the search term
-      setIsSearching(true);
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/recipes/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            dietTypes: [],
-            selectedRegions: [],
-            excludedFoods: [],
-            searchInput: searchTerm, // Use the search term directly from the event
-            allowPartialMatch: true
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch recipes');
-        }
-        const data = await response.json();
-        setRecipes(data.recipes || []);
-      } catch (error) {
-        console.error('Error searching recipes:', error);
-        alert('Failed to search recipes. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
+    const handleHideFavorites = () => {
+      setShowFavorites(false);
     };
 
     window.addEventListener('showFavoriteRecipes', handleShowFavorites);
-    window.addEventListener('searchRecipes', handleSearch);
-
+    window.addEventListener('hideFavoriteRecipes', handleHideFavorites);
+    
     return () => {
       window.removeEventListener('showFavoriteRecipes', handleShowFavorites);
-      window.removeEventListener('searchRecipes', handleSearch);
+      window.removeEventListener('hideFavoriteRecipes', handleHideFavorites);
     };
   }, []);
 
-  // Remove the separate handleGenerateRecipes function since we're not using it anymore
-  const handleGenerateMore = async () => {
+  const handleMoreSearchResults = useCallback(async () => {
+    if (!searchTerm) return;
     setIsLoading(true);
     try {
       const response = await fetch('/api/recipes/generate', {
@@ -93,21 +112,47 @@ export default function Home() {
       const data = await response.json();
       setRecipes(data.recipes || []);
     } catch (error) {
-      console.error('Error searching recipes:', error);
-      alert('Failed to search recipes. Please try again.');
+      console.error('Error generating more recipes:', error);
+      alert('Failed to generate more recipes. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchTerm]);
+
+  // Function to handle home navigation
+  const handleHomeClick = useCallback(() => {
+    setShowFavorites(false);
+    setIsSearching(false);
+    setSearchTerm('');
+    setRecipes([]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#ffc800]">
-      <Navbar />
+      <Navbar onHomeClick={handleHomeClick} onSearch={performSearch} />
       <div className="container mx-auto p-8 flex flex-col items-center justify-center space-y-12">
         <TypewriterHeader />
         
-        {/* Toggle visibility based on state */}
-        {!showFavorites && !isSearching && (
+        {showFavorites ? (
+          <FavoriteRecipes 
+            isVisible={true} 
+            onBack={() => {
+              setShowFavorites(false);
+              handleHomeClick();
+            }} 
+          />
+        ) : isSearching ? (
+          <SearchResults
+            searchTerm={searchTerm}
+            recipes={recipes}
+            isLoading={isLoading}
+            onBackToPreferences={() => {
+              setIsSearching(false);
+              setSearchTerm('');
+            }}
+            onGenerateMore={handleMoreSearchResults}
+          />
+        ) : (
           <DietaryPreferenceSelector
             selectedDiets={selectedDiets}
             setSelectedDiets={setSelectedDiets}
@@ -121,21 +166,6 @@ export default function Home() {
             setCurrentStep={setCurrentStep}
           />
         )}
-        {!showFavorites && isSearching && (
-          <SearchResults
-            searchTerm={searchTerm}
-            recipes={recipes}
-            isLoading={isLoading}
-            onBackToPreferences={() => setIsSearching(false)}
-            onGenerateMore={handleGenerateMore}
-          />
-        )}
-        <FavoriteRecipes 
-          isVisible={showFavorites} 
-          onBack={() => {
-            setShowFavorites(false);
-          }} 
-        />
       </div>
     </main>
   );

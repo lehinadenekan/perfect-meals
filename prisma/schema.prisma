@@ -47,49 +47,53 @@ model User {
   preferences        UserPreference?
   recipeHistory      UserRecipeHistory[]
   savedRecipes       Recipe[]                @relation("SavedRecipes")
+  albums             Album[]
 
   @@map("users")
 }
 
 model Recipe {
-  id                 String               @id @default(cuid())
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  title              String
+  id                 String                   @id @default(cuid())
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  title              String                   @unique
   description        String?
   cookingTime        Int?
   servings           Int?
   difficulty         String?
   cuisineType        String?
   authorId           String
-  isVegetarian       Boolean?             @default(false)
-  isVegan            Boolean?             @default(false)
-  isGlutenFree       Boolean?             @default(false)
-  isNutFree          Boolean?             @default(false)
+  isVegetarian       Boolean?                 @default(false)
+  isVegan            Boolean?                 @default(false)
+  isGlutenFree       Boolean?                 @default(false)
+  isNutFree          Boolean?                 @default(false)
   jobId              String?
-  isFermented        Boolean?             @default(false)
-  isLactoseFree      Boolean?             @default(false)
-  isLowFodmap        Boolean?             @default(false)
-  isPescatarian      Boolean?             @default(false)
-  needsDietaryReview Boolean              @default(false)
+  isFermented        Boolean?                 @default(false)
+  isLactoseFree      Boolean?                 @default(false)
+  isLowFodmap        Boolean?                 @default(false)
+  isPescatarian      Boolean?                 @default(false)
+  needsDietaryReview Boolean                  @default(false)
   imageUrl           String?
   regionOfOrigin     String?
+  search_vector      Unsupported("tsvector")?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]
   instructions       Instruction[]
   nutritionFacts     NutritionFacts?
-  author             User                 @relation("AuthoredRecipes", fields: [authorId], references: [id])
-  generationJob      RecipeGenerationJob? @relation("JobRecipes", fields: [jobId], references: [id])
+  author             User                     @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  generationJob      RecipeGenerationJob?     @relation("JobRecipes", fields: [jobId], references: [id])
   reviews            Review[]
   recipeHistory      UserRecipeHistory[]
-  categories         Category[]           @relation("CategoryToRecipe")
-  cuisines           Cuisine[]            @relation("CuisineRecipes")
-  fusionCuisines     Cuisine[]            @relation("RecipeFusionCuisines")
-  tags               Tag[]                @relation("RecipeToTag")
-  savedBy            User[]               @relation("SavedRecipes")
+  categories         Category[]               @relation("CategoryToRecipe")
+  cuisines           Cuisine[]                @relation("CuisineRecipes")
+  fusionCuisines     Cuisine[]                @relation("RecipeFusionCuisines")
+  tags               Tag[]                    @relation("RecipeToTag")
+  savedBy            User[]                   @relation("SavedRecipes")
+  albums             RecipeToAlbum[]
 
   @@index([authorId])
   @@index([jobId])
+  @@index([search_vector], type: Gin)
 }
 
 model Ingredient {
@@ -260,5 +264,34 @@ model DietaryFeedback {
   updatedAt            DateTime @updatedAt
   recipe               Recipe   @relation(fields: [recipeId], references: [id])
 
+  @@index([recipeId])
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipes     RecipeToAlbum[]
+  isPublic    Boolean  @default(false)
+
+  @@index([userId])
+}
+
+model RecipeToAlbum {
+  id        String   @id @default(cuid())
+  albumId   String
+  recipeId  String
+  addedAt   DateTime @default(now())
+
+  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([albumId, recipeId])
+  @@index([albumId])
   @@index([recipeId])
 }
