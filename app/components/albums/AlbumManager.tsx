@@ -3,26 +3,32 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 
+interface RecipeStub {
+  id: string;
+  title: string;
+  imageUrl?: string;
+}
+
+interface RecipeLink {
+  recipe: RecipeStub;
+}
+
 interface Album {
   id: string;
   name: string;
   description?: string;
   coverImage?: string;
   createdAt: string;
-  recipes: {
-    recipe: {
-      id: string;
-      title: string;
-      imageUrl?: string;
-    };
-  }[];
+  recipes: RecipeLink[];
 }
 
 interface AlbumManagerProps {
   onAlbumSelect?: (albumId: string) => void;
+  refreshTrigger?: number;
+  onViewAlbum?: (album: Album) => void;
 }
 
-export default function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
+export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbum }: AlbumManagerProps) {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
@@ -31,10 +37,13 @@ export default function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("AlbumManager: Fetching albums due to mount or refresh trigger.");
     fetchAlbums();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchAlbums = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/albums');
       if (!response.ok) throw new Error('Failed to fetch albums');
@@ -151,7 +160,7 @@ export default function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
         {albums.map((album) => (
           <div
             key={album.id}
-            onClick={() => onAlbumSelect?.(album.id)}
+            onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}
             className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
           >
             <div className="aspect-video bg-gray-200 relative">

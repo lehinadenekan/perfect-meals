@@ -2,50 +2,55 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
+import LoadingSpinner from '../shared/LoadingSpinner';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import FlagSubmission from '../recipe/FlagSubmission';
 import { Recipe as AppRecipe } from '@/app/types/recipe';
 import AlbumManager from '../albums/AlbumManager';
+import type { Album } from '@prisma/client';
+import AlbumDetailsView from '../albums/AlbumDetailsView';
 
 type Recipe = AppRecipe;
 
-type Tab = 'all' | 'albums';
+type ViewMode = 'allFavorites' | 'allAlbums' | 'albumDetails';
 
 interface FavoriteRecipesProps {
-  isVisible: boolean;
   onBack: () => void;
+  onAlbumUpdate: () => void;
+  albumRefreshTrigger: number;
 }
 
-export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesProps) {
+export default function FavoriteRecipes({ 
+  onBack, 
+  onAlbumUpdate, 
+  albumRefreshTrigger 
+}: FavoriteRecipesProps) {
   const { data: session } = useSession();
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [flaggedRecipe, setFlaggedRecipe] = useState<Recipe | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('allFavorites');
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
 
   useEffect(() => {
-    const fetchFavoriteRecipes = async () => {
-      if (!isVisible || !session?.user?.email) return;
-      
+    const fetchFavorites = async () => {
+      if (!session?.user?.id) return;
+      setIsLoading(true);
       try {
-        setIsLoading(true);
         const response = await fetch('/api/recipes/favorites');
-        if (!response.ok) throw new Error('Failed to fetch favorite recipes');
+        if (!response.ok) throw new Error('Failed to fetch favorites');
         const data = await response.json();
-        setFavoriteRecipes(data);
-      } catch (error) {
-        console.error('Error fetching favorite recipes:', error);
+        setFavoriteRecipes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching favorite recipes:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchFavoriteRecipes();
-  }, [isVisible, session?.user?.email]);
-
-  if (!isVisible) return null;
+    fetchFavorites();
+  }, [session]);
 
   if (!session) {
     return (
@@ -69,24 +74,24 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
     );
   }
 
+  const handleBackClick = () => {
+    setViewMode('allFavorites');
+    setSelectedAlbum(null);
+    onBack();
+  };
+
+  const handleViewAlbumDetails = (album: Album) => {
+    console.log("Viewing album details:", album);
+    setSelectedAlbum(album);
+    setViewMode('albumDetails');
+  };
+
   return (
     <div className="w-full py-12 transition-all duration-300">
-      {/* Flag Submission Modal */}
-      {flaggedRecipe && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
-            <FlagSubmission
-              recipe={flaggedRecipe}
-              onBack={() => setFlaggedRecipe(null)}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative">
           <button
-            onClick={onBack}
+            onClick={handleBackClick}
             className="absolute -left-2 -top-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center group"
             aria-label="Go back"
           >
@@ -100,56 +105,77 @@ export default function FavoriteRecipes({ isVisible, onBack }: FavoriteRecipesPr
           </h1>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
           <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
             <button
               className={`${
-                activeTab === 'all'
+                viewMode === 'allFavorites'
                   ? 'bg-white text-black shadow'
                   : 'text-gray-600 hover:text-gray-800'
               } px-4 py-2 rounded-lg transition-colors duration-200`}
-              onClick={() => setActiveTab('all')}
+              onClick={() => setViewMode('allFavorites')}
             >
               All Favorites
             </button>
             <button
               className={`${
-                activeTab === 'albums'
+                viewMode === 'allAlbums'
                   ? 'bg-white text-black shadow'
                   : 'text-gray-600 hover:text-gray-800'
               } px-4 py-2 rounded-lg transition-colors duration-200`}
-              onClick={() => setActiveTab('albums')}
+              onClick={() => setViewMode('allAlbums')}
             >
               Albums
             </button>
           </div>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'all' ? (
-          favoriteRecipes.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-gray-800">
-                You haven&apos;t saved any recipes as favourites yet.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
-              {favoriteRecipes.map(recipe => (
-                <RecipeCard 
-                  key={recipe.id} 
-                  recipe={recipe} 
-                  isLoggedIn={true}
-                  onFlagClick={() => setFlaggedRecipe(recipe)}
-                />
-              ))}
-            </div>
-          )
-        ) : (
-          <AlbumManager />
-        )}
+        <div className="mt-6 w-full">
+          {viewMode === 'allFavorites' && (
+            favoriteRecipes.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-800">
+                  You haven&apos;t saved any recipes as favourites yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+                {favoriteRecipes.map(recipe => (
+                  <div key={recipe.id}> 
+                    <RecipeCard 
+                      recipe={recipe} 
+                      onFlagClick={() => setFlaggedRecipe(recipe)}
+                      onAlbumUpdate={onAlbumUpdate}
+                    />
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {viewMode === 'allAlbums' && (
+            <AlbumManager 
+              refreshTrigger={albumRefreshTrigger}
+              onViewAlbum={handleViewAlbumDetails}
+            />
+          )}
+
+          {viewMode === 'albumDetails' && selectedAlbum && (
+            <AlbumDetailsView
+              album={selectedAlbum}
+              onBack={() => setViewMode('allAlbums')}
+              onAlbumUpdate={onAlbumUpdate}
+            />
+          )}
+        </div>
       </div>
+
+      {flaggedRecipe && (
+        <FlagSubmission
+          recipe={flaggedRecipe}
+          onBack={() => setFlaggedRecipe(null)}
+        />
+      )}
     </div>
   );
 } 

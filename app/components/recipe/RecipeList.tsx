@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
-import { Recipe } from '@prisma/client'
+// Import the frontend Recipe type definition instead of the Prisma one
+// import { Recipe } from '@prisma/client' 
+import { Recipe } from '@/app/types/recipe'; // Assuming this is the correct path
 import RecipeCard from './RecipeCard'
 
 interface RecipeListProps {

@@ -11,17 +11,19 @@ interface DietaryInfoProps {
 export default function DietaryInfo({ analysis, recipe }: DietaryInfoProps) {
   // Organize badges by category for better visual grouping
   const dietaryBadges = [
-    // Diet type badges
+    // Diet type badges (from recipe object)
     { condition: recipe.isVegetarian, label: 'Vegetarian', bgColor: 'bg-green-100', textColor: 'text-green-800' },
     { condition: recipe.isVegan, label: 'Vegan', bgColor: 'bg-green-100', textColor: 'text-green-800' },
-    { condition: analysis.isPescatarian, label: 'Pescatarian', bgColor: 'bg-cyan-100', textColor: 'text-cyan-800' },
+    // Pescatarian comes from ingredient analysis
+    { condition: analysis.isPescatarian, label: 'Pescatarian', bgColor: 'bg-cyan-100', textColor: 'text-cyan-800' }, 
     
-    // Allergen badges
+    // Allergen badges (from recipe object)
     { condition: recipe.isGlutenFree, label: 'Gluten Free', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800' },
     { condition: recipe.isLactoseFree, label: 'Lactose Free', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
     { condition: recipe.isNutFree, label: 'Nut Free', bgColor: 'bg-orange-100', textColor: 'text-orange-800' },
     
-    // Special content badges
+    // Special content badges (from ingredient analysis)
+    // Assuming isLowFodmap and isFermented are reliable results from analyzeDietary
     { condition: analysis.isLowFodmap, label: 'Low FODMAP', bgColor: 'bg-emerald-100', textColor: 'text-emerald-800' },
     { condition: analysis.isFermented, label: 'Fermented', bgColor: 'bg-purple-100', textColor: 'text-purple-800' },
   ];

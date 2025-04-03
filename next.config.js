@@ -9,6 +9,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'platform-lookaside.fbsbx.com',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '**',
       },

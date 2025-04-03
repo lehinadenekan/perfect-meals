@@ -111,6 +111,15 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
                         >
                           Favourite Recipes
                         </button>
+                        <button
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('showRecentlyViewed'));
+                            setIsDropdownOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Recently Viewed
+                        </button>
                       </div>
                     </div>
                   )}

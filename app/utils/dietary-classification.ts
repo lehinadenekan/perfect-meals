@@ -1,17 +1,17 @@
-import { Recipe } from '@/app/types/recipe';
+import { Recipe, Ingredient } from '../types/recipe';
 
-interface FodmapIngredient {
+export interface FodmapIngredient {
   name: string;
   threshold: number;
 }
 
-interface FermentedIngredient {
+export interface FermentedIngredient {
   name: string;
   role: 'main' | 'flavoring';
 }
 
 // FODMAP classification data with thresholds (in grams)
-const HIGH_FODMAP_INGREDIENTS: { [key: string]: FodmapIngredient[] } = {
+export const HIGH_FODMAP_INGREDIENTS: { [key: string]: FodmapIngredient[] } = {
   fruits: [
     { name: 'apple', threshold: 35 },
     { name: 'pear', threshold: 30 },
@@ -78,7 +78,7 @@ const HIGH_FODMAP_INGREDIENTS: { [key: string]: FodmapIngredient[] } = {
 };
 
 // Fermented foods classification with role indicators
-const FERMENTED_FOODS: { [key: string]: FermentedIngredient[] } = {
+export const FERMENTED_FOODS: { [key: string]: FermentedIngredient[] } = {
   dairy: [
     { name: 'yogurt', role: 'main' },
     { name: 'kefir', role: 'main' },
@@ -129,25 +129,15 @@ const FERMENTED_FOODS: { [key: string]: FermentedIngredient[] } = {
   ]
 };
 
-// Enhanced non-pescatarian ingredients with categories
-const NON_PESCATARIAN_INGREDIENTS: { [key: string]: string[] } = {
-  meats: [
-    'beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'goose',
-    'veal', 'venison', 'rabbit', 'goat', 'mutton'
-  ],
-  processedMeats: [
-    'bacon', 'ham', 'sausage', 'salami', 'prosciutto', 'pepperoni',
-    'chorizo', 'hot dog', 'bratwurst', 'jerky'
-  ],
-  animalByproducts: [
-    'lard', 'tallow', 'gelatin', 'animal shortening', 'schmaltz',
-    'bone broth', 'beef stock', 'chicken stock'
-  ],
-  additives: [
-    'carmine', 'cochineal', 'isinglass', 'rennet', 'shellac',
-    'lanolin', 'oleic acid', 'capric acid', 'glycerin'
-  ]
-};
+// Define nut ingredients
+const NUT_INGREDIENTS = [
+  // Tree nuts
+  'almond', 'cashew', 'pecan', 'walnut', 'macadamia', 'pistachio', 'hazelnut', 'brazil nut',
+  // Nut-derived ingredients
+  'almond milk', 'almond flour', 'cashew milk', 'cashew cream',
+  // Exclude peanut butter and seeds
+  // 'peanut butter', 'sunflower seeds', 'pumpkin seeds', 'sesame seeds', 'chia seeds', 'flax seeds'
+];
 
 interface IngredientAnalysisDetails {
   name: string;
@@ -218,11 +208,6 @@ function analyzeIngredient(
   return { found: false, score: 0 };
 }
 
-// Flatten and process ingredient lists
-const allHighFodmapIngredients = Object.values(HIGH_FODMAP_INGREDIENTS).flat();
-const allFermentedFoods = Object.values(FERMENTED_FOODS).flat();
-const allNonPescatarianFoods = Object.values(NON_PESCATARIAN_INGREDIENTS).flat();
-
 export interface DietaryAnalysis {
   isLowFodmap: boolean;
   fodmapScore: number;
@@ -234,76 +219,47 @@ export interface DietaryAnalysis {
     flavorings: string[];
     preparationMethod: boolean;
   };
+  hasNuts: boolean;
   isPescatarian: boolean;
-  pescatarianScore: number;
-  nonPescatarianIngredients: string[];
 }
 
 export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
-  // FODMAP analysis
-  let fodmapScore = 0;
   const fodmapDetails: IngredientAnalysisDetails[] = [];
-  
-  if (recipe?.ingredients) {
-    recipe.ingredients.forEach(ingredient => {
-      const analysis = analyzeIngredient(ingredient, allHighFodmapIngredients);
-      if (analysis.found && analysis.details) {
-        fodmapScore += analysis.score;
-        fodmapDetails.push(analysis.details);
-      }
-    });
-  }
-
-  // Fermentation analysis
-  let fermentationScore = 0;
-  const mainFermentedIngredients: string[] = [];
+  const fermentedMainIngredients: string[] = [];
   const fermentedFlavorings: string[] = [];
-  
-  if (recipe?.ingredients) {
-    recipe.ingredients.forEach(ingredient => {
-      const analysis = analyzeIngredient(ingredient, allFermentedFoods);
-      if (analysis.found && analysis.details && analysis.details.role) {
-        fermentationScore += analysis.details.role === 'main' ? 1 : 0.5;
+  let fodmapScore = 0;
+  let fermentationScore = 0;
+  let hasNuts = false;
+
+  recipe.ingredients.forEach((ingredient: Ingredient) => {
+    // FODMAP analysis
+    for (const category of Object.values(HIGH_FODMAP_INGREDIENTS)) {
+      const analysis = analyzeIngredient(ingredient, category);
+      if (analysis.found && analysis.details) {
+        fodmapDetails.push(analysis.details);
+        fodmapScore += analysis.score;
+      }
+    }
+
+    // Fermentation analysis
+    for (const category of Object.values(FERMENTED_FOODS)) {
+      const analysis = analyzeIngredient(ingredient, category);
+      if (analysis.found && analysis.details) {
         if (analysis.details.role === 'main') {
-          mainFermentedIngredients.push(analysis.details.name);
+          fermentedMainIngredients.push(analysis.details.name);
         } else {
           fermentedFlavorings.push(analysis.details.name);
         }
+        fermentationScore += analysis.score;
       }
-    });
-  }
+    }
 
-  // Check for fermentation in preparation
-  const hasFementation = recipe.description?.toLowerCase().includes('ferment') || false;
-  if (hasFementation) {
-    fermentationScore += 1;
-  }
-
-  // Pescatarian analysis
-  let pescatarianScore = 0;
-  const nonPescatarianFound: string[] = [];
-  let hasFish = false;
-  
-  if (recipe?.ingredients) {
-    recipe.ingredients.forEach(ingredient => {
-      // Check for non-pescatarian ingredients (meat)
-      const meatAnalysis = analyzeIngredient(ingredient, allNonPescatarianFoods);
-      if (meatAnalysis.found) {
-        pescatarianScore += meatAnalysis.score;
-        nonPescatarianFound.push(ingredient.name);
-      }
-
-      // Check for fish ingredients
-      const fishTerms = ['fish', 'salmon', 'tuna', 'cod', 'halibut', 'tilapia', 'bass', 'trout', 'seafood'];
-      const hasMatchingFish = fishTerms.some(term => 
-        ingredient.name.toLowerCase().includes(term) ||
-        (ingredient.notes?.toLowerCase().includes(term) ?? false)
-      );
-      if (hasMatchingFish) {
-        hasFish = true;
-      }
-    });
-  }
+    // Nut analysis
+    const nutAnalysis = analyzeIngredient(ingredient, NUT_INGREDIENTS);
+    if (nutAnalysis.found) {
+      hasNuts = true;
+    }
+  });
 
   return {
     isLowFodmap: fodmapScore < 1,
@@ -312,13 +268,12 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
     isFermented: fermentationScore > 0,
     fermentationScore,
     fermentationDetails: {
-      mainIngredients: mainFermentedIngredients,
+      mainIngredients: fermentedMainIngredients,
       flavorings: fermentedFlavorings,
-      preparationMethod: hasFementation
+      preparationMethod: false
     },
-    isPescatarian: pescatarianScore === 0 && hasFish,
-    pescatarianScore,
-    nonPescatarianIngredients: nonPescatarianFound
+    hasNuts,
+    isPescatarian: recipe.isPescatarian
   };
 }
 
@@ -326,12 +281,14 @@ export function analyzeDietary(recipe: Recipe): DietaryAnalysis {
 export function calculateDietaryFlags(recipe: Recipe): {
   isLowFodmap: boolean;
   isFermented: boolean;
+  hasNuts: boolean;
   isPescatarian: boolean;
 } {
   const analysis = analyzeDietary(recipe);
   return {
     isLowFodmap: analysis.isLowFodmap,
     isFermented: analysis.isFermented,
+    hasNuts: analysis.hasNuts,
     isPescatarian: analysis.isPescatarian
   };
 } 

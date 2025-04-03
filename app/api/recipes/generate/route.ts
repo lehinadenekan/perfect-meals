@@ -442,15 +442,18 @@ export async function POST(request: Request) {
       if (reqBody.dietTypes?.length > 0) {
         for (const diet of reqBody.dietTypes) {
           const normalizedDiet = diet.toLowerCase();
+          const dietField = normalizedDiet === 'fermented' ? 'isFermented' : 
+                           normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
+                           normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
+                           normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
+                           normalizedDiet === 'nut-free' ? 'isNutFree' :
+                           normalizedDiet === 'pescatarian' ? 'isPescatarian' :
+                           `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`;
+          
+          console.log(`Checking count for ${diet} using field ${dietField}`);
           const count = await prisma.recipe.count({
             where: {
-              [normalizedDiet === 'fermented' ? 'isFermented' : 
-               normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
-               normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
-               normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
-               normalizedDiet === 'nut-free' ? 'isNutFree' :
-               normalizedDiet === 'pescatarian' ? 'isPescatarian' :
-               `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`]: true
+              [dietField]: true
             }
           });
           console.log(`Total recipes for ${diet}: ${count}`);

@@ -10,6 +10,7 @@ interface SearchResultsProps {
   isLoading: boolean;
   onBackToPreferences: () => void;
   onGenerateMore: () => void;
+  onAlbumUpdate: () => void;
 }
 
 export default function SearchResults({
@@ -18,6 +19,7 @@ export default function SearchResults({
   isLoading,
   onBackToPreferences,
   onGenerateMore,
+  onAlbumUpdate,
 }: SearchResultsProps) {
   return (
     <div className="w-full py-12 transition-all duration-300">
@@ -60,7 +62,7 @@ export default function SearchResults({
               <RecipeCard 
                 key={recipe.id} 
                 recipe={recipe} 
-                isLoggedIn={true}
+                onAlbumUpdate={onAlbumUpdate}
               />
             ))}
           </div>

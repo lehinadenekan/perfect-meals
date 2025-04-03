@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { 
   XMarkIcon, 
@@ -14,6 +14,7 @@ import { Recipe } from '@/app/types/recipe';
 import Image from 'next/image';
 import FavoriteButton from '../shared/FavoriteButton';
 import FlagSubmission from './FlagSubmission';
+import { addRecentlyViewed } from '@/app/utils/recentlyViewed';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -56,7 +57,18 @@ export default function RecipeDetailModal({ recipe, isOpen, onClose }: RecipeDet
   const [servingMultiplier, setServingMultiplier] = useState(1);
   const [showFlagModal, setShowFlagModal] = useState(false);
   
-  const ingredientGroups = groupIngredients(recipe.ingredients);
+  // Group ingredients only if they exist
+  const ingredientGroups = (recipe.ingredients && Array.isArray(recipe.ingredients))
+    ? groupIngredients(recipe.ingredients)
+    : { main: [], spices: [], garnish: [], other: [] }; // Default empty groups
+
+  // Effect to add recipe to recently viewed when modal opens
+  useEffect(() => {
+    if (isOpen && recipe) {
+      addRecentlyViewed(recipe);
+      console.log("Added to recently viewed:", recipe.title);
+    }
+  }, [isOpen, recipe]); // Run when isOpen changes or the recipe itself changes while open
 
   const handlePrint = () => {
     window.print();
@@ -257,14 +269,22 @@ export default function RecipeDetailModal({ recipe, isOpen, onClose }: RecipeDet
                       <div>
                         <h3 className="text-lg font-semibold mb-4">Instructions</h3>
                         <ol className="space-y-4">
-                          {recipe.instructions.map((instruction) => (
-                            <li key={instruction.id} className="flex gap-4">
-                              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-medium">
-                                {instruction.stepNumber}
-                              </span>
-                              <p className="text-gray-600">{instruction.description}</p>
-                            </li>
-                          ))}
+                          {(recipe.instructions && Array.isArray(recipe.instructions)) ? (
+                             [...recipe.instructions] 
+                              .sort((a, b) => a.stepNumber - b.stepNumber) 
+                              .map((instruction, index) => (
+                                <li key={index} className="flex items-start">
+                                  <span className="mr-3 flex-shrink-0 w-6 h-6 flex items-center justify-center bg-yellow-400 rounded-full text-sm font-bold">
+                                    {instruction.stepNumber}
+                                  </span>
+                                  <span className="text-gray-700">
+                                    {instruction.description}
+                                  </span>
+                                </li>
+                              ))
+                           ) : (
+                             <li><p className="text-gray-500 italic">Instructions not available for this view.</p></li>
+                           )}
                         </ol>
                       </div>
                     </div>

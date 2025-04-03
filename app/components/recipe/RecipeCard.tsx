@@ -7,22 +7,88 @@ import DietaryInfo from './DietaryInfo';
 import { DietaryFeedback } from './DietaryFeedback';
 import FavoriteButton from '../shared/FavoriteButton';
 import RecipeDetailModal from './RecipeDetailModal';
+import AddToAlbumButton from '../albums/AddToAlbumButton';
+import AlbumSelectionDropdown from '../albums/AlbumSelectionDropdown';
 
 interface RecipeCardProps {
   recipe: Recipe;
   isLoggedIn?: boolean;
   onFlagClick?: () => void;
+  onAlbumUpdate?: () => void;
 }
 
-export default function RecipeCard({ recipe, onFlagClick }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: RecipeCardProps) {
+  // --- DEBUG: Log the received recipe prop ---
+  console.log(`RecipeCard rendering with recipe:`, recipe);
+  // -----------------------------------------
+  
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const dietaryAnalysis = analyzeDietary(recipe);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // RE-ADD check: Perform dietary analysis only if ingredients are present
+  const dietaryAnalysis = (recipe.ingredients && Array.isArray(recipe.ingredients))
+    ? analyzeDietary(recipe)
+    : { // Provide a default DietaryAnalysis object
+        isLowFodmap: false,
+        fodmapScore: 0,
+        fodmapDetails: [],
+        isFermented: false,
+        fermentationScore: 0,
+        fermentationDetails: { 
+            mainIngredients: [],
+            flavorings: [],
+            preparationMethod: false,
+        },
+        hasNuts: false,
+        isPescatarian: false,
+      }; 
 
-  // Calculate approximate macros based on calories if available
-  const calories = recipe.calories || 0;
-  const approximateCarbs = Math.round(calories * 0.5 / 4); // 50% of calories from carbs, 4 calories per gram
-  const approximateProtein = Math.round(calories * 0.25 / 4); // 25% of calories from protein, 4 calories per gram
-  const approximateFat = Math.round(calories * 0.25 / 9); // 25% of calories from fat, 9 calories per gram
+  // Calculate macros, using 0 if calories missing
+  const caloriesForCalc = recipe.calories || 0; 
+  const approximateCarbs = Math.round(caloriesForCalc * 0.5 / 4); 
+  const approximateProtein = Math.round(caloriesForCalc * 0.25 / 4);
+  const approximateFat = Math.round(caloriesForCalc * 0.25 / 9);
+
+  // --- API Call Handlers --- 
+  const handleAddToAlbum = async (albumId: string) => {
+    console.log(`RecipeCard: Adding recipe ${recipe.id} to album ${albumId}`); 
+    try {
+      const response = await fetch(`/api/albums/${albumId}/recipes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipeId: recipe.id }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add recipe to album');
+      }
+      console.log("Successfully added to album");
+      onAlbumUpdate?.();
+    } catch (error) {
+      console.error("Error adding recipe to album:", error);
+      throw error;
+    }
+  };
+
+  const handleCreateAndAddAlbum = async (albumName: string) => {
+    console.log(`RecipeCard: Creating album "${albumName}" and adding recipe ${recipe.id}`);
+    try {
+      const response = await fetch('/api/albums', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: albumName, recipeId: recipe.id }),
+      });
+       if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create album');
+      }
+      console.log("Successfully created album and added recipe");
+      onAlbumUpdate?.();
+    } catch (error) {
+       console.error("Error creating album:", error);
+       throw error;
+    }
+  };
 
   return (
     <>
@@ -54,25 +120,28 @@ export default function RecipeCard({ recipe, onFlagClick }: RecipeCardProps) {
             </p>
           </div>
 
-          {/* Dietary Information - fixed height */}
+          {/* Dietary Information - Render based on analysis */}
           <div className="h-[80px] mb-4">
             <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
           </div>
 
-          {/* Nutritional Information - fixed height */}
+          {/* Nutritional Information - Display N/A if original calories missing */}
           <div className="h-[72px] mb-4">
             <div className="flex flex-col space-y-2 text-sm text-gray-600">
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                <span>Carbs: {approximateCarbs}g</span>
+                {/* Check actual recipe.calories for display */}
+                <span>Carbs: {recipe.calories ? `${approximateCarbs}g` : 'N/A'}</span>
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span>Protein: {approximateProtein}g</span>
+                {/* Check actual recipe.calories for display */}
+                <span>Protein: {recipe.calories ? `${approximateProtein}g` : 'N/A'}</span>
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                <span>Fat: {approximateFat}g</span>
+                 {/* Check actual recipe.calories for display */}
+                <span>Fat: {recipe.calories ? `${approximateFat}g` : 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -93,7 +162,18 @@ export default function RecipeCard({ recipe, onFlagClick }: RecipeCardProps) {
             <div className="flex items-center whitespace-nowrap">
               <DietaryFeedback onFlagClick={onFlagClick} />
             </div>
-            <FavoriteButton recipeId={recipe.id} />
+            <div className="flex items-center space-x-2 relative">
+              <FavoriteButton recipeId={recipe.id} />
+              <AddToAlbumButton onClick={() => setIsDropdownOpen(!isDropdownOpen)} />
+              {isDropdownOpen && (
+                <AlbumSelectionDropdown 
+                  recipeId={recipe.id}
+                  onClose={() => setIsDropdownOpen(false)}
+                  onAddToAlbum={handleAddToAlbum}
+                  onCreateAndAddAlbum={handleCreateAndAddAlbum}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
