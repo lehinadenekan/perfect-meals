@@ -2,34 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client';
 
-interface RecipeStub {
-  id: string;
-  title: string;
-  imageUrl?: string;
-}
-
-interface RecipeLink {
-  recipe: RecipeStub;
-}
-
-interface Album {
-  id: string;
-  name: string;
-  description?: string;
-  coverImage?: string;
-  createdAt: string;
-  recipes: RecipeLink[];
-}
+// Define the type for the fetched album data, including the nested recipe relation
+type FetchedAlbum = PrismaAlbum & {
+  recipes: (RecipeToAlbum & {
+    recipe: Recipe;
+  })[];
+};
 
 interface AlbumManagerProps {
   onAlbumSelect?: (albumId: string) => void;
   refreshTrigger?: number;
-  onViewAlbum?: (album: Album) => void;
+  onViewAlbum?: (album: FetchedAlbum) => void;
 }
 
 export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbum }: AlbumManagerProps) {
-  const [albums, setAlbums] = useState<Album[]>([]);
+  const [albums, setAlbums] = useState<FetchedAlbum[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
   const [newAlbumDescription, setNewAlbumDescription] = useState('');
@@ -47,7 +36,7 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
     try {
       const response = await fetch('/api/albums');
       if (!response.ok) throw new Error('Failed to fetch albums');
-      const data = await response.json();
+      const data: FetchedAlbum[] = await response.json();
       setAlbums(data);
     } catch (err) {
       setError('Failed to load albums');
@@ -157,7 +146,7 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {albums.map((album) => (
+        {albums.map((album: FetchedAlbum) => (
           <div
             key={album.id}
             onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}

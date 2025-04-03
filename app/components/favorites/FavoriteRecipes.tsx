@@ -8,12 +8,23 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import FlagSubmission from '../recipe/FlagSubmission';
 import { Recipe as AppRecipe } from '@/app/types/recipe';
 import AlbumManager from '../albums/AlbumManager';
-import type { Album } from '@prisma/client';
+import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client';
 import AlbumDetailsView from '../albums/AlbumDetailsView';
+import { useRouter } from 'next/navigation';
+import MyRecipesView from '../my-recipes/MyRecipesView';
 
-type Recipe = AppRecipe;
+// Define the type for the fetched album data, including the nested recipe relation
+// (Mirrors the definition in AlbumManager.tsx)
+type FetchedAlbum = PrismaAlbum & {
+  recipes: (RecipeToAlbum & {
+    recipe: Recipe;
+  })[];
+};
 
-type ViewMode = 'allFavorites' | 'allAlbums' | 'albumDetails';
+// Rename original Recipe type alias to avoid conflict if needed, or remove if AppRecipe is sufficient
+type FavoriteRecipe = AppRecipe;
+
+type ViewMode = 'allFavorites' | 'allAlbums' | 'albumDetails' | 'myRecipes';
 
 interface FavoriteRecipesProps {
   onBack: () => void;
@@ -27,11 +38,12 @@ export default function FavoriteRecipes({
   albumRefreshTrigger 
 }: FavoriteRecipesProps) {
   const { data: session } = useSession();
-  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const router = useRouter();
+  const [favoriteRecipes, setFavoriteRecipes] = useState<FavoriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [flaggedRecipe, setFlaggedRecipe] = useState<Recipe | null>(null);
+  const [flaggedRecipe, setFlaggedRecipe] = useState<FavoriteRecipe | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('allFavorites');
-  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
+  const [selectedAlbum, setSelectedAlbum] = useState<FetchedAlbum | null>(null);
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -75,15 +87,26 @@ export default function FavoriteRecipes({
   }
 
   const handleBackClick = () => {
-    setViewMode('allFavorites');
-    setSelectedAlbum(null);
-    onBack();
+    if (viewMode === 'albumDetails') {
+      setViewMode('allAlbums');
+      setSelectedAlbum(null);
+    } else if (viewMode === 'allAlbums' || viewMode === 'myRecipes') {
+       setViewMode('allFavorites');
+    } else {
+      setViewMode('allFavorites');
+      setSelectedAlbum(null);
+      onBack();
+    }
   };
 
-  const handleViewAlbumDetails = (album: Album) => {
+  const handleViewAlbumDetails = (album: FetchedAlbum) => {
     console.log("Viewing album details:", album);
     setSelectedAlbum(album);
     setViewMode('albumDetails');
+  };
+
+  const handleCreateRecipeClick = () => {
+    router.push('/recipes/create');
   };
 
   return (
@@ -101,34 +124,49 @@ export default function FavoriteRecipes({
 
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
-            Favourite Recipes
+            {viewMode === 'allFavorites' && 'Favourite Recipes'}
+            {viewMode === 'allAlbums' && 'Recipe Albums'}
+            {viewMode === 'albumDetails' && selectedAlbum?.name}
+            {viewMode === 'myRecipes' && 'My Created Recipes'}
           </h1>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
-            <button
-              className={`${
-                viewMode === 'allFavorites'
-                  ? 'bg-white text-black shadow'
-                  : 'text-gray-600 hover:text-gray-800'
-              } px-4 py-2 rounded-lg transition-colors duration-200`}
-              onClick={() => setViewMode('allFavorites')}
-            >
-              All Favorites
-            </button>
-            <button
-              className={`${
-                viewMode === 'allAlbums'
-                  ? 'bg-white text-black shadow'
-                  : 'text-gray-600 hover:text-gray-800'
-              } px-4 py-2 rounded-lg transition-colors duration-200`}
-              onClick={() => setViewMode('allAlbums')}
-            >
-              Albums
-            </button>
+        {viewMode !== 'albumDetails' && (
+           <div className="flex justify-center mb-8">
+            <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
+              <button
+                className={`${
+                  viewMode === 'allFavorites'
+                    ? 'bg-white text-black shadow'
+                    : 'text-gray-600 hover:text-gray-800'
+                } px-4 py-2 rounded-lg transition-colors duration-200`}
+                onClick={() => setViewMode('allFavorites')}
+              >
+                All Favorites
+              </button>
+              <button
+                className={`${
+                  viewMode === 'allAlbums'
+                    ? 'bg-white text-black shadow'
+                    : 'text-gray-600 hover:text-gray-800'
+                } px-4 py-2 rounded-lg transition-colors duration-200`}
+                onClick={() => setViewMode('allAlbums')}
+              >
+                Albums
+              </button>
+              <button
+                className={`${
+                  viewMode === 'myRecipes'
+                    ? 'bg-white text-black shadow'
+                    : 'text-gray-600 hover:text-gray-800'
+                } px-4 py-2 rounded-lg transition-colors duration-200`}
+                onClick={() => setViewMode('myRecipes')}
+              >
+                My Recipes
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-6 w-full">
           {viewMode === 'allFavorites' && (
@@ -166,6 +204,10 @@ export default function FavoriteRecipes({
               onBack={() => setViewMode('allAlbums')}
               onAlbumUpdate={onAlbumUpdate}
             />
+          )}
+
+          {viewMode === 'myRecipes' && (
+            <MyRecipesView onCreateClick={handleCreateRecipeClick} />
           )}
         </div>
       </div>

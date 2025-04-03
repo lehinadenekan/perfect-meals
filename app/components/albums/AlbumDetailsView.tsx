@@ -1,15 +1,17 @@
 import React from 'react';
 import RecipeCard from '../recipe/RecipeCard';
-// Assuming Album type includes nested recipe structure as fetched from API
-// Use the placeholder type if Prisma import fails
+// Import necessary Prisma types
+import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client';
+
+// Remove local interface definitions
+/*
 interface RecipeStub {
   id: string;
   title: string;
   imageUrl?: string;
-  // Add other fields RecipeCard might need, like description, regionOfOrigin etc.
   description?: string;
   regionOfOrigin?: string;
-  calories?: number; // Example: Add if RecipeCard uses it
+  calories?: number; 
 }
 interface RecipeLink {
   recipe: RecipeStub;
@@ -20,11 +22,20 @@ interface Album {
   description?: string;
   recipes: RecipeLink[];
 }
+*/
+
+// Define the type for the fetched album data, including the nested recipe relation
+type FetchedAlbum = PrismaAlbum & {
+  recipes: (RecipeToAlbum & {
+    recipe: Recipe;
+  })[];
+};
 
 interface AlbumDetailsViewProps {
-  album: Album;
-  onBack: () => void; // Function to go back to the album list view
-  onAlbumUpdate: () => void; // Function to trigger refresh in parent
+  // Update prop type
+  album: FetchedAlbum; 
+  onBack: () => void; 
+  onAlbumUpdate: () => void; 
 }
 
 export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: AlbumDetailsViewProps) {
@@ -52,20 +63,14 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
         <p className="text-center text-gray-500 py-8">This album doesn&apos;t have any recipes yet.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+          {/* Accessing the nested recipe should work correctly with FetchedAlbum type */}
           {album.recipes.map(({ recipe }) => (
-            // Ensure the recipe object passed matches RecipeCard's expected props
-            // We might need to adjust the 'RecipeStub' type or the mapping here
-            // if RecipeCard requires more fields than RecipeStub currently has.
-            // For now, assuming RecipeStub has enough or RecipeCard handles missing fields.
-             <div key={recipe.id} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 p-2 flex justify-center">
+            <div key={recipe.id} className="w-full flex justify-center">
                  <RecipeCard
-                    // Use @ts-expect-error instead
-                    // @ts-expect-error - Temporarily ignore type mismatch if RecipeStub differs significantly from RecipeCard's expected Recipe type
-                    // TODO: Ensure RecipeStub includes all necessary fields for RecipeCard or fetch full recipe details if needed.
+                    // The @ts-expect-error might no longer be needed if the full Recipe type is sufficient
+                    // @ts-expect-error - Re-evaluate if this is still necessary after type changes
                     recipe={recipe}
-                    onAlbumUpdate={onAlbumUpdate} // Pass the refresh handler down
-                    // Add other necessary props RecipeCard expects, like onFlagClick if applicable
-                    // onFlagClick={() => { /* Handle flagging from album view? */ }}
+                    onAlbumUpdate={onAlbumUpdate}
                  />
             </div>
           ))}

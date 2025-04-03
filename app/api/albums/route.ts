@@ -111,7 +111,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating album:", error);
     // Handle potential Prisma errors like unique constraints
-    if (error.code === 'P2002') { // Unique constraint violation (e.g., album name for user)
+    // Check if error is an object and has a 'code' property
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'P2002') { 
         return NextResponse.json({ error: 'Album name already exists' }, { status: 409 }); // 409 Conflict
     }
     return NextResponse.json({ error: 'Failed to create album' }, { status: 500 });
