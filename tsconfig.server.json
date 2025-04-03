@@ -2,9 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
+    "moduleResolution": "node", // Added to override base config
     "outDir": "dist",
     "noEmit": false,
     "jsx": "react"
   },
   "include": ["server.ts"]
-} 
+}
