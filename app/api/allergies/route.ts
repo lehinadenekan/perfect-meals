@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,9 +35,10 @@ interface AllergyInput {
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
+  const userEmail = session?.user?.email;
 
-  if (!session?.user?.email) {
+  if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -49,7 +49,7 @@ export async function PUT(request: Request) {
     // Delete existing allergies
     await prisma.userAllergy.deleteMany({
       where: {
-        userEmail: session.user.email,
+        userEmail: userEmail,
       },
     });
 
@@ -69,7 +69,7 @@ export async function PUT(request: Request) {
         // Then create the user allergy
         return prisma.userAllergy.create({
           data: {
-            userEmail: session.user.email,
+            userEmail: userEmail,
             ingredientId: ingredient.id,
             severity: allergy.severity,
           },

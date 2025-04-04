@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+// import { getServerSession } from 'next-auth'; // Remove
 import prisma from '@/lib/prisma';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+// import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Remove
+import { auth } from '@/auth'; // Add
 
 // GET /api/user/preferences
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
+  const session = await auth(); // Replace
+  const userEmail = session?.user?.email; // Use variable
+
+  if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const userPreferences = await prisma.userPreference.findUnique({
       where: {
-        userEmail: session.user.email,
+        userEmail: userEmail, // Use variable
       },
     });
 
@@ -33,9 +35,10 @@ export async function GET() {
 
 // POST /api/user/preferences
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
+  const session = await auth(); // Replace
+  const userEmail = session?.user?.email; // Use variable
+
+  if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
 
     // First ensure the user exists
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: userEmail } // Use variable
     });
 
     if (!user) {
@@ -60,14 +63,14 @@ export async function POST(request: Request) {
     // Now create or update the preferences using upsert
     const updatedPreferences = await prisma.userPreference.upsert({
       where: {
-        userEmail: session.user.email
+        userEmail: userEmail // Use variable
       },
       update: {
         dietTypes: { set: dietTypes || [] },
         excludedFoods: { set: excludedFoods || [] }
       },
       create: {
-        userEmail: session.user.email,
+        userEmail: userEmail, // Use variable
         dietTypes: dietTypes || [],
         excludedFoods: excludedFoods || [],
         cookingTime: 'MEDIUM',
@@ -91,16 +94,17 @@ export async function POST(request: Request) {
 
 // DELETE /api/user/preferences
 export async function DELETE() {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
+  const session = await auth(); // Replace
+  const userEmail = session?.user?.email; // Use variable
+
+  if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     await prisma.userPreference.delete({
       where: {
-        userEmail: session.user.email,
+        userEmail: userEmail, // Use variable
       },
     });
 

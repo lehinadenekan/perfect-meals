@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
 
 // Helper function to safely convert BigInt to Number
-function safeNumber(value: any): number {
+function safeNumber(value: unknown): number {
   if (typeof value === 'bigint') {
     return Number(value);
   }
-  return value;
+  if (typeof value === 'number') {
+    return value;
+  }
+  return 0;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

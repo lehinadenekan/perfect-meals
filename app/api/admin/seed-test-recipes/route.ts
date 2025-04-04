@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
 
 // Sample image URLs for testing
 const SAMPLE_IMAGES = [
@@ -15,8 +14,10 @@ const SAMPLE_IMAGES = [
 export async function POST() {
   try {
     // Check authentication for the API call
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const session = await auth();
+    const userEmail = session?.user?.email;
+
+    if (!userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,7 +26,7 @@ export async function POST() {
     
     // First try the current user
     authorUser = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: userEmail }
     });
     
     // If current user not found, try admin
@@ -66,10 +67,8 @@ export async function POST() {
           servings: 4,
           difficulty: 'MEDIUM',
           cuisineType: 'International',
-          type: 'DINNER',
           regionOfOrigin: 'International',
           imageUrl: SAMPLE_IMAGES[i],
-          calories: 500,
           isVegetarian: false,
           isVegan: false,
           isGlutenFree: false,
@@ -78,7 +77,7 @@ export async function POST() {
           author: {
             connect: { id: authorUser.id }
           },
-          cuisine: {
+          cuisines: {
             connectOrCreate: {
               where: { name: 'International' },
               create: {
