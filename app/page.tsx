@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from './components/Navbar';
 import TypewriterHeader from './components/TypewriterHeader';
@@ -145,57 +145,60 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#ffc800]">
       <Navbar onHomeClick={handleHomeClick} onSearch={performSearch} />
-      <div className="container mx-auto p-8 flex flex-col items-center justify-center space-y-12">
-        
-        {/* Conditionally render header or keep it static? */}
-        {/* Only show Typewriter if in default view? */}
-        {currentView === 'default' && <TypewriterHeader />} 
-        
-        {/* Main Content Area based on currentView */}
-        {currentView === 'favorites' && (
-          <FavoriteRecipes 
-            // isVisible is implicitly true now
-            onBack={handleGoBackToDefault} // Use generic back handler
-            onAlbumUpdate={triggerAlbumRefresh}
-            albumRefreshTrigger={albumRefreshTrigger}
-          />
-        )}
-        
-        {currentView === 'searchResults' && (
-          <SearchResults
-            searchTerm={searchTerm}
-            recipes={recipes}
-            isLoading={isLoading}
-            onBackToPreferences={() => setCurrentView('default')} // Example: back goes to default
-            onGenerateMore={handleMoreSearchResults}
-            onAlbumUpdate={triggerAlbumRefresh}
-          />
-        )}
-        
-        {currentView === 'recentlyViewed' && (
-           // Render the actual RecentlyViewedRecipes component
-           <RecentlyViewedRecipes 
-             onBack={handleGoBackToDefault}
-             onAlbumUpdate={triggerAlbumRefresh} // Pass down the update trigger
-           />
-        )}
+      {/* Wrap content area in Suspense */}
+      <Suspense fallback={<div className="text-center p-8">Loading...</div>}>
+        <div className="container mx-auto p-8 flex flex-col items-center justify-center space-y-12">
+          
+          {/* Conditionally render header or keep it static? */}
+          {/* Only show Typewriter if in default view? */}
+          {currentView === 'default' && <TypewriterHeader />} 
+          
+          {/* Main Content Area based on currentView */}
+          {currentView === 'favorites' && (
+            <FavoriteRecipes 
+              // isVisible is implicitly true now
+              onBack={handleGoBackToDefault} // Use generic back handler
+              onAlbumUpdate={triggerAlbumRefresh}
+              albumRefreshTrigger={albumRefreshTrigger}
+            />
+          )}
+          
+          {currentView === 'searchResults' && (
+            <SearchResults
+              searchTerm={searchTerm}
+              recipes={recipes}
+              isLoading={isLoading}
+              onBackToPreferences={() => setCurrentView('default')} // Example: back goes to default
+              onGenerateMore={handleMoreSearchResults}
+              onAlbumUpdate={triggerAlbumRefresh}
+            />
+          )}
+          
+          {currentView === 'recentlyViewed' && (
+             // Render the actual RecentlyViewedRecipes component
+             <RecentlyViewedRecipes 
+               onBack={handleGoBackToDefault}
+               onAlbumUpdate={triggerAlbumRefresh} // Pass down the update trigger
+             />
+          )}
 
-        {/* Default view content (Dietary Selector) */}
-        {currentView === 'default' && (
-          <DietaryPreferenceSelector
-            selectedDiets={selectedDiets}
-            setSelectedDiets={setSelectedDiets}
-            excludedFoods={excludedFoods}
-            setExcludedFoods={setExcludedFoods}
-            selectedRegions={selectedRegions}
-            setSelectedRegions={setSelectedRegions}
-            recipes={recipes} // Pass recipes if needed by selector/results
-            setRecipes={setRecipes} // Pass setRecipes if needed
-            currentStep={currentStep}
-            setCurrentStep={setCurrentStep}
-          />
-        )}
-      </div>
+          {/* Default view content (Dietary Selector) */}
+          {currentView === 'default' && (
+            <DietaryPreferenceSelector
+              selectedDiets={selectedDiets}
+              setSelectedDiets={setSelectedDiets}
+              excludedFoods={excludedFoods}
+              setExcludedFoods={setExcludedFoods}
+              selectedRegions={selectedRegions}
+              setSelectedRegions={setSelectedRegions}
+              recipes={recipes} // Pass recipes if needed by selector/results
+              setRecipes={setRecipes} // Pass setRecipes if needed
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+            />
+          )}
+        </div>
+      </Suspense>
     </main>
   );
 } 
