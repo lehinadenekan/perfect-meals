@@ -21,37 +21,37 @@ export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: Recip
   // --- DEBUG: Log the received recipe prop ---
   console.log(`RecipeCard rendering with recipe:`, recipe);
   // -----------------------------------------
-  
+
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
+
   // RE-ADD check: Perform dietary analysis only if ingredients are present
   const dietaryAnalysis = (recipe.ingredients && Array.isArray(recipe.ingredients))
     ? analyzeDietary(recipe)
     : { // Provide a default DietaryAnalysis object
-        isLowFodmap: false,
-        fodmapScore: 0,
-        fodmapDetails: [],
-        isFermented: false,
-        fermentationScore: 0,
-        fermentationDetails: { 
-            mainIngredients: [],
-            flavorings: [],
-            preparationMethod: false,
-        },
-        hasNuts: false,
-        isPescatarian: false,
-      }; 
+      isLowFodmap: false,
+      fodmapScore: 0,
+      fodmapDetails: [],
+      isFermented: false,
+      fermentationScore: 0,
+      fermentationDetails: {
+        mainIngredients: [],
+        flavorings: [],
+        preparationMethod: false,
+      },
+      hasNuts: false,
+      isPescatarian: false,
+    };
 
   // Calculate macros, using 0 if calories missing
-  const caloriesForCalc = recipe.calories || 0; 
-  const approximateCarbs = Math.round(caloriesForCalc * 0.5 / 4); 
+  const caloriesForCalc = recipe.calories || 0;
+  const approximateCarbs = Math.round(caloriesForCalc * 0.5 / 4);
   const approximateProtein = Math.round(caloriesForCalc * 0.25 / 4);
   const approximateFat = Math.round(caloriesForCalc * 0.25 / 9);
 
   // --- API Call Handlers --- 
   const handleAddToAlbum = async (albumId: string) => {
-    console.log(`RecipeCard: Adding recipe ${recipe.id} to album ${albumId}`); 
+    console.log(`RecipeCard: Adding recipe ${recipe.id} to album ${albumId}`);
     try {
       const response = await fetch(`/api/albums/${albumId}/recipes`, {
         method: 'POST',
@@ -78,21 +78,21 @@ export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: Recip
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: albumName, recipeId: recipe.id }),
       });
-       if (!response.ok) {
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create album');
       }
       console.log("Successfully created album and added recipe");
       onAlbumUpdate?.();
     } catch (error) {
-       console.error("Error creating album:", error);
-       throw error;
+      console.error("Error creating album:", error);
+      throw error;
     }
   };
 
   return (
     <>
-      <div 
+      <div
         className="bg-white rounded-lg shadow-md overflow-hidden w-[240px] h-[555px] transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer"
         onClick={() => setShowDetailModal(true)}
       >
@@ -140,7 +140,7 @@ export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: Recip
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                 {/* Check actual recipe.calories for display */}
+                {/* Check actual recipe.calories for display */}
                 <span>Fat: {recipe.calories ? `${approximateFat}g` : 'N/A'}</span>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: Recip
           </div>
 
           {/* Bottom row with flag and heart icons - aligned with bullet points */}
-          <div 
+          <div
             className="flex items-center justify-between w-full h-[24px]"
             onClick={(e) => e.stopPropagation()} // Prevent modal from opening when clicking these buttons
           >
@@ -166,7 +166,7 @@ export default function RecipeCard({ recipe, onFlagClick, onAlbumUpdate }: Recip
               <FavoriteButton recipeId={recipe.id} />
               <AddToAlbumButton onClick={() => setIsDropdownOpen(!isDropdownOpen)} />
               {isDropdownOpen && (
-                <AlbumSelectionDropdown 
+                <AlbumSelectionDropdown
                   recipeId={recipe.id}
                   onClose={() => setIsDropdownOpen(false)}
                   onAddToAlbum={handleAddToAlbum}

@@ -56,7 +56,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
 
   useEffect(() => {
     // Only run on client
-    if (typeof window !== 'undefined') { 
+    if (typeof window !== 'undefined') {
       const storedPrefs = localStorage.getItem('dietaryPrefs');
       if (storedPrefs) {
         try { // Add try-catch for JSON.parse
@@ -217,17 +217,15 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
                     aria-pressed={selectedDiets.includes(dietType)}
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
-                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
-                      selectedDiets.includes(dietType)
+                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
                         ? 'border-yellow-400 text-yellow-500 shadow-lg'
                         : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-center">
                       {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-5 h-5 mr-3 ${
-                          selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
-                        }`,
+                        className: `w-5 h-5 mr-3 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
+                          }`,
                         'aria-hidden': true
                       })}
                       <span className="font-medium">{DIET_TYPES[dietType].title}</span>
@@ -247,17 +245,15 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
                     aria-pressed={selectedDiets.includes(dietType)}
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index + TOP_ROW_DIETS.length)}
-                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${
-                      selectedDiets.includes(dietType)
+                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
                         ? 'border-yellow-400 text-yellow-500 shadow-lg'
                         : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-center">
                       {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-5 h-5 mr-3 ${
-                          selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
-                        }`,
+                        className: `w-5 h-5 mr-3 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
+                          }`,
                         'aria-hidden': true
                       })}
                       <span className="font-medium">{DIET_TYPES[dietType].title}</span>
@@ -294,7 +290,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="w-full max-w-7xl mx-auto"
       role="region"
       aria-label="dietary preferences selection"
@@ -306,13 +302,12 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
             <button
               key={step}
               onClick={() => setCurrentStep(step)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer ${
-                step === currentStep
+              className={`w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer ${step === currentStep
                   ? 'bg-black'
                   : step < currentStep
-                  ? 'bg-yellow-200 hover:bg-yellow-300'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
+                    ? 'bg-yellow-200 hover:bg-yellow-300'
+                    : 'bg-gray-200 hover:bg-gray-300'
+                }`}
               aria-label={`Go to step ${step}`}
               aria-current={step === currentStep ? 'step' : undefined}
             />

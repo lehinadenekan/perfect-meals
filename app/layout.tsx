@@ -14,11 +14,12 @@ export default function RootLayout({
       <head>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1744468975179679"
              crossOrigin="anonymous"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
         <Providers>{children}</Providers>
-        <Analytics />
-        <SpeedInsights />
+        {/* <Analytics /> */}
+        {/* <SpeedInsights /> */}
       </body>
     </html>
   )

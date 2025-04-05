@@ -30,9 +30,9 @@ const nextConfig = {
   webpack: (config, { dev }) => {
     config.externals = [...config.externals, 'pg-native'];
 
-    if (dev) {
-      config.cache = false;
-    }
+    // if (dev) {
+    //   config.cache = false;
+    // }
 
     return config;
   },

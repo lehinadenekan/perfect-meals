@@ -26,8 +26,8 @@ export default function HomePageClient() {
 
   const [albumRefreshTrigger, setAlbumRefreshTrigger] = useState(0);
   const triggerAlbumRefresh = useCallback(() => {
-      console.log("Triggering album list refresh");
-      setAlbumRefreshTrigger(prev => prev + 1);
+    console.log("Triggering album list refresh");
+    setAlbumRefreshTrigger(prev => prev + 1);
   }, []);
 
   const [currentView, setCurrentView] = useState<CurrentView>('default');
@@ -60,7 +60,7 @@ export default function HomePageClient() {
   useEffect(() => {
     const query = searchParams.get('q');
     if (query && !searchTerm) { // Only perform search if query exists and isn't already the current term
-        performSearch(query);
+      performSearch(query);
     }
     // Add logic here if you want clearing the 'q' param to reset the view
     // else if (!query && currentView === 'searchResults') {
@@ -72,7 +72,7 @@ export default function HomePageClient() {
 
   useEffect(() => {
     // Only run on the client where window is defined
-    if (typeof window !== 'undefined') { 
+    if (typeof window !== 'undefined') {
       const handleShowFavorites = () => {
         setCurrentView('favorites');
         setSearchTerm('');
@@ -85,7 +85,7 @@ export default function HomePageClient() {
       };
       window.addEventListener('showFavoriteRecipes', handleShowFavorites);
       window.addEventListener('showRecentlyViewed', handleShowRecentlyViewed);
-      
+
       // Return cleanup function within the client-side block
       return () => {
         window.removeEventListener('showFavoriteRecipes', handleShowFavorites);
@@ -95,7 +95,7 @@ export default function HomePageClient() {
   }, []);
 
   const handleMoreSearchResults = useCallback(async () => {
-     // TODO: Implement actual fetch logic for more results if needed
+    // TODO: Implement actual fetch logic for more results if needed
     if (!searchTerm) return;
     console.log("Fetching more results for:", searchTerm);
   }, [searchTerm]);
@@ -108,13 +108,13 @@ export default function HomePageClient() {
   }, []);
 
   const handleGoBackToDefault = useCallback(() => {
-      setCurrentView('default');
+    setCurrentView('default');
   }, []);
 
   return (
     <> {/* Use Fragment as we don't need the outer main/navbar here */}
       <Navbar onHomeClick={handleHomeClick} onSearch={performSearch} />
-      <div className="container mx-auto p-8 flex flex-col items-center justify-center space-y-12">
+      <div className="container mx-auto p-4 md:p-8 flex flex-col items-center justify-center space-y-6 md:space-y-12">
         {currentView === 'default' && <TypewriterHeader />}
 
         {currentView === 'favorites' && (
@@ -137,10 +137,10 @@ export default function HomePageClient() {
         )}
 
         {currentView === 'recentlyViewed' && (
-           <RecentlyViewedRecipes
-             onBack={handleGoBackToDefault}
-             onAlbumUpdate={triggerAlbumRefresh}
-           />
+          <RecentlyViewedRecipes
+            onBack={handleGoBackToDefault}
+            onAlbumUpdate={triggerAlbumRefresh}
+          />
         )}
 
         {currentView === 'default' && (
