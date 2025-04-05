@@ -1,13 +1,13 @@
 import { ImageService } from '../app/services/imageService';
-import { recipes } from '../prisma/seed-data/recipes';
+import { seedRecipes } from '../prisma/seed-data/recipes';
 
 async function downloadRecipeImages() {
   const imageService = new ImageService();
   const results: { recipe: string; success: boolean; error?: string }[] = [];
 
-  console.log(`Starting download of ${recipes.length} recipe images...`);
+  console.log(`Starting download of ${seedRecipes.length} recipe images...`);
 
-  for (const recipe of recipes) {
+  for (const recipe of seedRecipes) {
     try {
       console.log(`Downloading image for ${recipe.title}...`);
       await imageService.downloadAndStoreImage(recipe.imageUrl, recipe.title);
@@ -26,7 +26,7 @@ async function downloadRecipeImages() {
   // Print summary
   console.log('\nDownload Summary:');
   console.log('----------------');
-  console.log(`Total recipes: ${recipes.length}`);
+  console.log(`Total recipes: ${seedRecipes.length}`);
   console.log(`Successful downloads: ${results.filter(r => r.success).length}`);
   console.log(`Failed downloads: ${results.filter(r => !r.success).length}`);
 

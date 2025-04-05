@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const addRecipeSchema = z.object({
@@ -8,9 +8,13 @@ const addRecipeSchema = z.object({
 });
 
 export async function POST(
-  request: Request,
-  { params }: { params: { albumId: string } }
+  request: NextRequest, // First argument is the Request
+  // @ts-expect-error // Use this instead of @ts-ignore
+  { params } // No type annotation here
 ) {
+  // Assert the type of params when accessing albumId
+  const albumId = (params as { albumId: string }).albumId;
+
   let body: { recipeId?: string } = {}; // Declare body with a more specific type
   try {
     const session = await auth();
@@ -19,7 +23,6 @@ export async function POST(
     }
 
     const userId = session.user.id;
-    const albumId = params.albumId;
 
     try {
       body = await request.json();
@@ -95,7 +98,7 @@ export async function POST(
 
   } catch (error) {
     // Now body is accessible here
-    console.error(`Error adding recipe ${body?.recipeId ?? '(unknown recipe)'} to album ${params.albumId}:`, error);
+    console.error(`Error adding recipe ${body?.recipeId ?? '(unknown recipe)'} to album ${(params as { albumId: string }).albumId}:`, error);
     return NextResponse.json({ error: 'Failed to add recipe to album' }, { status: 500 });
   }
 } 

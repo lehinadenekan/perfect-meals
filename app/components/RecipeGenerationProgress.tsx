@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 
 interface GenerationProgress {
   status: string;
@@ -45,32 +43,20 @@ export function RecipeGenerationProgress({ jobId, onComplete }: Props) {
   const percentComplete = Math.round((progress.completed / progress.total) * 100);
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
-          Generating Your Recipe Collection
-        </h3>
-        {progress.status === 'IN_PROGRESS' && (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        )}
-      </div>
-
+    <div className="w-full max-w-md mx-auto space-y-4 p-4 bg-white rounded-lg shadow">
+      <h2 className="text-lg font-semibold text-center">Generating Recipes...</h2>
       <Progress value={percentComplete} className="w-full" />
-      
-      <div className="flex justify-between text-sm text-gray-600">
-        <span>{progress.completed} of {progress.total} recipes generated</span>
-        <span>{percentComplete}%</span>
+      <div className="text-sm text-gray-600 text-center">
+        {progress.completed}/{progress.total} recipes generated
       </div>
-
       {progress.failed > 0 && (
         <Alert variant="destructive">
           <AlertTitle>Generation Issues</AlertTitle>
           <AlertDescription>
-            {progress.failed} recipes failed to generate. Don't worry - we'll keep trying!
+            {progress.failed} recipes failed to generate. Don&apos;t worry - we&apos;ll keep trying!
           </AlertDescription>
         </Alert>
       )}
-
       {progress.status === 'COMPLETED' && (
         <Alert>
           <AlertTitle>Generation Complete!</AlertTitle>
@@ -79,7 +65,6 @@ export function RecipeGenerationProgress({ jobId, onComplete }: Props) {
           </AlertDescription>
         </Alert>
       )}
-
       {progress.error && (
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>

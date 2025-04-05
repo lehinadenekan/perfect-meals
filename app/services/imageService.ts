@@ -68,7 +68,7 @@ export class ImageService {
       }
       
       return null;
-    } catch (error) {
+    } catch {
       if (attempt < this.maxRetries) {
         console.log(`Retry ${attempt} after error for ${url}`);
         await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
@@ -125,8 +125,8 @@ export class ImageService {
 
       // Return the public URL
       return this.getLocalImagePath(fileName);
-    } catch (error) {
-      console.error(`Error processing image from ${imageUrl}:`, error);
+    } catch {
+      console.error(`Error processing image from ${imageUrl}`);
       return this.copyPlaceholderImage(this.generateImageFileName(imageUrl));
     }
   }

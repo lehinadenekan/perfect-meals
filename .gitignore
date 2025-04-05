@@ -36,3 +36,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts backups/recipes_backup_*.tar.gz
 backups/*.tar.gz
+
+# Large media files
+*.zip
+*.mp4
+*.mov

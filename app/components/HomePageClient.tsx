@@ -71,22 +71,27 @@ export default function HomePageClient() {
   }, [searchParams, performSearch, searchTerm, currentView]);
 
   useEffect(() => {
-    const handleShowFavorites = () => {
-      setCurrentView('favorites');
-      setSearchTerm('');
-      setRecipes([]);
-    };
-    const handleShowRecentlyViewed = () => {
-      setCurrentView('recentlyViewed');
-      setSearchTerm('');
-      setRecipes([]);
-    };
-    window.addEventListener('showFavoriteRecipes', handleShowFavorites);
-    window.addEventListener('showRecentlyViewed', handleShowRecentlyViewed);
-    return () => {
-      window.removeEventListener('showFavoriteRecipes', handleShowFavorites);
-      window.removeEventListener('showRecentlyViewed', handleShowRecentlyViewed);
-    };
+    // Only run on the client where window is defined
+    if (typeof window !== 'undefined') { 
+      const handleShowFavorites = () => {
+        setCurrentView('favorites');
+        setSearchTerm('');
+        setRecipes([]);
+      };
+      const handleShowRecentlyViewed = () => {
+        setCurrentView('recentlyViewed');
+        setSearchTerm('');
+        setRecipes([]);
+      };
+      window.addEventListener('showFavoriteRecipes', handleShowFavorites);
+      window.addEventListener('showRecentlyViewed', handleShowRecentlyViewed);
+      
+      // Return cleanup function within the client-side block
+      return () => {
+        window.removeEventListener('showFavoriteRecipes', handleShowFavorites);
+        window.removeEventListener('showRecentlyViewed', handleShowRecentlyViewed);
+      };
+    }
   }, []);
 
   const handleMoreSearchResults = useCallback(async () => {

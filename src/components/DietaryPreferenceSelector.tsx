@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { DietaryPreference, IngredientpHData } from '../types';
-import { getFilteredIngredientsByPreferences, getAdvancedFilteredIngredients } from '../utils/preference-integration';
+import React, { useState } from 'react';
+import { DietaryPreference } from '../types';
+import { getFilteredIngredientsByPreferences } from '../utils/preference-integration';
+import { type Ingredient } from '../utils/dietary-filters';
 
 interface DietaryPreferenceSelectorProps {
-  onGenerateMeals: (filteredIngredients: IngredientpHData[]) => void;
+  onGenerateMeals: (filteredIngredients: Ingredient[]) => void;
 }
 
 const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({ onGenerateMeals }) => {
@@ -12,12 +13,13 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({ o
   
   // All available dietary preferences
   const availablePreferences: DietaryPreference[] = [
-    'Alkaline', 
+    // 'Alkaline', // Removed
     'Gluten-Free', 
     'Fermented', 
     'Low-FODMAP',
     'Pescatarian',
-    'Mediterranean',
+    // 'Mediterranean', // Removed
+    'Nut-Free', // Ensure this matches the type definition (was added back)
     'Vegan',
     'Vegetarian'
   ];
@@ -33,8 +35,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({ o
   
   // Generate meals based on selected preferences
   const handleGenerateMeals = () => {
-    // Use the advanced filtering to get ingredients based on all selected preferences
-    const filteredIngredients = getAdvancedFilteredIngredients(selectedPreferences);
+    const filteredIngredients = getFilteredIngredientsByPreferences(selectedPreferences);
     
     // Pass filtered ingredients to parent component for meal generation
     onGenerateMeals(filteredIngredients);

@@ -11,6 +11,12 @@ interface Cuisine {
   imageUrl: string;
 }
 
+interface ApiCuisinePreference {
+  cuisineId: string;
+  preferenceLevel: PreferenceLevel;
+  name: string;
+}
+
 const CUISINES: Cuisine[] = [
   {
     id: 'italian',
@@ -79,6 +85,7 @@ type PreferenceLevel = 'love' | 'like' | 'neutral' | 'dislike';
 interface CuisinePreference {
   cuisineId: string;
   level: PreferenceLevel;
+  name: string;
 }
 
 export default function CuisinePreferences() {
@@ -93,12 +100,13 @@ export default function CuisinePreferences() {
         const response = await fetch('/api/cuisine-preferences');
         if (!response.ok) throw new Error('Failed to fetch cuisine preferences');
         
-        const data = await response.json();
+        const data: ApiCuisinePreference[] = await response.json();
         if (data) {
           setPreferences(
-            data.map((pref: any) => ({
+            data.map((pref: ApiCuisinePreference) => ({
               cuisineId: pref.cuisineId,
               level: pref.preferenceLevel,
+              name: pref.name,
             }))
           );
         }
@@ -117,14 +125,30 @@ export default function CuisinePreferences() {
     return preferences.find(p => p.cuisineId === cuisineId)?.level || 'neutral';
   };
 
-  const handlePreferenceChange = (cuisineId: string, level: PreferenceLevel) => {
-    setPreferences(prev => {
-      const existing = prev.find(p => p.cuisineId === cuisineId);
-      if (existing) {
-        return prev.map(p => p.cuisineId === cuisineId ? { ...p, level } : p);
+  const handlePreferenceChange = (
+    cuisineId: string,
+    level: 'love' | 'like' | 'neutral' | 'dislike' | 'remove'
+  ) => {
+    const index = preferences.findIndex((p) => p.cuisineId === cuisineId);
+    const newPreferences = [...preferences];
+
+    if (level === 'remove') {
+      if (index !== -1) {
+        newPreferences.splice(index, 1);
+        setPreferences(newPreferences);
       }
-      return [...prev, { cuisineId, level }];
-    });
+    } else if (index !== -1) {
+      const updatedPreferences = newPreferences.map((pref, i) => 
+        i === index ? { ...pref, level } : pref
+      );
+      setPreferences(updatedPreferences);
+    } else {
+      const cuisineData: { id: string; name: string } | undefined = CUISINES.find(c => c.id === cuisineId);
+      if (cuisineData) {
+        const addedPreferences = [...newPreferences, { cuisineId, level, name: cuisineData.name }];
+        setPreferences(addedPreferences);
+      }
+    }
   };
 
   const getPreferenceColor = (level: PreferenceLevel): string => {

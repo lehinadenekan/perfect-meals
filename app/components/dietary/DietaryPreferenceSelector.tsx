@@ -54,6 +54,26 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
     setSelectedRegions([]);
   }, []); // Empty dependency array means this runs once on mount
 
+  useEffect(() => {
+    // Only run on client
+    if (typeof window !== 'undefined') { 
+      const storedPrefs = localStorage.getItem('dietaryPrefs');
+      if (storedPrefs) {
+        try { // Add try-catch for JSON.parse
+          const parsedPrefs = JSON.parse(storedPrefs);
+          setSelectedDiets(parsedPrefs.selectedDiets || []);
+          setExcludedFoods(parsedPrefs.excludedFoods || []);
+          setSelectedRegions(parsedPrefs.selectedRegions || []);
+        } catch (error) {
+          console.error("Failed to parse dietaryPrefs from localStorage", error);
+          // Optionally clear the invalid item
+          // localStorage.removeItem('dietaryPrefs');
+        }
+      }
+    }
+    // Added missing dependencies
+  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
+
   // Existing handlers
   const handleDietToggle = async (dietType: DietType) => {
     setSelectedDiets((prev: DietType[]) => {

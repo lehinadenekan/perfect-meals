@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserPreference, Recipe, Ingredient, Instruction, NutritionFacts, Prisma } from '@prisma/client';
+import { PrismaClient, User, UserPreference, Recipe, Ingredient, Instruction, NutritionFacts } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 
 export type MockPrismaClient = DeepMockProxy<PrismaClient>;

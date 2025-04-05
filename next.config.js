@@ -38,10 +38,10 @@ const nextConfig = {
   },
   reactStrictMode: true,
   typescript: {
-    ignoreBuildErrors: true // Temporarily ignore TS errors to get the server running
+    // ignoreBuildErrors: true // Temporarily ignore TS errors to get the server running
   },
   eslint: {
-    ignoreDuringBuilds: true // Temporarily ignore ESLint errors
+    // ignoreDuringBuilds: true // Temporarily ignore ESLint errors
   }
 };
 

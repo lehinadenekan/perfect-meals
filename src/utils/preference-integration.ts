@@ -1,21 +1,6 @@
 import { filterIngredients } from './dietary-filters';
-
-export type DietaryPreference = 
-  | 'Gluten-Free'
-  | 'Fermented'
-  | 'Low-FODMAP'
-  | 'Lactose-Free'
-  | 'Pescatarian'
-  | 'Nut-Free'
-  | 'Vegan'
-  | 'Vegetarian';
-
-interface Ingredient {
-  name: string;
-  category: string;
-  variations?: string[];
-  notes?: string;
-}
+import { DietaryPreference } from '../types';
+import type { Ingredient } from './dietary-filters';
 
 /**
  * Maps UI dietary preferences to filtering functions and criteria

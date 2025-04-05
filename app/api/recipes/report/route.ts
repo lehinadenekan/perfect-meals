@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Removed top-level initialization
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
+  // Initialize Resend inside the handler
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   try {
     const { recipeId, recipeTitle, name, email, message } = await request.json();
+
+    if (!process.env.RESEND_API_KEY) {
+      console.error('Resend API Key is not defined. Cannot send report.');
+      throw new Error('Server configuration error: cannot send email report.');
+    }
 
     // Send email using Resend
     await resend.emails.send({

@@ -698,7 +698,8 @@ export function getCuisineByKeyword(keyword: string): RegionalCuisine | undefine
   }
 
   // Then try matching keywords
-  for (const [cuisine, mapping] of Object.entries(CUISINE_MAPPINGS)) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [_cuisine, mapping] of Object.entries(CUISINE_MAPPINGS)) {
     if (mapping.keywords.some(k => keyword.toLowerCase().includes(k))) {
       return mapping;
     }

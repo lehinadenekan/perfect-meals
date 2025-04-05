@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import RecipeSearch from '@/app/components/recipe/RecipeSearch';
+import { RecipeSearch } from '@/app/components/recipe/RecipeSearch';
 import { Recipe } from '@/app/types/recipe';
 
 export default function RecipesPage() {

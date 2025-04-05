@@ -20,14 +20,15 @@ export interface IngredientpHData {
 
 // Additional types for the application
 
-// Dietary preference options
+// Dietary preference options - Removed Alkaline and Mediterranean
 export type DietaryPreference = 
   | 'Fermented'
   | 'Gluten-Free'
   | 'Lactose-Free'
   | 'Low-FODMAP'
-  | 'Mediterranean'
+  // | 'Mediterranean' // Removed
   | 'Pescatarian'
+  | 'Nut-Free'
   | 'Vegan'
   | 'Vegetarian';
 

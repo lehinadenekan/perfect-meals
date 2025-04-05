@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-import { recipes } from '../prisma/seed-data/recipes';
+import { seedRecipes } from '../prisma/seed-data/recipes';
 
 const PUBLIC_IMAGES_DIR = path.join(process.cwd(), 'public', 'images', 'recipes');
 
@@ -29,8 +29,15 @@ async function downloadImage(url: string, filename: string): Promise<boolean> {
     fs.writeFileSync(filepath, response.data as Buffer);
     console.log(`✓ Downloaded: ${filename}`);
     return true;
-  } catch (error: any) {
-    console.error(`✗ Failed to download ${url}:`, error.message);
+  } catch (error) {
+    // Type check the error before accessing message
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    console.error(`✗ Failed to download ${url}:`, errorMessage);
     return false;
   }
 }
@@ -45,7 +52,9 @@ async function main() {
     skipped: 0
   };
 
-  for (const recipe of recipes) {
+  console.log(`🔍 Found ${seedRecipes.length} recipes to process.`);
+
+  for (const recipe of seedRecipes) {
     if (!recipe.imageUrl) {
       console.log(`⚠ No image URL for recipe: ${recipe.title}`);
       results.skipped++;
@@ -77,6 +86,11 @@ async function main() {
   console.log(`✓ Successfully downloaded: ${results.success}`);
   console.log(`✗ Failed to download: ${results.failed}`);
   console.log(`→ Skipped: ${results.skipped}`);
+
+  console.log('✅ Image download process completed.');
 }
 
-main().catch(console.error); 
+main().catch(error => {
+  console.error('❌ Error during image download:', error);
+  process.exit(1);
+}); 

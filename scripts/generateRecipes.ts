@@ -1,29 +1,33 @@
-import { BulkRecipeGenerator } from '../app/services/bulkRecipeGenerator';
+// import { BulkRecipeGenerator } from '../app/services/bulkRecipeGenerator'; // Commented out due to missing file
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function generateRecipes() {
   try {
-    // Create a new generation job
+    // Create a new generation job - Also commented out as it's unused without the generator
+    /* 
     const job = await prisma.recipeGenerationJob.create({
       data: {
         status: 'PENDING',
-        totalRecipes: 50,
+        totalRecipes: 50, // Example value
         completed: 0,
         failed: 0
       }
     });
+    */
 
-    console.log('Starting recipe generation...');
-    console.log('Job ID:', job.id);
+    // console.log('Starting recipe generation...'); // Can keep this if desired, or comment out
+    // console.log('Job ID:', job.id); 
 
-    const generator = new BulkRecipeGenerator();
-    await generator.generateRecipes(job.id);
+    // Commented out generator usage
+    // const generator = new BulkRecipeGenerator(); 
+    // await generator.generateRecipes(job.id); 
 
-    console.log('Recipe generation completed!');
+    // console.log('Recipe generation completed!'); 
     
-    // Get final job status
+    // Commented out final job status check
+    /*
     const finalJob = await prisma.recipeGenerationJob.findUnique({
       where: { id: job.id }
     });
@@ -34,9 +38,11 @@ async function generateRecipes() {
         console.log(`Failed to generate ${finalJob.failed} recipes`);
       }
     }
+    */
+    console.log('Recipe generation script temporarily disabled due to missing BulkRecipeGenerator.');
 
   } catch (error) {
-    console.error('Error generating recipes:', error);
+    console.error('Error during recipe generation script execution (currently disabled):', error); 
   } finally {
     await prisma.$disconnect();
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Recipe } from '@/app/types/recipe';
 import RecipeCard from './RecipeCard';
 import { Spinner } from '../ui/spinner';
@@ -21,7 +21,12 @@ interface DietaryOption {
   description: string;
 }
 
-export default function RecipeSearch() {
+// Define the props interface
+interface RecipeSearchProps {
+  onSearchResults: Dispatch<SetStateAction<Recipe[]>>;
+}
+
+export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -128,21 +133,25 @@ export default function RecipeSearch() {
       });
 
       setRecipes(filteredRecipes);
+      onSearchResults(filteredRecipes);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setRecipes([]);
+      onSearchResults([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Effect to perform search when query changes (debounced)
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
+    if (searchQuery.length > 2) {
       searchRecipes();
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedDiets]);
+    } else {
+      setRecipes([]); // Clear results if query is short
+      onSearchResults([]); // Add this line
+    }
+  }, [searchQuery, searchRecipes, onSearchResults]);
 
   const toggleDiet = (diet: DietaryPreference) => {
     setSelectedDiets(prev =>

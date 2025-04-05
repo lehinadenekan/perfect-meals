@@ -1,4 +1,4 @@
-interface Ingredient {
+export interface Ingredient {
   name: string;
   category: string;
   variations?: string[];

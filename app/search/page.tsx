@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
 import { Recipe } from '@/app/types/recipe';
@@ -69,10 +69,20 @@ function SearchResults() {
 }
 
 export default function SearchPage() {
+  const router = useRouter();
+
+  const handleHomeClick = () => {
+    router.push('/');
+  };
+
+  const handleSearch = async (term: string) => {
+    router.push(`/search?q=${encodeURIComponent(term)}`);
+  };
+
   return (
     <Suspense fallback={<div>Loading search...</div>}>
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        <Navbar onHomeClick={handleHomeClick} onSearch={handleSearch} />
         <main className="flex-grow container mx-auto py-8">
           <SearchResults />
         </main>

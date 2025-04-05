@@ -1,17 +1,17 @@
+import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 
 interface DiagnosticLog {
   timestamp: string;
   step: string;
-  details: any;
+  details: Record<string, unknown>;
 }
 
 export async function POST(request: Request) {
   const logs: DiagnosticLog[] = [];
   const startTime = new Date();
 
-  function log(step: string, details: any) {
+  function log(step: string, details: Record<string, unknown>) {
     logs.push({
       timestamp: new Date().toISOString(),
       step,
@@ -25,9 +25,9 @@ export async function POST(request: Request) {
     log('request_received', { body });
 
     // Build query parameters
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (body.dietTypes?.length > 0) {
-      const dietConditions: any[] = [];
+      const dietConditions: Record<string, unknown>[] = [];
       if (body.dietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
       if (body.dietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
       if (body.dietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
@@ -63,6 +63,46 @@ export async function POST(request: Request) {
       servings: r.servings
     }));
     log('recipe_details', { recipes: recipeInfo });
+
+    // Find a sample recipe to test generation logic
+    const sampleRecipe = await prisma.recipe.findFirst({
+      where: { title: { contains: "Steak", mode: 'insensitive' } },
+      include: {
+        ingredients: true,
+        instructions: true,
+        nutritionFacts: true,
+        categories: true,
+        cuisines: true,
+        tags: true
+      }
+    });
+
+    if (!sampleRecipe) {
+      log('error', {
+        message: "No suitable recipe found for debugging.",
+        stack: null
+      });
+      return NextResponse.json({
+        success: false,
+        duration_ms: new Date().getTime() - startTime.getTime(),
+        logs,
+        error: "No suitable recipe found for debugging."
+      }, { status: 404 });
+    }
+
+    log('sample_recipe_found', sampleRecipe);
+
+    // Simulate a generation step (replace with actual logic if needed)
+    // Removed unused generateStep function
+    /*
+    const generateStep = (inputData: Record<string, unknown>): Record<string, unknown> => {
+      log('running_generation_step', inputData);
+      // ... hypothetical generation logic ...
+      const output = { generated: true, inputType: typeof inputData };
+      log('generation_step_output', output);
+      return output;
+    };
+    */
 
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();

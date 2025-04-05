@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import DietaryPreferenceSelector from './DietaryPreferenceSelector';
-import { ingredientpHData } from '../data/ph-influence';
-import { IngredientpHData, Meal } from '../types';
+import { Meal } from '../types';
+import { type Ingredient } from '../utils/dietary-filters';
 
 const MealGenerator: React.FC = () => {
   // State for filtered ingredients and generated meals
-  const [filteredIngredients, setFilteredIngredients] = useState<IngredientpHData[]>([]);
+  const [filteredIngredients, setFilteredIngredients] = useState<Ingredient[]>([]);
   const [generatedMeals, setGeneratedMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Function to handle ingredients filtered from DietaryPreferenceSelector
-  const handleFilteredIngredients = (ingredients: IngredientpHData[]) => {
+  const handleFilteredIngredients = (ingredients: Ingredient[]) => {
     setFilteredIngredients(ingredients);
     generateMeals(ingredients);
   };
 
   // Function to generate meals based on filtered ingredients
-  const generateMeals = async (ingredients: IngredientpHData[]) => {
+  const generateMeals = async (ingredients: Ingredient[]) => {
     setLoading(true);
     
     try {
@@ -24,7 +24,7 @@ const MealGenerator: React.FC = () => {
       // For now, we'll create some sample meals based on the filtered ingredients
       
       // Simple algorithm to group ingredients by category and create meals
-      const categorizedIngredients: Record<string, IngredientpHData[]> = {};
+      const categorizedIngredients: Record<string, Ingredient[]> = {};
       
       // Group ingredients by category
       ingredients.forEach(ingredient => {
@@ -75,7 +75,7 @@ const MealGenerator: React.FC = () => {
             vegetable.name,
             ...(starch ? [starch.name] : [])
           ],
-          dietaryTags: getDietaryTags([protein, vegetable, ...(starch ? [starch] : [])])
+          dietaryTags: getDietaryTags(),
         });
       }
       
@@ -95,7 +95,7 @@ const MealGenerator: React.FC = () => {
             vegetable.name,
             ...(starch ? [starch.name] : [])
           ],
-          dietaryTags: getDietaryTags([protein, vegetable, ...(starch ? [starch] : [])])
+          dietaryTags: getDietaryTags(),
         });
       }
       
@@ -110,7 +110,7 @@ const MealGenerator: React.FC = () => {
           name: `${veg1.name}, ${veg2.name}, and ${veg3.name} Salad`,
           description: `A refreshing salad featuring ${veg1.name.toLowerCase()}, ${veg2.name.toLowerCase()}, and ${veg3.name.toLowerCase()}.`,
           ingredients: [veg1.name, veg2.name, veg3.name],
-          dietaryTags: getDietaryTags([veg1, veg2, veg3])
+          dietaryTags: getDietaryTags(),
         });
       }
       
@@ -118,22 +118,25 @@ const MealGenerator: React.FC = () => {
       setGeneratedMeals(meals);
     } catch (error) {
       console.error('Error generating meals:', error);
+      setGeneratedMeals([]);
     } finally {
       setLoading(false);
     }
   };
   
   // Helper to determine dietary tags for a meal based on its ingredients
-  const getDietaryTags = (mealIngredients: IngredientpHData[]): string[] => {
+  const getDietaryTags = (): string[] => {
     const tags: string[] = [];
     
-    // Check if all ingredients are alkaline
+    // Removed check for alkaline ingredients as pHInfluence is no longer available
+    /*
     const allAlkaline = mealIngredients.every(ing => 
       ['SLIGHTLY_ALKALINE', 'MODERATELY_ALKALINE', 'HIGHLY_ALKALINE'].includes(ing.pHInfluence)
     );
     if (allAlkaline) tags.push('Alkaline');
+    */
     
-    // Add other dietary tags as needed
+    // Add other dietary tags as needed (Example - could check for vegan/vegetarian based on ingredients)
     // This is simplified - real implementation would be more comprehensive
     
     return tags;
@@ -154,14 +157,10 @@ const MealGenerator: React.FC = () => {
           <div className="meals-grid">
             {generatedMeals.map(meal => (
               <div key={meal.id} className="meal-card">
-                {meal.imageUrl && <img src={meal.imageUrl} alt={meal.name} />}
+                {meal.imageUrl && <img src={meal.imageUrl} alt={meal.name} style={{ maxWidth: '100px' }} />}
                 <h3>{meal.name}</h3>
                 <p>{meal.description}</p>
-                <div className="dietary-tags">
-                  {meal.dietaryTags.map(tag => (
-                    <span key={tag} className="tag">{tag}</span>
-                  ))}
-                </div>
+                <p>Tags: {meal.dietaryTags.join(', ')}</p>
               </div>
             ))}
           </div>
@@ -172,7 +171,7 @@ const MealGenerator: React.FC = () => {
       {!loading && generatedMeals.length === 0 && filteredIngredients.length > 0 && (
         <div className="no-meals">
           <p>
-            We couldn't generate meals with your current preferences. 
+          We couldn&apos;t generate meals with your current preferences.
             Try selecting different dietary preferences or customizing your options.
           </p>
         </div>

@@ -1,5 +1,3 @@
-import { CuisineType } from '@prisma/client';
-
 export const detailedCuisineData = [
   {
     name: 'Japanese',

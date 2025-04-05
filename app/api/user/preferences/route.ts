@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 // import { getServerSession } from 'next-auth'; // Remove
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 // import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Remove
 import { auth } from '@/auth'; // Add
 
