@@ -817,9 +817,8 @@ export default function RecipeDetailModal({
                             leaveFrom="transform opacity-100 scale-100"
                             leaveTo="transform opacity-0 scale-95"
                           >
-                            {/* Ensure dropdown opens upwards or carefully positioned on mobile */}
-                            <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                              {/* ... (Copy Menu.Item JSX here) ... */}
+                            {/* Ensure dropdown opens upwards or carefully positioned on mobile - updated below for mobile */}
+                            <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                               <div className="px-1 py-1">
                                 <Menu.Item>
                                   {({ active }) => (
@@ -1066,99 +1065,96 @@ export default function RecipeDetailModal({
                     </div>
 
                     {/* --- Action Buttons (Mobile - Visible below content, hidden md+) --- */}
-                    <div className="mt-8 pt-4 border-t border-gray-200 flex justify-center items-center gap-4 md:hidden recipe-modal-print-hide">
-                      {/* Favorite Button */}
-                      <FavoriteButton
-                        recipeId={recipe.id}
-                        className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
-                        onSuccess={onFavoriteChange}
-                      />
-                      {/* Print Button */}
-                      <button
-                        onClick={handleInitiatePrint}
-                        className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                        title="Print Recipe"
-                      >
-                        <PrinterIcon className="h-5 w-5" />
-                        <span className="sr-only">Print Recipe</span>
-                      </button>
-                      {/* Export Dropdown */}
-                      <Menu as="div" className="relative inline-block text-left">
-                        {/* ... (Copy Export Menu JSX here) ... */}
-                        <div>
-                          <Menu.Button
-                            className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
-                            disabled={isExportingPdf}
-                            title="Export Recipe"
-                          >
-                            {isExportingPdf ? (
-                              <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : (
-                              <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
-                            )}
-                            {/* No chevron needed for mobile? Optional. */}
-                          </Menu.Button>
-                        </div>
-                        <Transition
-                          as={Fragment}
-                          enter="transition ease-out duration-100"
-                          enterFrom="transform opacity-0 scale-95"
-                          enterTo="transform opacity-100 scale-100"
-                          leave="transition ease-in duration-75"
-                          leaveFrom="transform opacity-100 scale-100"
-                          leaveTo="transform opacity-0 scale-95"
+                    <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
+                        {/* Favorite Button */}
+                        <FavoriteButton
+                          recipeId={recipe.id}
+                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
+                          onSuccess={onFavoriteChange}
+                        />
+                        {/* Print Button */}
+                        <button
+                          onClick={handleInitiatePrint}
+                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                          title="Print Recipe"
                         >
-                          {/* Ensure dropdown opens upwards or carefully positioned on mobile */}
-                          <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                            {/* ... (Copy Menu.Item JSX here) ... */}
-                            <div className="px-1 py-1">
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
-                                )}
-                              </Menu.Item>
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
-                                )}
-                              </Menu.Item>
-                            </div>
-                          </Menu.Items>
-                        </Transition>
-                      </Menu>
-                      {/* Share Button */}
-                      <button
-                        onClick={handleShare}
-                        className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
-                        title="Share Recipe"
-                      >
-                        <ShareIcon className="h-5 w-5" />
-                        <span className="sr-only">Share Recipe</span>
-                        {/* Position copied confirmation appropriately for bottom layout */}
-                        {copied && (
-                          <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
-                            Copied!
-                          </span>
-                        )}
-                      </button>
-                      {/* Flag Button */}
-                      <button
-                        onClick={() => setShowFlagModal(true)}
-                        className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                        title="Flag Issue"
-                      >
-                        <FlagIcon className="h-5 w-5" />
-                        <span className="sr-only">Flag Issue</span>
-                      </button>
+                          <PrinterIcon className="h-5 w-5" />
+                          <span className="sr-only">Print Recipe</span>
+                        </button>
+                        {/* Export Dropdown (Mobile) */}
+                        <Menu as="div" className="relative inline-block text-left">
+                          <div>
+                            <Menu.Button
+                              className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
+                              disabled={isExportingPdf}
+                              title="Export Recipe"
+                            >
+                              {isExportingPdf ? (
+                                <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
+                              )}
+                            </Menu.Button>
+                          </div>
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            {/* Opens upwards for mobile */}
+                            <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                              <div className="px-1 py-1">
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
+                                  )}
+                                </Menu.Item>
+                                <Menu.Item>
+                                  {({ active }) => (
+                                    <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
+                                  )}
+                                </Menu.Item>
+                              </div>
+                            </Menu.Items>
+                          </Transition>
+                        </Menu>
+                        {/* Share Button */}
+                        <button
+                          onClick={handleShare}
+                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
+                          title="Share Recipe"
+                        >
+                          <ShareIcon className="h-5 w-5" />
+                          <span className="sr-only">Share Recipe</span>
+                          {copied && (
+                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
+                              Copied!
+                            </span>
+                          )}
+                        </button>
+                        {/* Flag Button */}
+                        <button
+                          onClick={() => setShowFlagModal(true)}
+                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                          title="Flag Issue"
+                        >
+                          <FlagIcon className="h-5 w-5" />
+                          <span className="sr-only">Flag Issue</span>
+                        </button>
                     </div>
+
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
