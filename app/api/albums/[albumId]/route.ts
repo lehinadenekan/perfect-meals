@@ -9,11 +9,11 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { albumId: string } }
+  context: { params: { albumId: string } }
 ) {
   // Pass authOptions and assert Session type via unknown
   const session = await getServerSession(authOptions) as unknown as Session | null;
-  const albumId = params.albumId;
+  const albumId = context.params.albumId;
 
   // Access userId via the asserted Session type
   const userId = session?.user?.id;
