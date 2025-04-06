@@ -1,17 +1,20 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-// Remove v4 imports
-// import getServerSession from 'next-auth';
-// import { authOptions } from '@/lib/auth';
-// import type { Session } from 'next-auth';
-import { auth } from "@/lib/auth"; // Import auth from v5 config
+// import { PrismaClient } from '@prisma/client';
+// import { auth } from "@/lib/auth"; // Import auth from v5 config
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
   context: { params: { albumId: string } }
 ) {
+  // --- Start Simplified Code ---
+  const albumId = context.params.albumId;
+  // console.log("Received request for albumId:", albumId);
+  return NextResponse.json({ message: "Simplified response", albumId: albumId });
+  // --- End Simplified Code ---
+
+  /* --- Start Original Code (Commented Out) ---
   // Get session using v5 auth()
   const session = await auth();
   const albumId = context.params.albumId;
@@ -29,7 +32,7 @@ export async function GET(
       where: { id: albumId },
       include: {
         recipes: {
-          orderBy: { /* Optional ordering */ },
+          orderBy: {  },
           include: {
             recipe: { // Actual Recipe
               include: {
@@ -92,6 +95,7 @@ export async function GET(
   } finally {
     await prisma.$disconnect();
   }
+  --- End Original Code --- */
 }
 
 // You might also want DELETE or PUT handlers here later to manage the album itself 
