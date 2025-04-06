@@ -1,14 +1,57 @@
-import React, { useState } from 'react'
+'use client';
+
+import React, { useState, useEffect } from 'react'
 // Import the frontend Recipe type definition instead of the Prisma one
 // import { Recipe } from '@prisma/client' 
 import { Recipe } from '@/app/types/recipe'; // Assuming this is the correct path
 import RecipeCard from './RecipeCard'
+import RecipeDetailModal from './RecipeDetailModal'
 
 interface RecipeListProps {
-  recipes: Recipe[]
+  recipes: (Recipe & { isFavorite?: boolean })[]; // Expect recipes with favorite status
 }
 
-export default function RecipeList({ recipes }: RecipeListProps) {
+export default function RecipeList({ recipes: initialRecipes }: RecipeListProps) {
+  // Use state to manage the list locally, allowing updates to favorite status
+  const [recipes, setRecipes] = useState(initialRecipes);
+
+  // --- State for Modal Control ---
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Effect to update local state if the initialRecipes prop changes
+  useEffect(() => {
+    setRecipes(initialRecipes);
+  }, [initialRecipes]);
+
+  // --- Callback for Favorite Changes ---
+  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+    setRecipes(currentRecipes =>
+      currentRecipes.map(recipe =>
+        recipe.id === recipeId
+          ? { ...recipe, isFavorite: newIsFavorite }
+          : recipe
+      )
+    );
+    // If the updated recipe is the one in the modal, update modal state too
+    if (selectedRecipe && selectedRecipe.id === recipeId) {
+      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+    }
+  };
+
+  // --- Modal Handlers ---
+  const handleOpenModal = (recipe: Recipe) => {
+    // Find the latest version from state to ensure modal gets correct favorite status
+    const currentRecipeData = recipes.find(r => r.id === recipe.id) || recipe;
+    setSelectedRecipe(currentRecipeData);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
+  };
+
   const [filters, setFilters] = useState({
     vegetarian: false,
     vegan: false,
@@ -22,8 +65,12 @@ export default function RecipeList({ recipes }: RecipeListProps) {
     return true
   })
 
+  if (!recipes || recipes.length === 0) {
+    return <p className="text-center text-gray-500 py-8">No recipes to display.</p>; // Added some styling
+  }
+
   return (
-    <div>
+    <>
       <div className="mb-4">
         <label className="mr-4">
           <input
@@ -56,15 +103,30 @@ export default function RecipeList({ recipes }: RecipeListProps) {
         </label>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onSelect={handleOpenModal}
+              onFavoriteChange={handleFavoriteChange}
+            />
           ))
         ) : (
           <p>No recipes found</p>
         )}
       </div>
-    </div>
+
+      {/* Render Modal Conditionally */}
+      {selectedRecipe && (
+        <RecipeDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          recipe={selectedRecipe}
+          onFavoriteChange={handleFavoriteChange}
+        />
+      )}
+    </>
   )
 } 

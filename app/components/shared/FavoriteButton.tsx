@@ -4,47 +4,46 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import toast from 'react-hot-toast';
 
 interface FavoriteButtonProps {
   recipeId: string;
   initialIsFavorite?: boolean;
+  className?: string;
+  onSuccess?: (recipeId: string, newIsFavorite: boolean) => void;
 }
 
 export default function FavoriteButton({
   recipeId,
   initialIsFavorite = false,
+  className = '',
+  onSuccess,
 }: FavoriteButtonProps) {
   const { data: session } = useSession();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsFavorite(initialIsFavorite);
+  }, [initialIsFavorite]);
 
   useEffect(() => {
     const checkIfFavorite = async () => {
       if (!session?.user?.email) return;
-      
+
+      setIsLoading(true);
       try {
-        // Use a timeout to prevent infinite loading
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), 5000)
-        );
-        
-        const fetchPromise = fetch('/api/recipes/favorites');
-        
-        // Race between the fetch and the timeout
-        const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-        
+        const response = await fetch('/api/recipes/favorites');
         if (!response.ok) {
-          throw new Error(`Failed to fetch favorites: ${response.status}`);
+          console.warn(`Failed to fetch favorites: ${response.status}`);
+          return;
         }
-        
         const favorites = await response.json();
         setIsFavorite(favorites.some((recipe: { id: string }) => recipe.id === recipeId));
-        setError(null); // Clear any previous errors
       } catch (error) {
         console.error('Error checking favorite status:', error);
-        // Don't change the favorite state on error, just log it
-        setError(error instanceof Error ? error.message : 'Unknown error');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -52,12 +51,16 @@ export default function FavoriteButton({
   }, [recipeId, session?.user?.email]);
 
   const toggleFavorite = async () => {
-    if (!session?.user?.email) return;
+    if (!session?.user?.email) {
+      toast.error("Please log in to add favorites.");
+      return;
+    }
     if (isLoading) return;
 
+    const previousIsFavorite = isFavorite;
+    setIsFavorite(!previousIsFavorite);
     setIsLoading(true);
-    setError(null);
-    
+
     try {
       const response = await fetch('/api/recipes/favorites', {
         method: 'POST',
@@ -66,7 +69,7 @@ export default function FavoriteButton({
         },
         body: JSON.stringify({
           recipeId,
-          action: isFavorite ? 'remove' : 'add',
+          action: !previousIsFavorite ? 'add' : 'remove',
         }),
       });
 
@@ -74,28 +77,39 @@ export default function FavoriteButton({
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to update favorite: ${response.status}`);
       }
-      
-      setIsFavorite(!isFavorite);
+
+      onSuccess?.(recipeId, !previousIsFavorite);
+
     } catch (error) {
+      setIsFavorite(previousIsFavorite);
+      const message = error instanceof Error ? error.message : 'Failed to update favorite';
       console.error('Error updating favorite:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error');
-      // Don't change state on error
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!session?.user?.email) return null;
+  if (!session) {
+    return (
+      <button
+        className={`${className} p-1.5 rounded-full opacity-50 cursor-not-allowed`}
+        aria-label="Log in to add favorites"
+        title="Log in to add favorites"
+        disabled
+      >
+        <HeartIcon className="h-6 w-6 text-gray-400" />
+      </button>
+    );
+  }
 
   return (
     <button
       onClick={toggleFavorite}
       disabled={isLoading}
-      className={`p-1.5 rounded-full transition-all transform hover:scale-110 ${
-        isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
-      }`}
+      className={`${className} p-1.5 rounded-full transition-all transform hover:scale-110 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+        }`}
       aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-      title={error ? `There was an error: ${error}` : undefined}
     >
       {isFavorite ? (
         <HeartIconSolid className="h-6 w-6 text-red-500" />

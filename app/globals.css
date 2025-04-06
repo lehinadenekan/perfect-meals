@@ -30,6 +30,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem
   }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -62,6 +63,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -69,8 +71,15 @@
 
 /* Custom recipe card animations and styling */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
@@ -99,4 +108,117 @@
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: rgba(156, 163, 175, 0.8);
-} 
+}
+
+/* Print specific styles */
+@media print {
+
+  /* Hide elements specifically marked for no-print */
+  .recipe-modal-print-hide {
+    display: none !important;
+    /* Important to override inline styles or utility classes */
+  }
+
+  /* Conditionally hide image/notes based on parent class set by state */
+  .print-hide-image .recipe-image-print-container {
+    display: none !important;
+  }
+
+  .print-hide-notes .recipe-notes-print-container {
+    display: none !important;
+  }
+
+  /* General page reset for printing */
+  body {
+    margin: 1in !important;
+    /* Add standard margins */
+    font-size: 12pt !important;
+    /* Ensure readable base font size */
+    color: #000 !important;
+    /* Ensure black text */
+    background-color: #fff !important;
+    /* Ensure white background */
+  }
+
+  /* Reset modal-specific styles for cleaner printing */
+  .printing-active dialog,
+  .printing-active [role="dialog"],
+  .printing-active [role="dialog"]>* {
+    /* Target dialog and its direct children */
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Specifically reset the modal panel/content area */
+  .printing-active [class*="DialogPanel"],
+  /* Headless UI Panel */
+  .printing-active [class*="DialogContent"] {
+    /* Radix/Shadcn Content */
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
+  }
+
+  /* Reset backdrop */
+  .printing-active [class*="DialogOverlay"],
+  .printing-active [class*="DialogBackdrop"] {
+    display: none !important;
+  }
+
+  /* Improve readability of text inside the printed modal */
+  .printing-active dialog h1,
+  .printing-active dialog h2,
+  .printing-active dialog h3,
+  .printing-active dialog h4,
+  .printing-active dialog p,
+  .printing-active dialog span,
+  .printing-active dialog li {
+    color: #000 !important;
+    background: none !important;
+  }
+
+  /* Add a simple header/footer */
+  @page {
+    margin-top: 1.5in;
+    /* Space for header */
+    margin-bottom: 1.5in;
+    /* Space for footer */
+
+    @top-center {
+      content: "Recipe from PerfectMeals";
+      /* Replace with your actual site name */
+      font-size: 10pt;
+      color: #666;
+      padding-bottom: 0.5in;
+    }
+
+    @bottom-center {
+      content: "Page " counter(page);
+      font-size: 10pt;
+      color: #666;
+      padding-top: 0.5in;
+    }
+  }
+
+  /* Prevent page breaks inside critical sections if possible */
+  .printing-active h3,
+  .printing-active h4 {
+    page-break-after: avoid;
+  }
+
+  .printing-active ul,
+  .printing-active ol {
+    page-break-inside: avoid;
+  }
+}

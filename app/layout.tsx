@@ -18,8 +18,8 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
-        <Analytics />
-        <SpeedInsights />
+        {/* <Analytics /> */}
+        {/* <SpeedInsights /> */}
       </body>
     </html>
   )

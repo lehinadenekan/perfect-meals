@@ -11,11 +11,14 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './prisma';
 // Re-importing Session and User, keeping DefaultSession for augmentation
 import type { DefaultSession, Session, User } from 'next-auth';
+// Try importing AuthOptions instead
+import type { AuthOptions } from 'next-auth';
 // Removed PrismaUser and NextAuthSession imports as they are unused
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 
-export const authOptions = {
+// Add explicit type annotation using AuthOptions
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -67,7 +70,7 @@ export const authOptions = {
     // Explicitly type parameters with imported Session and User
     async session({ session, user }: { session: Session; user: User }) {
       // Use type assertion as a temporary workaround for persistent type error
-      session.user.id = user.id as string; 
+      session.user.id = user.id as string;
       return session;
     },
   },

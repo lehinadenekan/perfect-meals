@@ -1,94 +1,132 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
-import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
-import { Recipe as AppRecipe } from '@/app/types/recipe';
+import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
+import { Recipe } from '@/app/types/recipe';
+import toast from 'react-hot-toast';
 
-interface Recipe extends Partial<AppRecipe> {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  cookingTime: number;
-  difficulty: string;
-}
+// Define a type for the fetched favorite recipe, ensuring it includes isFavorite
+// (it should always be true when fetched for this page)
+type FavoriteRecipe = Recipe & { isFavorite: true };
 
 export default function FavoriteMealsPage() {
-  const { data: session } = useSession();
-  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: session, status } = useSession();
+  const [favoriteRecipes, setFavoriteRecipes] = useState<FavoriteRecipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // --- State for Modal Control ---
+  const [selectedRecipe, setSelectedRecipe] = useState<FavoriteRecipe | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchFavoriteRecipes = async () => {
-      try {
-        const response = await fetch('/api/recipes/favorites');
-        if (!response.ok) throw new Error('Failed to fetch favorite recipes');
-        const data = await response.json();
-        setFavoriteRecipes(data);
-      } catch (error) {
-        console.error('Error fetching favorite recipes:', error);
-      } finally {
-        setIsLoading(false);
+    const fetchFavorites = async () => {
+      if (status === 'authenticated') {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await fetch('/api/recipes/favorites'); // Your API endpoint for favorites
+          if (!response.ok) {
+            throw new Error('Failed to fetch favorite recipes');
+          }
+          const data = await response.json();
+          // Ensure fetched data includes isFavorite = true, or set it
+          const recipesWithFavoriteStatus = data.map((recipe: Recipe) => ({ ...recipe, isFavorite: true as const }));
+          setFavoriteRecipes(recipesWithFavoriteStatus);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'An unknown error occurred');
+          toast.error("Could not load favorites.");
+        } finally {
+          setLoading(false);
+        }
+      } else if (status === 'unauthenticated') {
+        setLoading(false);
+        setFavoriteRecipes([]); // Clear recipes if user logs out
       }
+      // Do nothing if status is 'loading'
     };
 
-    if (session?.user?.email) {
-      fetchFavoriteRecipes();
-    } else {
-      setIsLoading(false);
-    }
-  }, [session?.user?.email]);
+    fetchFavorites();
+  }, [status]); // Re-run when authentication status changes
 
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-yellow-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Please sign in to view your favourite recipes
-            </h2>
-          </div>
-        </div>
-      </div>
-    );
+  // --- Callback for Favorite Changes ---
+  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+    if (!newIsFavorite) {
+      // Remove from favorites: Filter out the recipe locally
+      setFavoriteRecipes(currentRecipes =>
+        currentRecipes.filter(recipe => recipe.id !== recipeId)
+      );
+      // Close the modal if the currently selected recipe was removed
+      if (selectedRecipe && selectedRecipe.id === recipeId) {
+        handleCloseModal();
+      }
+      toast.success("Removed from favorites");
+    } else {
+      // This case shouldn't technically happen from this page (can't favorite an already favorite item again)
+      // But if it did, we'd update the state (though it should already be isFavorite: true)
+      setFavoriteRecipes(currentRecipes =>
+        currentRecipes.map(recipe =>
+          recipe.id === recipeId
+            ? { ...recipe, isFavorite: true }
+            : recipe
+        )
+      );
+    }
+  };
+
+  // --- Modal Handlers ---
+  const handleOpenModal = (recipe: Recipe) => {
+    // We still find the most up-to-date version from local state
+    const currentRecipeData = favoriteRecipes.find(r => r.id === recipe.id)
+    setSelectedRecipe(currentRecipeData || { ...recipe, isFavorite: true }); // Set selected, ensure isFavorite is true if somehow missing
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
+  };
+
+  if (status === 'loading' || loading) {
+    return <div className="text-center py-10">Loading your favorite meals...</div>;
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-yellow-400 py-12 flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
+  if (status === 'unauthenticated') {
+    return <div className="text-center py-10">Please log in to see your favorite meals.</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">Error loading favorites: {error}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-yellow-400 py-12 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Your Favourite Recipes
-          </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-700 sm:mt-4">
-            Here are all the recipes you&apos;ve saved
-          </p>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">My Favorite Meals</h1>
+      {favoriteRecipes.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {favoriteRecipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onSelect={handleOpenModal}
+              onFavoriteChange={handleFavoriteChange}
+            />
+          ))}
         </div>
+      ) : (
+        <p className="text-center text-gray-600">You haven't added any favorite meals yet.</p>
+      )}
 
-        {favoriteRecipes.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-800">
-              You haven&apos;t saved any recipes as favourites yet.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
-            {favoriteRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe as unknown as import('@/app/types/recipe').Recipe} isLoggedIn={true} />
-            ))}
-          </div>
-        )}
-      </div>
+      {selectedRecipe && (
+        <RecipeDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          recipe={selectedRecipe}
+          onFavoriteChange={handleFavoriteChange}
+        />
+      )}
     </div>
   );
 } 
