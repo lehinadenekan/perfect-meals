@@ -4,6 +4,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering, disable static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const session = await auth();
 
@@ -22,9 +25,9 @@ export async function GET() {
         // Include relevant relations if needed by RecipeCard, adjust as necessary
         ingredients: true,
         instructions: {
-             orderBy: {
-                 stepNumber: 'asc', // Ensure instructions are ordered
-             },
+          orderBy: {
+            stepNumber: 'asc', // Ensure instructions are ordered
+          },
         },
         // nutritionFacts: true, // Add if needed
         // author: true, // Author might be implicit here

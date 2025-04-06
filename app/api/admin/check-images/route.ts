@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 
+// Force dynamic rendering, disable static generation
+export const dynamic = 'force-dynamic';
+
 // Helper function to safely convert BigInt to Number
 function safeNumber(value: unknown): number {
   if (typeof value === 'bigint') {
@@ -92,11 +95,11 @@ export async function GET() {
     `;
 
     // Convert any BigInt values to regular numbers
-    const allImagePatterns = Array.isArray(rawImagePatterns) 
+    const allImagePatterns = Array.isArray(rawImagePatterns)
       ? rawImagePatterns.map(pattern => ({
-          ...pattern,
-          count: safeNumber(pattern.count)
-        }))
+        ...pattern,
+        count: safeNumber(pattern.count)
+      }))
       : [];
 
     return NextResponse.json({

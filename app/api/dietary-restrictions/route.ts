@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering, disable static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const session = await auth();
   const userEmail = session?.user?.email;

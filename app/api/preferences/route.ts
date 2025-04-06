@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+
+// Force dynamic rendering, disable static generation
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await auth();
@@ -44,9 +47,9 @@ export async function PUT(request: Request) {
 
   try {
     const data = await request.json();
-    const { 
-      cookingTime, 
-      servingSize, 
+    const {
+      cookingTime,
+      servingSize,
       mealPrep,
       dietTypes,
       excludedFoods
