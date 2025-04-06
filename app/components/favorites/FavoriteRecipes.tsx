@@ -38,8 +38,8 @@ export default function FavoriteRecipes({
   onAlbumUpdate,
   albumRefreshTrigger
 }: FavoriteRecipesProps) {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { status } = useSession();
   const [favoriteRecipes, setFavoriteRecipes] = useState<FavoriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [flaggedRecipe, setFlaggedRecipe] = useState<FavoriteRecipe | null>(null);

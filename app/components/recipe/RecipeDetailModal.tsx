@@ -15,7 +15,6 @@ import {
   BackwardIcon,
   ForwardIcon,
   ArrowDownTrayIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';

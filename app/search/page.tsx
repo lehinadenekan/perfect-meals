@@ -86,7 +86,7 @@ function SearchResults() {
             />
           ))
         ) : (
-          !loading && <div>No recipes found for "{query}".</div>
+          !loading && <div>No recipes found for &quot;{query}&quot;.</div>
         )}
       </div>
 

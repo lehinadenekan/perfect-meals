@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Recipe } from '@/app/types/recipe';
 import RecipeCard from './RecipeCard';
 import RecipeDetailModal from './RecipeDetailModal';
@@ -22,13 +22,9 @@ interface DietaryOption {
   description: string;
 }
 
-interface RecipeSearchProps {
-  // Potentially add other props if needed, e.g., initial filter state
-}
-
 type RecipeSearchResult = Recipe & { isFavorite?: boolean };
 
-export const RecipeSearch: React.FC<RecipeSearchProps> = (/* { Destructure props if any } */) => {
+export const RecipeSearch: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recipes, setRecipes] = useState<RecipeSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);

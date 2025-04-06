@@ -12,9 +12,9 @@ import toast from 'react-hot-toast';
 type FavoriteRecipe = Recipe & { isFavorite: true };
 
 export default function FavoriteMealsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [favoriteRecipes, setFavoriteRecipes] = useState<FavoriteRecipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // --- State for Modal Control ---
@@ -24,7 +24,7 @@ export default function FavoriteMealsPage() {
   useEffect(() => {
     const fetchFavorites = async () => {
       if (status === 'authenticated') {
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
         try {
           const response = await fetch('/api/recipes/favorites'); // Your API endpoint for favorites
@@ -39,10 +39,10 @@ export default function FavoriteMealsPage() {
           setError(err instanceof Error ? err.message : 'An unknown error occurred');
           toast.error("Could not load favorites.");
         } finally {
-          setLoading(false);
+          setIsLoading(false);
         }
       } else if (status === 'unauthenticated') {
-        setLoading(false);
+        setIsLoading(false);
         setFavoriteRecipes([]); // Clear recipes if user logs out
       }
       // Do nothing if status is 'loading'
@@ -89,7 +89,7 @@ export default function FavoriteMealsPage() {
     setSelectedRecipe(null);
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || isLoading) {
     return <div className="text-center py-10">Loading your favorite meals...</div>;
   }
 
@@ -116,7 +116,7 @@ export default function FavoriteMealsPage() {
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-600">You haven't added any favorite meals yet.</p>
+        <p className="text-center text-gray-600">You haven&apos;t added any favorite meals yet.</p>
       )}
 
       {selectedRecipe && (

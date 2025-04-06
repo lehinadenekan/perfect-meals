@@ -76,11 +76,9 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
         isLactoseFree: recipe.isLactoseFree ?? false,
         isPescatarian: recipe.isPescatarian ?? false,
         isFermented: recipe.isFermented ?? false,
-        // needsDietaryReview seems specific to Prisma, omit it if not in FrontendRecipe
-        // needsDietaryReview: recipe.needsDietaryReview ?? false, 
-        // Safely add relations if they exist, otherwise default to empty array
-        ingredients: (recipe as any).ingredients ?? [], // Use 'as any' to bypass potential type error if not included
-        instructions: (recipe as any).instructions ?? [], // Use 'as any' to bypass potential type error if not included
+        // Revert to 'as any' cast as workaround for build errors
+        ingredients: (recipe as any).ingredients ?? [],
+        instructions: (recipe as any).instructions ?? [],
         createdAt: recipe.createdAt,
         updatedAt: recipe.updatedAt,
         // Add favorite status (which the API route should now provide)

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, Recipe as PrismaRecipe } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import getServerSession from 'next-auth';
 import { authOptions } from '@/lib/auth';
 // Import Session type from next-auth if not already implicitly available through augmentation
