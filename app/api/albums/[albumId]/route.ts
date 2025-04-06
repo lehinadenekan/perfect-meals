@@ -1,9 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import getServerSession from 'next-auth';
-import { authOptions } from '@/lib/auth';
-// Import Session type from next-auth if not already implicitly available through augmentation
-import type { Session } from 'next-auth';
+// Remove v4 imports
+// import getServerSession from 'next-auth';
+// import { authOptions } from '@/lib/auth';
+// import type { Session } from 'next-auth';
+import { auth } from "@/lib/auth"; // Import auth from v5 config
 
 const prisma = new PrismaClient();
 
@@ -11,11 +12,11 @@ export async function GET(
   request: NextRequest,
   context: { params: { albumId: string } }
 ) {
-  // Pass authOptions and assert Session type via unknown
-  const session = await getServerSession(authOptions) as unknown as Session | null;
+  // Get session using v5 auth()
+  const session = await auth();
   const albumId = context.params.albumId;
 
-  // Access userId via the asserted Session type
+  // Access user ID from v5 session object (type should be augmented)
   const userId = session?.user?.id;
 
   if (!albumId) {
