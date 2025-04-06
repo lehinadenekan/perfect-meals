@@ -218,8 +218,8 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
                     className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
-                        ? 'border-yellow-400 text-yellow-500 shadow-lg'
-                        : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
+                      ? 'border-yellow-400 text-yellow-500 shadow-lg'
+                      : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
                       }`}
                   >
                     <div className="flex items-center justify-center">
@@ -246,8 +246,8 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
                     onClick={() => handleDietToggle(dietType)}
                     onKeyDown={(e) => handleKeyDown(e, index + TOP_ROW_DIETS.length)}
                     className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
-                        ? 'border-yellow-400 text-yellow-500 shadow-lg'
-                        : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
+                      ? 'border-yellow-400 text-yellow-500 shadow-lg'
+                      : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
                       }`}
                   >
                     <div className="flex items-center justify-center">
@@ -303,10 +303,10 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
               key={step}
               onClick={() => setCurrentStep(step)}
               className={`w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer ${step === currentStep
-                  ? 'bg-black'
-                  : step < currentStep
-                    ? 'bg-yellow-200 hover:bg-yellow-300'
-                    : 'bg-gray-200 hover:bg-gray-300'
+                ? 'bg-black'
+                : step < currentStep
+                  ? 'bg-yellow-200 hover:bg-yellow-300'
+                  : 'bg-gray-200 hover:bg-gray-300'
                 }`}
               aria-label={`Go to step ${step}`}
               aria-current={step === currentStep ? 'step' : undefined}
@@ -375,7 +375,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
             Click &ldquo;Generate New Recipes&rdquo; anytime to see different recipes!
           </p>
           <div className="mt-8">
-            <MealCarousel recipes={recipes} />
+            <MealCarousel title="Meals based on your preferences" recipes={recipes} />
           </div>
         </>
       )}

@@ -1,25 +1,21 @@
 import { NextResponse, NextRequest } from 'next/server';
-// import { PrismaClient } from '@prisma/client';
-// import { auth } from "@/lib/auth"; // Import auth from v5 config
+import { PrismaClient } from '@prisma/client';
+import getServerSession from 'next-auth';
+import { authOptions } from '@/lib/auth';
+// Import Session type from next-auth if not already implicitly available through augmentation
+import type { Session } from 'next-auth';
 
-// const prisma = new PrismaClient();
+const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
   context: { params: { albumId: string } }
 ) {
-  // --- Start Simplified Code ---
-  const albumId = context.params.albumId;
-  // console.log("Received request for albumId:", albumId);
-  return NextResponse.json({ message: "Simplified response", albumId: albumId });
-  // --- End Simplified Code ---
-
-  /* --- Start Original Code (Commented Out) ---
-  // Get session using v5 auth()
-  const session = await auth();
+  // Pass authOptions and assert Session type via unknown
+  const session = await getServerSession(authOptions) as unknown as Session | null;
   const albumId = context.params.albumId;
 
-  // Access user ID from v5 session object (type should be augmented)
+  // Access userId via the asserted Session type
   const userId = session?.user?.id;
 
   if (!albumId) {
@@ -32,7 +28,7 @@ export async function GET(
       where: { id: albumId },
       include: {
         recipes: {
-          orderBy: {  },
+          orderBy: { /* Optional ordering */ },
           include: {
             recipe: { // Actual Recipe
               include: {
@@ -95,7 +91,6 @@ export async function GET(
   } finally {
     await prisma.$disconnect();
   }
-  --- End Original Code --- */
 }
 
 // You might also want DELETE or PUT handlers here later to manage the album itself 

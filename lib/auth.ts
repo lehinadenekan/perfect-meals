@@ -1,63 +1,77 @@
-import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "./prisma" // Assuming prisma client instance is exported from lib/prisma.ts
-import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
-import type { Adapter } from "next-auth/adapters"
-import type { DefaultSession } from "next-auth" // Import DefaultSession for augmentation
-// Removed unused v5 type imports for Session/User as augmentation handles it
-
-// Define auth config according to v5 structure
-// Note: Session strategy is defined differently in v5, often via adapter/JWT.
-// Custom pages are usually handled by middleware or component logic.
-// Callback logic is also slightly different.
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma) as Adapter,
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
-    }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_ID!,
-      clientSecret: process.env.FACEBOOK_SECRET!,
-    }),
-  ],
-  session: {
-    strategy: "database",
-  },
-  callbacks: {
-    // The `session` callback modifies the session object available client-side
-    async session({ session, user }) {
-      // Add user id to the session object
-      if (session.user && user?.id) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
-    // Add other callbacks like jwt, signIn as needed
-  },
-  // Add pages configuration if needed, though v5 handles this differently
-  // pages: { ... }
-  // Add cookies configuration if needing customization beyond defaults
-  // cookies: { ... }
-
-  // Add debug flag for development if helpful
-  // debug: process.env.NODE_ENV === 'development',
-})
-
-// Type Augmentation following Auth.js v5 pattern
-declare module "next-auth" {
-  /**
-   * Returned by `auth`, `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
+// Type augmentation for next-auth Session
+declare module 'next-auth' {
   interface Session {
     user: {
-      /** The user's postal address. */
-      id: string
-    } & DefaultSession["user"] // Add the id to the default user type
+      id: string;
+    } & DefaultSession['user']; // Merge with default user properties
   }
 }
 
-// Note: You might need to adjust `./prisma` import based on your project structure.
-// Ensure environment variables are non-null or handle potential undefined values. 
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import { prisma } from './prisma';
+// Re-importing Session and User, keeping DefaultSession for augmentation
+import type { DefaultSession, Session, User } from 'next-auth';
+// Try importing AuthOptions instead
+import type { AuthOptions } from 'next-auth';
+// Removed PrismaUser and NextAuthSession imports as they are unused
+import GoogleProvider from 'next-auth/providers/google';
+import FacebookProvider from 'next-auth/providers/facebook';
+
+// Add explicit type annotation using AuthOptions
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_ID || '',
+      clientSecret: process.env.GOOGLE_SECRET || '',
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_ID || '',
+      clientSecret: process.env.FACEBOOK_SECRET || '',
+    }),
+  ],
+  pages: {
+    signIn: '/', // We're handling sign in via our modal
+    error: '/', // We'll handle errors in the modal
+  },
+  session: {
+    strategy: 'database' as const, // Add 'as const' for stricter typing
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
+  callbacks: {
+    // Explicitly type parameters with imported Session and User
+    async session({ session, user }: { session: Session; user: User }) {
+      // Use type assertion as a temporary workaround for persistent type error
+      session.user.id = user.id as string;
+      return session;
+    },
+  },
+}; 
