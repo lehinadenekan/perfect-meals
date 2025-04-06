@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Recipe } from '@/app/types/recipe';
 import RecipeCard from './RecipeCard';
 import RecipeDetailModal from './RecipeDetailModal';
@@ -24,7 +24,12 @@ interface DietaryOption {
 
 type RecipeSearchResult = Recipe & { isFavorite?: boolean };
 
-export const RecipeSearch: React.FC = () => {
+// Define Props interface
+interface RecipeSearchProps {
+  onSearchResults: Dispatch<SetStateAction<Recipe[]>>;
+}
+
+export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [recipes, setRecipes] = useState<RecipeSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,10 +111,12 @@ export const RecipeSearch: React.FC = () => {
       const data = await response.json();
 
       setRecipes(data || []);
+      onSearchResults(data || []);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setRecipes([]);
+      onSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -123,8 +130,9 @@ export const RecipeSearch: React.FC = () => {
       return () => clearTimeout(handler);
     } else {
       setRecipes([]);
+      onSearchResults([]);
     }
-  }, [searchQuery, selectedDiets]);
+  }, [searchQuery, selectedDiets, onSearchResults]);
 
   const toggleDiet = (diet: DietaryPreference) => {
     setSelectedDiets(prev =>
