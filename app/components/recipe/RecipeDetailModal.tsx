@@ -1051,18 +1051,19 @@ export default function RecipeDetailModal({
                       </div>
                     </div>
 
-                    {/* Cooking Tips */}
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold mb-4">Cooking Tips</h3>
-                      <div className="bg-yellow-50 p-4 rounded-lg">
-                        <ul className="list-disc list-inside space-y-2 text-gray-600">
-                          <li>Prep all ingredients before starting to cook</li>
-                          <li>Follow the steps in order for best results</li>
-                          <li>Adjust seasoning to taste</li>
-                          <li>Let the dish rest for a few minutes before serving</li>
-                        </ul>
+                    {/* Notes Section (Replaces Cooking Tips) */}
+                    {recipe.notes && recipe.notes.length > 0 && (
+                      <div className="mt-8 recipe-modal-notes">
+                        <h3 className="text-lg font-semibold mb-4">Notes</h3>
+                        <div className="bg-blue-50 p-4 rounded-lg"> {/* Optional: Changed background color */}
+                          <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+                            {recipe.notes.map((note, index) => (
+                              <li key={index}>{note}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* --- Action Buttons (Mobile - Visible below content, hidden md+) --- */}
                     <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">

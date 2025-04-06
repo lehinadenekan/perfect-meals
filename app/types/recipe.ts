@@ -57,4 +57,5 @@ export interface Recipe {
   instructions: Instruction[];
   createdAt: Date;
   updatedAt: Date;
+  notes?: string[];
 } 
