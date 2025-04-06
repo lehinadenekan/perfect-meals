@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { auth } from '@/auth';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import type { Session } from 'next-auth';
 import { Recipe } from '@/app/types/recipe';
 import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
@@ -97,7 +99,7 @@ async function getRandomRecipesFromDB(
   // Add search term filter if provided
   if (params.searchInput) {
     const searchTerm = params.searchInput.toLowerCase();
-    
+
     // Add both singular and plural forms to search
     const searchTerms = [searchTerm];
     if (searchTerm.endsWith('s')) {
@@ -107,7 +109,7 @@ async function getRandomRecipesFromDB(
       // If singular, add plural
       searchTerms.push(`${searchTerm}s`);
     }
-    
+
     // First get a broader set of potential matches
     conditions.push({
       OR: [
@@ -121,7 +123,7 @@ async function getRandomRecipesFromDB(
   // Add dietary preferences to where clause if they exist
   if (params.dietTypes?.length > 0) {
     const dietConditions: Prisma.RecipeWhereInput[] = [];
-    
+
     params.dietTypes.forEach(diet => {
       console.log(`Processing dietary preference: ${diet}`);
       const normalizedDiet = diet.toLowerCase();
@@ -209,7 +211,7 @@ async function getRandomRecipesFromDB(
     // Apply word boundary filter if search term is provided
     if (params.searchInput) {
       const searchTerm = params.searchInput.toLowerCase();
-      
+
       // Add both singular and plural forms to search
       const searchTerms = [searchTerm];
       if (searchTerm.endsWith('s')) {
@@ -219,16 +221,16 @@ async function getRandomRecipesFromDB(
         // If singular, add plural
         searchTerms.push(`${searchTerm}s`);
       }
-      
+
       console.log('Filtering with word boundaries for terms:', searchTerms);
-      
+
       dbRecipes = dbRecipes.filter(recipe => {
         // Check title for whole word match
         const titleMatch = searchTerms.some(term => {
           const regex = new RegExp(`\\b${term}\\b`, 'i');
           return regex.test(recipe.title);
         });
-        
+
         // Check ingredients for whole word match
         const ingredientMatch = recipe.ingredients.some(ingredient => {
           return searchTerms.some(term => {
@@ -236,27 +238,27 @@ async function getRandomRecipesFromDB(
             return regex.test(ingredient.name);
           });
         });
-        
+
         // Check description for whole word match
         const descriptionMatch = recipe.description ? searchTerms.some(term => {
           const regex = new RegExp(`\\b${term}\\b`, 'i');
           return regex.test(recipe.description || '');
         }) : false;
-        
+
         return titleMatch || ingredientMatch || descriptionMatch;
       });
-      
+
       console.log('After word boundary filtering:', {
         remainingRecipes: dbRecipes.length,
         searchTerms
       });
-      
+
       // Sort results by relevance
       dbRecipes = dbRecipes.sort((a, b) => {
         // Calculate relevance score for each recipe
         const getScore = (recipe: DbRecipe): number => {
           let score = 0;
-          
+
           // Title match (highest priority)
           if (searchTerms.some(term => {
             const regex = new RegExp(`\\b${term}\\b`, 'i');
@@ -264,7 +266,7 @@ async function getRandomRecipesFromDB(
           })) {
             score += 100;
           }
-          
+
           // Ingredient match (medium priority)
           if (recipe.ingredients.some(i => {
             return searchTerms.some(term => {
@@ -274,7 +276,7 @@ async function getRandomRecipesFromDB(
           })) {
             score += 50;
           }
-          
+
           // Description match (lowest priority)
           if (recipe.description && searchTerms.some(term => {
             const regex = new RegExp(`\\b${term}\\b`, 'i');
@@ -282,10 +284,10 @@ async function getRandomRecipesFromDB(
           })) {
             score += 25;
           }
-          
+
           return score;
         };
-        
+
         // Sort by score (higher first)
         return getScore(b) - getScore(a);
       });
@@ -294,7 +296,7 @@ async function getRandomRecipesFromDB(
     // Step 3: Apply excluded foods filtering in memory
     if (params.excludedFoods?.length > 0) {
       console.log('Applying excluded foods filtering:', params.excludedFoods);
-      
+
       // Create an array of all terms to check (original terms + variations)
       const termsToExclude = params.excludedFoods.reduce((acc: string[], food) => {
         const foodLower = food.toLowerCase();
@@ -304,7 +306,7 @@ async function getRandomRecipesFromDB(
       }, []);
 
       console.log('All terms being excluded:', termsToExclude);
-      
+
       dbRecipes = dbRecipes.filter(recipe => {
         // Check if any excluded term appears in title or ingredients
         const hasExcludedFood = termsToExclude.some(term => {
@@ -367,10 +369,10 @@ async function getRandomRecipesFromDB(
       cuisineType: dbRecipe.cuisineType || dbRecipe.cuisines[0]?.name || 'Global',
       regionOfOrigin: dbRecipe.regionOfOrigin || dbRecipe.cuisines[0]?.region || 'Global',
       imageUrl: dbRecipe.imageUrl || `/images/recipes/${dbRecipe.id}.jpg`,
-      calories: dbRecipe.nutritionFacts?.protein ? 
-        Math.round((dbRecipe.nutritionFacts.protein * 4) + 
-                  (dbRecipe.nutritionFacts.carbs || 0) * 4 + 
-                  (dbRecipe.nutritionFacts.fat || 0) * 9) : 
+      calories: dbRecipe.nutritionFacts?.protein ?
+        Math.round((dbRecipe.nutritionFacts.protein * 4) +
+          (dbRecipe.nutritionFacts.carbs || 0) * 4 +
+          (dbRecipe.nutritionFacts.fat || 0) * 9) :
         undefined,
       authorId: dbRecipe.authorId,
       isVegetarian: dbRecipe.isVegetarian || false,
@@ -413,19 +415,25 @@ async function getRandomRecipesFromDB(
 }
 
 export async function POST(request: Request) {
+  // Get session using v4 method, but don't require it
+  const session: Session | null = await getServerSession(authOptions);
+  const userId = session?.user?.id; // Will be undefined if not logged in
+
+  console.log(`Recipe generation request initiated by user: ${userId || 'anonymous'}`);
+
   try {
     const reqBody = await request.json();
-    const session = await auth();
-    const userEmail = session?.user?.email || undefined;
 
-    console.log('Recipe generation request:', {
-      userEmail: userEmail || 'anonymous',
+    // Log the request details (keeping user ID anonymous if not logged in)
+    console.log('Recipe generation request body:', {
+      userId: userId || 'anonymous',
       params: reqBody,
       timestamp: new Date().toISOString()
     });
 
-    const recipes = await getRandomRecipesFromDB(reqBody, userEmail);
-    
+    // Pass userId (which might be undefined) to the generation logic
+    const recipes = await getRandomRecipesFromDB(reqBody, userId);
+
     if (!recipes || recipes.length === 0) {
       console.log('No recipes found matching criteria. Request details:', {
         dietTypes: reqBody.dietTypes,
@@ -433,23 +441,23 @@ export async function POST(request: Request) {
         excludedFoods: reqBody.excludedFoods,
         timestamp: new Date().toISOString()
       });
-      
+
       // Check if there are any recipes at all in the database
       const totalRecipes = await prisma.recipe.count();
       console.log(`Total recipes in database: ${totalRecipes}`);
-      
+
       // Check counts for each dietary preference
       if (reqBody.dietTypes?.length > 0) {
         for (const diet of reqBody.dietTypes) {
           const normalizedDiet = diet.toLowerCase();
-          const dietField = normalizedDiet === 'fermented' ? 'isFermented' : 
-                           normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
-                           normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
-                           normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
-                           normalizedDiet === 'nut-free' ? 'isNutFree' :
-                           normalizedDiet === 'pescatarian' ? 'isPescatarian' :
-                           `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`;
-          
+          const dietField = normalizedDiet === 'fermented' ? 'isFermented' :
+            normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
+              normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
+                normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
+                  normalizedDiet === 'nut-free' ? 'isNutFree' :
+                    normalizedDiet === 'pescatarian' ? 'isPescatarian' :
+                      `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`;
+
           console.log(`Checking count for ${diet} using field ${dietField}`);
           const count = await prisma.recipe.count({
             where: {
@@ -459,9 +467,9 @@ export async function POST(request: Request) {
           console.log(`Total recipes for ${diet}: ${count}`);
         }
       }
-      
+
       return NextResponse.json(
-        { 
+        {
           error: 'No recipes found matching your criteria. Try adjusting your preferences.',
           success: false
         },
@@ -470,14 +478,14 @@ export async function POST(request: Request) {
     }
 
     console.log(`Returning ${recipes.length} recipes to user. Recipe IDs:`, recipes.map(r => r.id));
-    return NextResponse.json({ 
+    return NextResponse.json({
       recipes,
       success: true
     });
   } catch (error) {
     console.error('Error in recipe generation:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate recipes. Please try again.',
         success: false,
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
