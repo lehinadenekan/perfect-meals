@@ -76,8 +76,9 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
         isLactoseFree: recipe.isLactoseFree ?? false,
         isPescatarian: recipe.isPescatarian ?? false,
         isFermented: recipe.isFermented ?? false,
-        // Revert to 'as any' cast as workaround for build errors
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ingredients: (recipe as any).ingredients ?? [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         instructions: (recipe as any).instructions ?? [],
         createdAt: recipe.createdAt,
         updatedAt: recipe.updatedAt,

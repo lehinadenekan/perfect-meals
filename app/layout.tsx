@@ -4,6 +4,9 @@ import { Providers } from './providers'
 // import { Analytics } from "@vercel/analytics/react"
 // import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Toaster } from 'react-hot-toast';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+// import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
