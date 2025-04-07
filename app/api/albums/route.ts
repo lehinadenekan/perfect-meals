@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -12,7 +13,7 @@ const createAlbumSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -42,7 +43,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

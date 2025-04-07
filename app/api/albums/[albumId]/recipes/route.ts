@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+// import { auth } from '@/auth'; // Remove incorrect import
+import { getServerSession } from 'next-auth/next'; // Add correct import
+import { authOptions } from '@/lib/auth'; // Add correct import
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -17,7 +19,8 @@ export async function POST(
 
   let body: { recipeId?: string } = {}; // Declare body with a more specific type
   try {
-    const session = await auth();
+    // Use getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
