@@ -40,52 +40,71 @@ export async function GET() {
     });
 
     // Transform the recipes to match the frontend Recipe type
-    const transformedRecipes: Recipe[] = (user?.savedRecipes || []).map(recipe => ({
-      id: recipe.id,
-      title: recipe.title,
-      description: recipe.description || undefined,
-      cookingTime: recipe.cookingTime || 30,
-      servings: recipe.servings || 4,
-      difficulty: recipe.difficulty || 'medium',
-      cuisineType: recipe.cuisineType || recipe.cuisines[0]?.name || 'Global',
-      regionOfOrigin: recipe.regionOfOrigin || recipe.cuisines[0]?.region || 'Global',
-      imageUrl: recipe.imageUrl || undefined,
-      calories: recipe.nutritionFacts ? 
-        Math.round(
-          (recipe.nutritionFacts.protein || 0) * 4 + 
-          (recipe.nutritionFacts.carbs || 0) * 4 + 
-          (recipe.nutritionFacts.fat || 0) * 9
-        ) : undefined,
-      authorId: recipe.authorId,
-      author: recipe.author ? {
+    const transformedRecipes: Recipe[] = (user?.savedRecipes || []).map(recipe => {
+      const authorData = recipe.author ? {
+        authorId: recipe.author.id,
         name: recipe.author.name || '',
-        image: recipe.author.image || undefined
-      } : undefined,
-      type: recipe.categories[0]?.name || 'main',
-      cuisineId: recipe.cuisines[0]?.id || '',
-      authenticity: 'traditional',
-      cookingMethods: recipe.cuisines[0]?.cookingMethods || [],
-      spiceLevel: 'medium',
-      showCount: 0,
-      hasFeatureFermented: recipe.isFermented || false,
-      hasFermentedIngredients: recipe.ingredients.some(i => i.isFermented),
-      hasFish: false,
-      isVegetarian: recipe.isVegetarian || false,
-      isVegan: recipe.isVegan || false,
-      isGlutenFree: recipe.isGlutenFree || false,
-      isNutFree: recipe.isNutFree || false,
-      isLowFodmap: recipe.isLowFodmap || false,
-      isLactoseFree: recipe.isLactoseFree || false,
-      isPescatarian: recipe.isPescatarian || false,
-      isFermented: recipe.isFermented || false,
-      ingredients: recipe.ingredients.map(i => ({
-        ...i,
-        notes: i.notes || undefined
-      })),
-      instructions: recipe.instructions,
-      createdAt: recipe.createdAt,
-      updatedAt: recipe.updatedAt
-    }));
+        image: recipe.author.image || undefined,
+        isVegetarian: recipe.isVegetarian || false,
+        isVegan: recipe.isVegan || false,
+        isGlutenFree: recipe.isGlutenFree || false,
+        isNutFree: recipe.isNutFree || false,
+        isLowFodmap: recipe.isLowFodmap || false,
+        isLactoseFree: recipe.isLactoseFree || false,
+        isPescatarian: recipe.isPescatarian || false,
+        isFermented: recipe.isFermented || false,
+        updatedAt: recipe.updatedAt,
+        imageUrl: recipe.author.image || undefined,
+        videoUrl: undefined,
+        author: undefined,
+        notes: undefined,
+        nutritionFacts: undefined
+      } : undefined;
+
+      return {
+        id: recipe.id,
+        title: recipe.title,
+        description: recipe.description || undefined,
+        cookingTime: recipe.cookingTime || 30,
+        servings: recipe.servings || 4,
+        difficulty: recipe.difficulty || 'medium',
+        cuisineType: recipe.cuisineType || recipe.cuisines[0]?.name || 'Global',
+        regionOfOrigin: recipe.regionOfOrigin || recipe.cuisines[0]?.region || 'Global',
+        imageUrl: recipe.imageUrl || undefined,
+        calories: recipe.nutritionFacts ? 
+          Math.round(
+            (recipe.nutritionFacts.protein || 0) * 4 + 
+            (recipe.nutritionFacts.carbs || 0) * 4 + 
+            (recipe.nutritionFacts.fat || 0) * 9
+          ) : undefined,
+        authorId: recipe.authorId,
+        author: authorData,
+        type: recipe.categories[0]?.name || 'main',
+        cuisineId: recipe.cuisines[0]?.id || '',
+        authenticity: 'traditional',
+        cookingMethods: recipe.cuisines[0]?.cookingMethods || [],
+        spiceLevel: 'medium',
+        showCount: 0,
+        hasFeatureFermented: recipe.isFermented || false,
+        hasFermentedIngredients: recipe.ingredients.some(i => i.isFermented),
+        hasFish: false,
+        isVegetarian: recipe.isVegetarian || false,
+        isVegan: recipe.isVegan || false,
+        isGlutenFree: recipe.isGlutenFree || false,
+        isNutFree: recipe.isNutFree || false,
+        isLowFodmap: recipe.isLowFodmap || false,
+        isLactoseFree: recipe.isLactoseFree || false,
+        isPescatarian: recipe.isPescatarian || false,
+        isFermented: recipe.isFermented || false,
+        ingredients: recipe.ingredients.map(i => ({
+          ...i,
+          notes: i.notes || undefined
+        })),
+        instructions: recipe.instructions,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt
+      };
+    });
 
     // Return empty array if user not found or no saved recipes
     return NextResponse.json(transformedRecipes);
