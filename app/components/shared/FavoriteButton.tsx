@@ -29,7 +29,10 @@ export default function FavoriteButton({
 
   useEffect(() => {
     const checkIfFavorite = async () => {
-      if (!session?.user?.email) return;
+      if (!session?.user?.email) {
+        setIsFavorite(false);
+        return;
+      }
 
       setIsLoading(true);
       try {
@@ -50,11 +53,12 @@ export default function FavoriteButton({
     checkIfFavorite();
   }, [recipeId, session?.user?.email]);
 
-  const toggleFavorite = async () => {
+  const handleClick = async () => {
     if (!session?.user?.email) {
-      toast.error("Please log in to add favorites.");
+      toast.error("Log In to add favourite recipes");
       return;
     }
+
     if (isLoading) return;
 
     const previousIsFavorite = isFavorite;
@@ -90,32 +94,20 @@ export default function FavoriteButton({
     }
   };
 
-  if (!session) {
-    return (
-      <button
-        className={`${className} p-1.5 rounded-full opacity-50 cursor-not-allowed`}
-        aria-label="Log in to add favorites"
-        title="Log in to add favorites"
-        disabled
-      >
-        <HeartIcon className="h-6 w-6 text-gray-400" />
-      </button>
-    );
-  }
-
   return (
     <button
-      onClick={toggleFavorite}
-      disabled={isLoading}
-      className={`${className} p-1.5 rounded-full transition-all transform hover:scale-110 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+      onClick={handleClick}
+      disabled={isLoading && !!session}
+      className={`${className} p-1.5 rounded-full transition-all transform hover:scale-110 ${isLoading && !!session ? 'opacity-50 cursor-wait' : 'hover:bg-gray-100'
         }`}
-      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={isFavorite && !!session ? 'Remove from favorites' : 'Add to favorites'}
+      title={!session ? "Log In to add favourite recipes" : (isFavorite ? 'Remove from favorites' : 'Add to favorites')}
     >
-      {isFavorite ? (
+      {isFavorite && !!session ? (
         <HeartIconSolid className="h-6 w-6 text-red-500" />
       ) : (
         <HeartIcon className="h-6 w-6 text-gray-400 hover:text-red-500" />
       )}
     </button>
   );
-} 
+}
