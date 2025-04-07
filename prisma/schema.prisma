@@ -75,6 +75,8 @@ model Recipe {
   needsDietaryReview Boolean                  @default(false)
   imageUrl           String?
   regionOfOrigin     String?
+  calories           Int?
+  notes              String[]
   search_vector      Unsupported("tsvector")?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]

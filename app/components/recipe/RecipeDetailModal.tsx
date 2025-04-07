@@ -1028,25 +1028,19 @@ export default function RecipeDetailModal({
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-sm text-gray-500">Calories</div>
-                          <div className="text-xl font-semibold">{recipe.calories || 'N/A'}</div>
+                          <div className="text-xl font-semibold">{recipe.calories ?? 'N/A'}</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-sm text-gray-500">Protein</div>
-                          <div className="text-xl font-semibold">
-                            {Math.round((recipe.calories || 0) * 0.25 / 4)}g
-                          </div>
+                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.protein ?? 0}g</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-sm text-gray-500">Carbs</div>
-                          <div className="text-xl font-semibold">
-                            {Math.round((recipe.calories || 0) * 0.5 / 4)}g
-                          </div>
+                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.carbs ?? 0}g</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div className="text-sm text-gray-500">Fat</div>
-                          <div className="text-xl font-semibold">
-                            {Math.round((recipe.calories || 0) * 0.25 / 9)}g
-                          </div>
+                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.fat ?? 0}g</div>
                         </div>
                       </div>
                     </div>

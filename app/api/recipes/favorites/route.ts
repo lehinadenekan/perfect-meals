@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Recipe } from '@/app/types/recipe';
 
 // Get user's favorite recipes
 export async function GET() {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     
     // Check for auth
     if (!session?.user?.email) {
@@ -98,7 +99,7 @@ export async function GET() {
 // Add or remove a recipe from favorites
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     
     // Check for auth
     if (!session?.user?.email) {

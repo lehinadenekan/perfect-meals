@@ -18,7 +18,11 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  console.log("Navbar session data:", session);
+  console.log("Navbar rendering. Session status:", status);
+  if (session) {
+    console.log("Navbar session object:", JSON.stringify(session, null, 2));
+    console.log("Navbar session.user.image:", session.user?.image);
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +89,8 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
                           fill
                           sizes="32px"
                           onError={(e) => {
-                            console.error('Image load error:', e);
+                            console.error('!!! Image onError triggered:', e);
+                            console.error('!!! Failing image URL:', session.user.image);
                             setImageError(true);
                           }}
                         />

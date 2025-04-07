@@ -49,12 +49,6 @@ export default function RecipeCard({
       isPescatarian: false,
     };
 
-  // Calculate macros, using 0 if calories missing
-  const caloriesForCalc = recipe.calories || 0;
-  const approximateCarbs = Math.round(caloriesForCalc * 0.5 / 4);
-  const approximateProtein = Math.round(caloriesForCalc * 0.25 / 4);
-  const approximateFat = Math.round(caloriesForCalc * 0.25 / 9);
-
   // --- API Call Handlers --- 
   const handleAddToAlbum = async (albumId: string) => {
     console.log(`RecipeCard: Adding recipe ${recipe.id} to album ${albumId}`);
@@ -135,18 +129,18 @@ export default function RecipeCard({
           <div className="flex flex-col space-y-2 text-sm text-gray-600">
             <div className="flex items-center space-x-2 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              {/* Check actual recipe.calories for display */}
-              <span>Carbs: {recipe.calories ? `${approximateCarbs}g` : 'N/A'}</span>
+              {/* Update Carbs display */}
+              <span>Carbs: {recipe.nutritionFacts?.carbs != null ? `${recipe.nutritionFacts.carbs}g` : 'N/A'}</span>
             </div>
             <div className="flex items-center space-x-2 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              {/* Check actual recipe.calories for display */}
-              <span>Protein: {recipe.calories ? `${approximateProtein}g` : 'N/A'}</span>
+              {/* Update Protein display */}
+              <span>Protein: {recipe.nutritionFacts?.protein != null ? `${recipe.nutritionFacts.protein}g` : 'N/A'}</span>
             </div>
             <div className="flex items-center space-x-2 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-              {/* Check actual recipe.calories for display */}
-              <span>Fat: {recipe.calories ? `${approximateFat}g` : 'N/A'}</span>
+              {/* Update Fat display */}
+              <span>Fat: {recipe.nutritionFacts?.fat != null ? `${recipe.nutritionFacts.fat}g` : 'N/A'}</span>
             </div>
           </div>
         </div>

@@ -14,9 +14,30 @@ export interface Instruction {
   recipeId: string;
 }
 
+export interface NutritionFacts {
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}
+
 export interface Author {
   name: string;
   image?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  authorId: string;
+  author?: Author;
+  isVegetarian: boolean;
+  isVegan: boolean;
+  isGlutenFree: boolean;
+  isNutFree: boolean;
+  isLowFodmap: boolean;
+  isLactoseFree: boolean;
+  isPescatarian: boolean;
+  isFermented: boolean;
+  updatedAt: Date;
+  notes?: string[];
+  nutritionFacts?: NutritionFacts;
 }
 
 export interface Recipe {
@@ -58,4 +79,5 @@ export interface Recipe {
   createdAt: Date;
   updatedAt: Date;
   notes?: string[];
+  nutritionFacts?: NutritionFacts;
 } 

@@ -95,7 +95,9 @@ async function main() {
           isNutFree: recipeData.isNutFree ?? false,
           isFermented: recipeData.isFermented ?? false,
           isLowFodmap: recipeData.isLowFodmap ?? false,
-          isPescatarian: isRecipePescatarian, // Set the calculated pescatarian flag
+          isPescatarian: isRecipePescatarian,
+          calories: recipeData.calories,
+          notes: recipeData.notes,
           ingredients: {
             create: recipeData.ingredients.map(ingredient => ({
               name: ingredient.name,
@@ -137,7 +139,9 @@ async function main() {
           isNutFree: recipeData.isNutFree ?? false,
           isFermented: recipeData.isFermented ?? false,
           isLowFodmap: recipeData.isLowFodmap ?? false,
-          isPescatarian: isRecipePescatarian, // Set the calculated pescatarian flag
+          isPescatarian: isRecipePescatarian,
+          calories: recipeData.calories,
+          notes: recipeData.notes,
         },
       });
 

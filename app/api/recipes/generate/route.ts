@@ -3,7 +3,6 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import type { Session } from 'next-auth';
-import { Recipe } from '@/app/types/recipe';
 import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
 const prisma = new PrismaClient();
@@ -16,75 +15,11 @@ type RecipeParams = {
   searchInput?: string;
 };
 
-type DbRecipe = {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  title: string;
-  description: string | null;
-  cookingTime: number | null;
-  servings: number | null;
-  difficulty: string | null;
-  cuisineType: string | null;
-  regionOfOrigin: string | null;
-  imageUrl: string | null;
-  authorId: string;
-  isVegetarian: boolean | null;
-  isVegan: boolean | null;
-  isGlutenFree: boolean | null;
-  isNutFree: boolean | null;
-  jobId: string | null;
-  isFermented: boolean | null;
-  isLactoseFree: boolean | null;
-  isLowFodmap: boolean | null;
-  isPescatarian: boolean | null;
-  needsDietaryReview: boolean;
-  ingredients: {
-    id: string;
-    name: string;
-    amount: number;
-    unit: string;
-    notes: string | null;
-    recipeId: string;
-    isFermented: boolean;
-  }[];
-  instructions: {
-    id: string;
-    stepNumber: number;
-    description: string;
-    recipeId: string;
-  }[];
-  nutritionFacts: {
-    id: string;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-    fiber: number | null;
-    sugar: number | null;
-    sodium: number | null;
-    recipeId: string;
-  } | null;
-  categories: {
-    id: string;
-    name: string;
-  }[];
-  cuisines: {
-    id: string;
-    name: string;
-    region: string;
-    cookingMethods: string[];
-  }[];
-  tags: {
-    id: string;
-    name: string;
-  }[];
-};
-
 // This function will get recipes from our local database
 async function getRandomRecipesFromDB(
   params: RecipeParams,
   userId?: string,
-): Promise<Recipe[]> {
+): Promise<Prisma.RecipeGetPayload<{ include: { ingredients: true, instructions: true, nutritionFacts: true, categories: true, cuisines: true, tags: true } }>[]> {
   console.log('Starting recipe generation with params:', {
     dietTypes: params.dietTypes?.length || 0,
     selectedRegions: params.selectedRegions?.length || 0,
@@ -200,7 +135,7 @@ async function getRandomRecipesFromDB(
         tags: true,
       },
       take: 100, // Limit initial fetch for performance
-    }) as unknown as DbRecipe[];
+    });
 
     console.log('Initial recipe fetch metrics:', {
       fetchedCount: dbRecipes.length,
@@ -256,7 +191,7 @@ async function getRandomRecipesFromDB(
       // Sort results by relevance
       dbRecipes = dbRecipes.sort((a, b) => {
         // Calculate relevance score for each recipe
-        const getScore = (recipe: DbRecipe): number => {
+        const getScore = (recipe: Prisma.RecipeGetPayload<{ include: { ingredients: true, instructions: true, nutritionFacts: true, categories: true, cuisines: true, tags: true } }>): number => {
           let score = 0;
 
           // Title match (highest priority)
@@ -348,60 +283,19 @@ async function getRandomRecipesFromDB(
       return [];
     }
 
-    // Step 5: Shuffle and limit results
-    dbRecipes = dbRecipes.sort(() => Math.random() - 0.5);
-    dbRecipes = dbRecipes.slice(0, 8);
+    // Step 5: Select random recipes from the filtered list
+    const count = 8; // Number of recipes to return
+    const randomSelection = dbRecipes.sort(() => 0.5 - Math.random()).slice(0, count);
 
     console.log('Final recipe selection:', {
-      selectedCount: dbRecipes.length,
-      sampleRecipeId: dbRecipes[0]?.id,
+      selectedCount: randomSelection.length,
+      sampleRecipeId: randomSelection[0]?.id,
       timestamp: new Date().toISOString()
     });
 
-    // Convert database recipes to frontend Recipe type
-    const frontendRecipes = dbRecipes.map((dbRecipe): Recipe => ({
-      id: dbRecipe.id,
-      title: dbRecipe.title,
-      description: dbRecipe.description || undefined,
-      cookingTime: dbRecipe.cookingTime || 30,
-      servings: dbRecipe.servings || 4,
-      difficulty: dbRecipe.difficulty || 'medium',
-      cuisineType: dbRecipe.cuisineType || dbRecipe.cuisines[0]?.name || 'Global',
-      regionOfOrigin: dbRecipe.regionOfOrigin || dbRecipe.cuisines[0]?.region || 'Global',
-      imageUrl: dbRecipe.imageUrl || `/images/recipes/${dbRecipe.id}.jpg`,
-      calories: dbRecipe.nutritionFacts?.protein ?
-        Math.round((dbRecipe.nutritionFacts.protein * 4) +
-          (dbRecipe.nutritionFacts.carbs || 0) * 4 +
-          (dbRecipe.nutritionFacts.fat || 0) * 9) :
-        undefined,
-      authorId: dbRecipe.authorId,
-      isVegetarian: dbRecipe.isVegetarian || false,
-      isVegan: dbRecipe.isVegan || false,
-      isGlutenFree: dbRecipe.isGlutenFree || false,
-      isNutFree: dbRecipe.isNutFree || false,
-      isLowFodmap: dbRecipe.isLowFodmap || false,
-      isLactoseFree: dbRecipe.isLactoseFree || false,
-      isPescatarian: dbRecipe.isPescatarian || false,
-      isFermented: dbRecipe.isFermented || false,
-      type: dbRecipe.categories[0]?.name || 'main',
-      cuisineId: dbRecipe.cuisines[0]?.id || '',
-      authenticity: 'traditional',
-      cookingMethods: dbRecipe.cuisines[0]?.cookingMethods || [],
-      spiceLevel: 'medium',
-      showCount: 0,
-      hasFeatureFermented: dbRecipe.isFermented || false,
-      hasFermentedIngredients: dbRecipe.ingredients.some(i => i.isFermented),
-      hasFish: false,
-      ingredients: dbRecipe.ingredients.map(i => ({
-        ...i,
-        notes: i.notes || undefined
-      })),
-      instructions: dbRecipe.instructions,
-      createdAt: dbRecipe.createdAt,
-      updatedAt: dbRecipe.updatedAt,
-    }));
-
-    return frontendRecipes;
+    // Return the data directly as fetched by Prisma
+    console.log(`Returning ${randomSelection.length} recipes to user. Recipe IDs:`, randomSelection.map(r => r.id));
+    return randomSelection; // Return Prisma's inferred type
   } catch (error: unknown) {
     console.error('Recipe generation error context:', {
       error: error instanceof Error ? error.message : String(error),
@@ -410,7 +304,7 @@ async function getRandomRecipesFromDB(
       excludedFoods: params.excludedFoods,
       timestamp: new Date().toISOString()
     });
-    throw error;
+    return []; // Return empty array on error
   }
 }
 
