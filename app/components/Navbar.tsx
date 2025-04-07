@@ -75,6 +75,9 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
             ) : session ? (
               <>
                 <div className="flex items-center gap-3 relative">
+                  <div className="px-4 py-2 rounded-md text-black cursor-default">
+                    BETA Mode
+                  </div>
                   <HomeButton />
                   <div
                     className="flex items-center gap-3 cursor-pointer"
@@ -138,6 +141,9 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
               </>
             ) : (
               <>
+                <div className="px-4 py-2 rounded-md text-black cursor-default">
+                  BETA Mode
+                </div>
                 <HomeButton />
                 <div className="px-4 py-2 rounded-md text-black cursor-default">
                   Guest Mode
