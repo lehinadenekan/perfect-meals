@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useSession } from 'next-auth/react';
+import * as Progress from '@radix-ui/react-progress';
 import { DietType, DIET_TYPES } from '@/types/diet';
 import GeographicFilter from './GeographicFilter';
 import MealCarousel from '../recipe/MealCarousel';
@@ -289,30 +290,27 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
     }
   };
 
+  // Calculate progress percentage based on current step (out of 3 steps)
+  const progressValue = currentStep === 1 ? 33 : currentStep === 2 ? 66 : 100;
+
   return (
     <div
       className="w-full max-w-7xl mx-auto"
       role="region"
       aria-label="dietary preferences selection"
     >
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-center mb-8">
-        <div className="flex items-center space-x-2">
-          {[1, 2, 3].map((step) => (
-            <button
-              key={step}
-              onClick={() => setCurrentStep(step)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer ${step === currentStep
-                ? 'bg-black'
-                : step < currentStep
-                  ? 'bg-yellow-200 hover:bg-yellow-300'
-                  : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-              aria-label={`Go to step ${step}`}
-              aria-current={step === currentStep ? 'step' : undefined}
-            />
-          ))}
-        </div>
+      {/* Progress Indicator - Replaced dots with Radix Progress */}
+      <div className="mb-8 px-4 sm:px-0"> {/* Added padding for smaller screens */}
+        <Progress.Root
+          className="relative overflow-hidden bg-gray-200 rounded-full w-full h-[10px]" // Styling for the bar root
+          style={{ transform: 'translateZ(0)' }} // Required for animation in some browsers
+          value={progressValue}
+        >
+          <Progress.Indicator
+            className="bg-white w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]" // Changed bg-yellow-400 to bg-white
+            style={{ transform: `translateX(-${100 - progressValue}%)` }}
+          />
+        </Progress.Root>
       </div>
 
       <div className="text-center mb-16">
