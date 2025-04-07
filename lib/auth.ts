@@ -69,8 +69,10 @@ export const authOptions: AuthOptions = {
   callbacks: {
     // Explicitly type parameters with imported Session and User
     async session({ session, user }: { session: Session; user: User }) {
-      // Use type assertion as a temporary workaround for persistent type error
-      session.user.id = user.id as string;
+      // Add user details to the session object for frontend access
+      session.user.id = user.id;
+      session.user.name = user.name;
+      session.user.image = user.image;
       return session;
     },
   },
