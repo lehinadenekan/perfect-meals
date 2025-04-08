@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useUser } from '@clerk/nextjs';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -449,144 +450,136 @@ export default function RecipeDetailModal({
 
   // Handles PDF export (Client-side)
   const handleExportPdf = async () => {
-    const contentElement = modalContentRef.current;
-    if (!contentElement) {
-      console.error("Modal content area not found for PDF export.");
-      alert("Could not export PDF: Content area missing.");
-      return;
-    }
-
     setIsExportingPdf(true);
+    const pdf = new jsPDF('p', 'pt', 'a4'); // Use A4 page size
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const pdfMargin = 20; // Increased margin
+    const usableWidth = pdfWidth - pdfMargin * 2;
+    const usableHeight = pdfHeight - pdfMargin * 2;
 
-    // Temporarily add print styles to capture a cleaner view
-    const parentDialog = contentElement.closest('dialog'); // Find the parent dialog
-    if (parentDialog) {
-      parentDialog.classList.add('printing-active', 'print-hide-image', 'print-hide-notes'); // Add classes to hide optional elements for capture
-    }
-
+    // Find the parent modal content panel to add/remove class
+    const modalContentElement = document.getElementById('recipe-modal-content');
 
     try {
-      // Slight delay to allow styles to apply
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add class to hide elements before capturing
+      modalContentElement?.classList.add('pdf-exporting');
 
-      const canvas = await html2canvas(contentElement, {
-        scale: 2, // Increase scale for better resolution
-        useCORS: true, // If images are external
-        logging: false, // Disable console logging from html2canvas
-        onclone: (documentClone) => {
-          // Ensure the background is white for the capture
-          documentClone.body.style.background = 'white';
-          const contentClone = documentClone.getElementById('recipe-modal-content');
-          if (contentClone) {
-            contentClone.style.background = 'white';
-          }
-        }
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p', // portrait
-        unit: 'pt', // points, matches css pixels closely
-        format: 'a4' // or 'letter'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      // const imgY = 30; // Add some top margin
-      const imgY = 0; // Start from top
-
-      // Calculate the total height needed in the PDF
-      const totalPDFHeight = imgHeight * ratio;
-      let currentY = 0;
-      let page = 1;
-
-      // Add image page by page
-      while (currentY < totalPDFHeight) {
-        if (page > 1) {
-          pdf.addPage();
-        }
-        // Calculate the portion of the image to draw on the current page
-        const sourceY = (currentY / ratio);
-        const sourceHeight = Math.min((pdfHeight / ratio), (imgHeight - sourceY)); // Height of the slice from the source canvas
-        const drawHeight = sourceHeight * ratio; // Height to draw this slice in the PDF
-
-        // Correct call signature for adding image slice
-        pdf.addImage(
-          imgData,       // The base64 image data
-          'PNG',         // Format
-          imgX,          // X position in PDF
-          imgY,          // Y position in PDF (starts at 0 for each page)
-          imgWidth * ratio, // Width to draw in PDF
-          drawHeight,     // Height to draw in PDF
-          undefined,      // Alias (optional)
-          'FAST',         // Compression (optional)
-          0               // Rotation (optional)
-        );
-        // The above call adds the whole image scaled. We need to clip or use different params.
-        // Let's try a different approach: drawing the slice directly.
-        // jsPDF documentation is a bit tricky here. The typical addImage doesn't support source coordinates well.
-        // A common workaround is to create temporary canvases for each slice.
-        // Simpler alternative: Add the whole image but use clipping (less efficient for many pages)
-
-        // --- Revised addImage call for slicing (using internal methods - might be less stable) ---
-        // pdf.addImage(
-        //   imgData,       // Base64 string
-        //   'PNG',         // Format
-        //   imgX,          // PDF X coord
-        //   imgY,          // PDF Y coord (0 on new page)
-        //   imgWidth * ratio, // PDF width
-        //   drawHeight,     // PDF height for this slice
-        //   undefined,      // Alias
-        //   'FAST',         // Compression
-        //   undefined,      // Rotation
-        //   sourceY,        // Source Y coord (this is often not supported directly)
-        //   sourceHeight    // Source Height (often not supported directly)
-        // );
-
-        // --- Safest Approach: Add the full image and let it paginate (less precise control) ---
-        // pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-
-        // --- Let's try the documented 'addImage(imageData, format, x, y, width, height, alias, compression, rotation)' version
-        // It *should* clip automatically if width/height exceed page boundaries, but let's manage pages manually.
-
-        // Revised logic: Draw the correct slice of the full canvas onto the current PDF page
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = imgWidth;
-        tempCanvas.height = sourceHeight;
-        const tempCtx = tempCanvas.getContext('2d');
-        if (tempCtx) {
-          // Draw the relevant slice from the original canvas onto the temporary canvas
-          const sourceCanvas = await html2canvas(contentElement, { scale: 2, useCORS: true, logging: false }); // Recapture might be needed if state changed
-          tempCtx.drawImage(sourceCanvas, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-          const sliceDataUrl = tempCanvas.toDataURL('image/png');
-          // Add the slice image to the PDF
-          pdf.addImage(sliceDataUrl, 'PNG', imgX, imgY, imgWidth * ratio, drawHeight, undefined, 'FAST');
-        } else {
-          console.error("Could not create temporary canvas context for PDF slicing.");
-          // Fallback: Add the whole image (may overflow)
-          if (page === 1) pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-        }
-
-        currentY += drawHeight;
-        page++;
+      // Capture the image container
+      const imageContainerElement = document.getElementById('recipe-modal-image-container');
+      let imageCanvas, imageBaseHeight = 0;
+      if (imageContainerElement) {
+        imageCanvas = await html2canvas(imageContainerElement, {
+          scale: 2, // Increase scale for better resolution
+          useCORS: true, // Important for external images
+          logging: false, // Reduce console noise
+        });
+        const imgData = imageCanvas.toDataURL('image/jpeg', 0.9); // Use JPEG for potentially smaller size
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * usableWidth) / imgProps.width;
+        pdf.addImage(imgData, 'JPEG', pdfMargin, pdfMargin, usableWidth, imgHeight);
+        imageBaseHeight = imgHeight + pdfMargin; // Position where text should start initially
+      } else {
+          console.warn("Recipe image container not found for PDF export.");
       }
 
-      pdf.save(`${recipe.title}.pdf`);
+
+      // Capture the text content container
+      const textContentElement = document.getElementById('recipe-modal-text-content');
+      if (!textContentElement) {
+          throw new Error("Recipe text content container not found for PDF export.");
+      }
+
+      const textContentCanvas = await html2canvas(textContentElement, {
+          scale: 2, // Increase scale for better resolution
+          scrollY: -window.scrollY, // Capture based on element, not window scroll
+          windowWidth: textContentElement.scrollWidth,
+          windowHeight: textContentElement.scrollHeight,
+          logging: false, // Reduce console noise
+          // Optionally add more html2canvas configs if needed
+      });
+
+      const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
+      const textImgProps = pdf.getImageProperties(textImgData);
+      const totalTextHeightScaled = (textImgProps.height * usableWidth) / textImgProps.width;
+
+
+      let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
+      let remainingTextCanvasHeight = textContentCanvas.height; // Use original canvas height for slicing
+      let sourceY = 0; // The Y position on the source canvas to start slicing from
+
+      // Loop to add text pages
+      while (remainingTextCanvasHeight > 0) {
+        // If not the first text page, add a new page
+        if (sourceY > 0) {
+            pdf.addPage();
+            currentTextY = pdfMargin; // Reset Y for new page
+        }
+
+        // Calculate height of content that fits on the *current* page
+        let spaceLeftOnPage = usableHeight - (currentTextY - pdfMargin); // Subtract space already used (e.g., by image)
+        if (spaceLeftOnPage <= 0) { // If image took the whole page or more
+             pdf.addPage();
+             currentTextY = pdfMargin;
+             spaceLeftOnPage = usableHeight;
+        }
+
+        // Calculate the height of the slice from the source canvas
+        // Convert the spaceLeftOnPage (in PDF units) back to canvas pixel height
+        const sliceHeightPx = (spaceLeftOnPage / usableWidth) * textContentCanvas.width;
+
+        // Determine the actual height to slice: minimum of remaining height and calculated slice height
+        const currentSliceHeightPx = Math.min(remainingTextCanvasHeight, sliceHeightPx);
+        // Calculate the height this slice will occupy in the PDF
+        const pdfSliceHeight = (currentSliceHeightPx / textContentCanvas.width) * usableWidth;
+
+
+        // Create a temporary canvas for the slice
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = textContentCanvas.width;
+        sliceCanvas.height = currentSliceHeightPx;
+        const sliceCtx = sliceCanvas.getContext('2d');
+
+        // Draw the slice from the main text canvas onto the temporary canvas
+         sliceCtx?.drawImage(
+            textContentCanvas,
+            0, sourceY, // Source x, y
+            textContentCanvas.width, currentSliceHeightPx, // Source width, height
+            0, 0, // Destination x, y
+            textContentCanvas.width, currentSliceHeightPx // Destination width, height
+        );
+
+
+        // Add the slice image to the PDF
+        const sliceImgData = sliceCanvas.toDataURL('image/png');
+        pdf.addImage(sliceImgData, 'PNG', pdfMargin, currentTextY, usableWidth, pdfSliceHeight);
+
+        // Update remaining height and source Y position
+        remainingTextCanvasHeight -= currentSliceHeightPx;
+        sourceY += currentSliceHeightPx;
+        // Update currentTextY for the next iteration (though it resets if a new page is added)
+        currentTextY += pdfSliceHeight + 10; // Add a small gap between slices if on same page (unlikely with current logic)
+
+      }
+
+
+      pdf.save(`${recipe.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`); // Sanitize filename
 
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. See console for details.");
-    } finally {
-      setIsExportingPdf(false);
-      // Remove temporary print styles
-      if (parentDialog) {
-        parentDialog.classList.remove('printing-active', 'print-hide-image', 'print-hide-notes');
+      // Type check the error before accessing its message property
+      let errorMessage = 'An unknown error occurred.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error; // Handle if error is just a string
       }
+      // Use the extracted message or the default
+      alert(`Failed to generate PDF. ${errorMessage || 'See console for details.'}`);
+    } finally {
+      // Always remove the class and reset loading state
+      modalContentElement?.classList.remove('pdf-exporting');
+      setIsExportingPdf(false);
     }
   };
 
@@ -718,8 +711,8 @@ export default function RecipeDetailModal({
                     </button>
                   </div>
 
-                  {/* Recipe Image */}
-                  <div className="relative w-full aspect-video">
+                  {/* Recipe Image - Add ID here */}
+                  <div id="recipe-modal-image-container" className="relative w-full aspect-video">
                     {recipe.imageUrl && (
                       <Image
                         src={recipe.imageUrl}
@@ -734,422 +727,425 @@ export default function RecipeDetailModal({
                     </h2>
                   </div>
 
-                  {/* Recipe Content */}
-                  <div className="p-6">
-                    {/* Recipe Meta Info and Action Buttons Container */}
-                    {/* This container now mainly handles layout for md+ screens */}
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
-                      {/* Left Side: Time, Servings, Difficulty (Always Visible Here) */}
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <ClockIcon className="h-5 w-5 mr-1.5" aria-hidden="true" />
-                          <span>{recipe.cookingTime} min</span>
-                        </div>
-                        <div className="flex items-center">
-                          {/* Serving adjustment controls */}
-                          <button
-                            onClick={() => setServingMultiplier(prev => Math.max(1 / recipe.servings, prev - 1 / recipe.servings))}
-                            disabled={recipe.servings * servingMultiplier <= 1}
-                            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 recipe-modal-print-hide"
-                            aria-label="Decrease servings"
-                          >
-                            <span className="text-xs">-</span>
-                          </button>
-                          <UserIcon className="h-5 w-5 mx-1" aria-hidden="true" />
-                          <span>{Math.round(recipe.servings * servingMultiplier)} servings</span>
-                          <button
-                            onClick={() => setServingMultiplier(prev => prev + 1 / recipe.servings)}
-                            className="p-1 rounded-full hover:bg-gray-100 recipe-modal-print-hide"
-                            aria-label="Increase servings"
-                          >
-                            <span className="text-xs">+</span>
-                          </button>
-                        </div>
-                        <div className="flex items-center">
-                          <BeakerIcon className="h-5 w-5 mr-1.5" aria-hidden="true" />
-                          <span>{recipe.difficulty}</span>
-                        </div>
-                      </div>
-
-                      {/* Right Side: Action Buttons (Desktop - Visible md+) */}
-                      {/* Added hidden md:flex */}
-                      <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
-                        {/* Favorite Button */}
-                        <FavoriteButton
-                          recipeId={recipe.id}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
-                          onSuccess={onFavoriteChange}
-                        />
-                        {/* Print Button */}
-                        <button
-                          onClick={handleInitiatePrint}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                          title="Print Recipe"
-                        >
-                          <PrinterIcon className="h-5 w-5" />
-                          <span className="sr-only">Print Recipe</span>
-                        </button>
-                        {/* Export Dropdown */}
-                        <Menu as="div" className="relative inline-block text-left">
-                          <div>
-                            <Menu.Button
-                              className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
-                              disabled={isExportingPdf}
-                              title="Export Recipe"
+                  {/* Wrap the rest of the content - Add Wrapper Div Here */}
+                  <div id="recipe-modal-text-content">
+                    <div className="p-6">
+                      {/* Recipe Meta Info and Action Buttons Container */}
+                      {/* This container now mainly handles layout for md+ screens */}
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
+                        {/* Left Side: Time, Servings, Difficulty (Always Visible Here) */}
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <ClockIcon className="h-5 w-5 mr-1.5" aria-hidden="true" />
+                            <span>{recipe.cookingTime} min</span>
+                          </div>
+                          <div className="flex items-center">
+                            {/* Serving adjustment controls - ADD pdf-hide HERE */}
+                            <button
+                              onClick={() => setServingMultiplier(prev => Math.max(1 / recipe.servings, prev - 1 / recipe.servings))}
+                              disabled={recipe.servings * servingMultiplier <= 1}
+                              className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 pdf-hide" // Added pdf-hide
+                              aria-label="Decrease servings"
                             >
-                              {isExportingPdf ? (
-                                <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
-                              )}
-                              {/* No chevron needed for mobile? Optional. */}
-                            </Menu.Button>
+                              <span className="text-xs">-</span>
+                            </button>
+                            <UserIcon className="h-5 w-5 mx-1" aria-hidden="true" />
+                            <span>{Math.round(recipe.servings * servingMultiplier)} servings</span>
+                            {/* Serving adjustment controls - ADD pdf-hide HERE */}
+                            <button
+                              onClick={() => setServingMultiplier(prev => prev + 1 / recipe.servings)}
+                              className="p-1 rounded-full hover:bg-gray-100 pdf-hide" // Added pdf-hide
+                              aria-label="Increase servings"
+                            >
+                              <span className="text-xs">+</span>
+                            </button>
                           </div>
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
+                          <div className="flex items-center">
+                            <BeakerIcon className="h-5 w-5 mr-1.5" aria-hidden="true" />
+                            <span>{recipe.difficulty}</span>
+                          </div>
+                        </div>
+
+                        {/* Right Side: Action Buttons (Desktop - Visible md+) */}
+                        {/* Added hidden md:flex */}
+                        <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
+                          {/* Favorite Button */}
+                          <FavoriteButton
+                            recipeId={recipe.id}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
+                            onSuccess={onFavoriteChange}
+                          />
+                          {/* Print Button */}
+                          <button
+                            onClick={handleInitiatePrint}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                            title="Print Recipe"
                           >
-                            {/* Ensure dropdown opens upwards or carefully positioned on mobile - updated below for mobile */}
-                            <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                              <div className="px-1 py-1">
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
-                                  )}
-                                </Menu.Item>
-                              </div>
-                            </Menu.Items>
-                          </Transition>
-                        </Menu>
-                        {/* Share Button */}
-                        <button
-                          onClick={handleShare}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
-                          title="Share Recipe"
-                        >
-                          <ShareIcon className="h-5 w-5" />
-                          <span className="sr-only">Share Recipe</span>
-                          {/* Position copied confirmation appropriately for bottom layout */}
-                          {copied && (
-                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
-                              Copied!
-                            </span>
-                          )}
-                        </button>
-                        {/* Flag Button */}
-                        <button
-                          onClick={() => setShowFlagModal(true)}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                          title="Flag Issue"
-                        >
-                          <FlagIcon className="h-5 w-5" />
-                          <span className="sr-only">Flag Issue</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Recipe Description */}
-                    <p className="text-gray-600 mb-6">{recipe.description}</p>
-
-                    {/* Two Column Layout */}
-                    <div className="grid md:grid-cols-2 gap-8">
-                      {/* Left Column - Ingredients */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
-
-                        {/* Main Ingredients */}
-                        {ingredientGroups.main.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-700 mb-2">Main Ingredients</h4>
-                            <ul className="space-y-2">
-                              {ingredientGroups.main.map((ingredient, idx) => (
-                                <li key={idx} className="text-gray-600">
-                                  {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                  {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Spices and Seasonings */}
-                        {ingredientGroups.spices.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-700 mb-2">Spices & Seasonings</h4>
-                            <ul className="space-y-2">
-                              {ingredientGroups.spices.map((ingredient, idx) => (
-                                <li key={idx} className="text-gray-600">
-                                  {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                  {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Garnishes */}
-                        {ingredientGroups.garnish.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-700 mb-2">For Garnish</h4>
-                            <ul className="space-y-2">
-                              {ingredientGroups.garnish.map((ingredient, idx) => (
-                                <li key={idx} className="text-gray-600">
-                                  {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                  {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Other/Optional Ingredients */}
-                        {ingredientGroups.other.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-700 mb-2">Optional Ingredients</h4>
-                            <ul className="space-y-2">
-                              {ingredientGroups.other.map((ingredient, idx) => (
-                                <li key={idx} className="text-gray-600">
-                                  {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                  {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Column - Instructions */}
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Instructions</h3>
-                        {sortedInstructions.length > 0 ? (
-                          <ol className="space-y-4 list-decimal list-inside">
-                            {sortedInstructions.map((instruction) => {
-                              const timerState = timerStates[instruction.stepNumber];
-                              // Determine if timer controls should be shown at all
-                              const hasInitialDuration = timerState?.initialDuration > 0;
-                              const canEverHaveTimer = hasInitialDuration || parseDuration(instruction.description) !== null;
-                              const isFinished = hasInitialDuration && timerState?.remainingTime <= 0;
-
-                              return (
-                                <li key={instruction.id} className="text-gray-700 flex items-start group">
-                                  <span className="mr-2 font-medium">{instruction.stepNumber}.</span>
-                                  <div className="flex-1">
-                                    <span>{instruction.description}</span>
-                                    {/* Timer UI - Show only if a duration can be determined */}
-                                    {canEverHaveTimer && (
-                                      <div className="flex items-center gap-2 mt-1 ml-4 text-sm">
-                                        {/* Rewind Button */}
-                                        <button
-                                          onClick={() => rewindTimer(instruction.stepNumber)}
-                                          disabled={!timerState || timerState.remainingTime <= 0} // Disable if no timer state or at 0
-                                          className="p-1 rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                          aria-label={`Rewind timer for step ${instruction.stepNumber} by ${REWIND_AMOUNT} seconds`}
-                                        >
-                                          <BackwardIcon className="h-4 w-4" />
-                                        </button>
-
-                                        {/* Play/Pause Button */}
-                                        {timerState?.isActive ? (
-                                          <button
-                                            onClick={() => pauseTimer(instruction.stepNumber)}
-                                            className="p-1 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
-                                            aria-label={`Pause timer for step ${instruction.stepNumber}`}
-                                          >
-                                            <PauseIcon className="h-5 w-5" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={() => playTimer(instruction.stepNumber, instruction.description)}
-                                            disabled={!canEverHaveTimer || isFinished} // Disable if cannot parse time or already finished
-                                            className="p-1 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                            aria-label={`Play timer for step ${instruction.stepNumber}`}
-                                          >
-                                            <PlayIcon className="h-5 w-5" />
-                                          </button>
-                                        )}
-
-                                        {/* Fast Forward Button */}
-                                        <button
-                                          onClick={() => fastForwardTimer(instruction.stepNumber)}
-                                          disabled={!timerState} // Disable if no timer state yet
-                                          className="p-1 rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                          aria-label={`Fast forward timer for step ${instruction.stepNumber} by ${FAST_FORWARD_AMOUNT} seconds`}
-                                        >
-                                          <ForwardIcon className="h-4 w-4" />
-                                        </button>
-
-                                        {/* Time Display */}
-                                        <div className="font-mono min-w-[50px] text-center">
-                                          {isFinished ? (
-                                            <span className="text-red-500 font-medium">Finished!</span>
-                                          ) : timerState ? (
-                                            <span className={timerState.isActive ? 'text-blue-600' : 'text-gray-600'}>
-                                              {formatTime(timerState.remainingTime)}
-                                            </span>
-                                          ) : (
-                                            <span className="text-gray-400">--:--</span> // Placeholder if timer never started
-                                          )}
-                                        </div>
-
-                                      </div>
+                            <PrinterIcon className="h-5 w-5" />
+                            <span className="sr-only">Print Recipe</span>
+                          </button>
+                          {/* Export Dropdown */}
+                          <Menu as="div" className="relative inline-block text-left">
+                            <div>
+                              <Menu.Button
+                                className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
+                                disabled={isExportingPdf}
+                                title="Export Recipe"
+                              >
+                                {isExportingPdf ? (
+                                  <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
+                                )}
+                                {/* No chevron needed for mobile? Optional. */}
+                              </Menu.Button>
+                            </div>
+                            <Transition
+                              as={Fragment}
+                              enter="transition ease-out duration-100"
+                              enterFrom="transform opacity-0 scale-95"
+                              enterTo="transform opacity-100 scale-100"
+                              leave="transition ease-in duration-75"
+                              leaveFrom="transform opacity-100 scale-100"
+                              leaveTo="transform opacity-0 scale-95"
+                            >
+                              {/* Ensure dropdown opens upwards or carefully positioned on mobile - updated below for mobile */}
+                              <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div className="px-1 py-1">
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
                                     )}
-                                  </div>
-                                </li>
-                              );
-                            })}
-                          </ol>
-                        ) : (
-                          <p className="text-gray-500">No instructions provided.</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Nutritional Information */}
-                    <div className="mt-8">
-                      <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-500">Calories</div>
-                          <div className="text-xl font-semibold">{recipe.calories ?? 'N/A'}</div>
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-500">Protein</div>
-                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.protein ?? 0}g</div>
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-500">Carbs</div>
-                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.carbs ?? 0}g</div>
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div className="text-sm text-gray-500">Fat</div>
-                          <div className="text-xl font-semibold">{recipe.nutritionFacts?.fat ?? 0}g</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Notes Section (Replaces Cooking Tips) */}
-                    {recipe.notes && recipe.notes.length > 0 && (
-                      <div className="mt-8 recipe-modal-notes">
-                        <h3 className="text-lg font-semibold mb-4">Notes</h3>
-                        <div className="bg-blue-50 p-4 rounded-lg"> {/* Optional: Changed background color */}
-                          <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
-                            {recipe.notes.map((note, index) => (
-                              <li key={index}>{note}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- Action Buttons (Mobile - Visible below content, hidden md+) --- */}
-                    <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
-                        {/* Favorite Button */}
-                        <FavoriteButton
-                          recipeId={recipe.id}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
-                          onSuccess={onFavoriteChange}
-                        />
-                        {/* Print Button */}
-                        <button
-                          onClick={handleInitiatePrint}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                          title="Print Recipe"
-                        >
-                          <PrinterIcon className="h-5 w-5" />
-                          <span className="sr-only">Print Recipe</span>
-                        </button>
-                        {/* Export Dropdown (Mobile) */}
-                        <Menu as="div" className="relative inline-block text-left">
-                          <div>
-                            <Menu.Button
-                              className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
-                              disabled={isExportingPdf}
-                              title="Export Recipe"
-                            >
-                              {isExportingPdf ? (
-                                <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
-                              )}
-                            </Menu.Button>
-                          </div>
-                          <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
+                                    )}
+                                  </Menu.Item>
+                                </div>
+                              </Menu.Items>
+                            </Transition>
+                          </Menu>
+                          {/* Share Button */}
+                          <button
+                            onClick={handleShare}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
+                            title="Share Recipe"
                           >
-                            {/* Opens upwards for mobile */}
-                            <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                              <div className="px-1 py-1">
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
-                                  )}
-                                </Menu.Item>
-                              </div>
-                            </Menu.Items>
-                          </Transition>
-                        </Menu>
-                        {/* Share Button */}
-                        <button
-                          onClick={handleShare}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
-                          title="Share Recipe"
-                        >
-                          <ShareIcon className="h-5 w-5" />
-                          <span className="sr-only">Share Recipe</span>
-                          {copied && (
-                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
-                              Copied!
-                            </span>
-                          )}
-                        </button>
-                        {/* Flag Button */}
-                        <button
-                          onClick={() => setShowFlagModal(true)}
-                          className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
-                          title="Flag Issue"
-                        >
-                          <FlagIcon className="h-5 w-5" />
-                          <span className="sr-only">Flag Issue</span>
-                        </button>
-                    </div>
+                            <ShareIcon className="h-5 w-5" />
+                            <span className="sr-only">Share Recipe</span>
+                            {/* Position copied confirmation appropriately for bottom layout */}
+                            {copied && (
+                              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
+                                Copied!
+                              </span>
+                            )}
+                          </button>
+                          {/* Flag Button */}
+                          <button
+                            onClick={() => setShowFlagModal(true)}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                            title="Flag Issue"
+                          >
+                            <FlagIcon className="h-5 w-5" />
+                            <span className="sr-only">Flag Issue</span>
+                          </button>
+                        </div>
+                      </div>
 
+                      {/* Recipe Description */}
+                      <p className="text-gray-600 mb-6">{recipe.description}</p>
+
+                      {/* Two Column Layout */}
+                      <div className="grid md:grid-cols-2 gap-8">
+                        {/* Left Column - Ingredients */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
+
+                          {/* Main Ingredients */}
+                          {ingredientGroups.main.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-700 mb-2">Main Ingredients</h4>
+                              <ul className="space-y-2">
+                                {ingredientGroups.main.map((ingredient, idx) => (
+                                  <li key={idx} className="text-gray-600">
+                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
+                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Spices and Seasonings */}
+                          {ingredientGroups.spices.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-700 mb-2">Spices & Seasonings</h4>
+                              <ul className="space-y-2">
+                                {ingredientGroups.spices.map((ingredient, idx) => (
+                                  <li key={idx} className="text-gray-600">
+                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
+                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Garnishes */}
+                          {ingredientGroups.garnish.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-700 mb-2">For Garnish</h4>
+                              <ul className="space-y-2">
+                                {ingredientGroups.garnish.map((ingredient, idx) => (
+                                  <li key={idx} className="text-gray-600">
+                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
+                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Other/Optional Ingredients */}
+                          {ingredientGroups.other.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-700 mb-2">Optional Ingredients</h4>
+                              <ul className="space-y-2">
+                                {ingredientGroups.other.map((ingredient, idx) => (
+                                  <li key={idx} className="text-gray-600">
+                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
+                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right Column - Instructions */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Instructions</h3>
+                          {sortedInstructions.length > 0 ? (
+                            <ol className="space-y-4 list-decimal list-inside">
+                              {sortedInstructions.map((instruction) => {
+                                const timerState = timerStates[instruction.stepNumber];
+                                // Determine if timer controls should be shown at all
+                                const hasInitialDuration = timerState?.initialDuration > 0;
+                                const canEverHaveTimer = hasInitialDuration || parseDuration(instruction.description) !== null;
+                                const isFinished = hasInitialDuration && timerState?.remainingTime <= 0;
+
+                                return (
+                                  <li key={instruction.id} className="text-gray-700 flex items-start group">
+                                    <span className="mr-2 font-medium">{instruction.stepNumber}.</span>
+                                    <div className="flex-1">
+                                      <span>{instruction.description}</span>
+                                      {/* Timer UI - Show only if a duration can be determined */}
+                                      {canEverHaveTimer && (
+                                        <div className="flex items-center gap-2 mt-1 ml-4 text-sm">
+                                          {/* Rewind Button */}
+                                          <button
+                                            onClick={() => rewindTimer(instruction.stepNumber)}
+                                            disabled={!timerState || timerState.remainingTime <= 0} // Disable if no timer state or at 0
+                                            className="p-1 rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label={`Rewind timer for step ${instruction.stepNumber} by ${REWIND_AMOUNT} seconds`}
+                                          >
+                                            <BackwardIcon className="h-4 w-4" />
+                                          </button>
+
+                                          {/* Play/Pause Button */}
+                                          {timerState?.isActive ? (
+                                            <button
+                                              onClick={() => pauseTimer(instruction.stepNumber)}
+                                              className="p-1 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
+                                              aria-label={`Pause timer for step ${instruction.stepNumber}`}
+                                            >
+                                              <PauseIcon className="h-5 w-5" />
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={() => playTimer(instruction.stepNumber, instruction.description)}
+                                              disabled={!canEverHaveTimer || isFinished} // Disable if cannot parse time or already finished
+                                              className="p-1 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                              aria-label={`Play timer for step ${instruction.stepNumber}`}
+                                            >
+                                              <PlayIcon className="h-5 w-5" />
+                                            </button>
+                                          )}
+
+                                          {/* Fast Forward Button */}
+                                          <button
+                                            onClick={() => fastForwardTimer(instruction.stepNumber)}
+                                            disabled={!timerState} // Disable if no timer state yet
+                                            className="p-1 rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            aria-label={`Fast forward timer for step ${instruction.stepNumber} by ${FAST_FORWARD_AMOUNT} seconds`}
+                                          >
+                                            <ForwardIcon className="h-4 w-4" />
+                                          </button>
+
+                                          {/* Time Display */}
+                                          <div className="font-mono min-w-[50px] text-center">
+                                            {isFinished ? (
+                                              <span className="text-red-500 font-medium">Finished!</span>
+                                            ) : timerState ? (
+                                              <span className={timerState.isActive ? 'text-blue-600' : 'text-gray-600'}>
+                                                {formatTime(timerState.remainingTime)}
+                                              </span>
+                                            ) : (
+                                              <span className="text-gray-400">--:--</span> // Placeholder if timer never started
+                                            )}
+                                          </div>
+
+                                        </div>
+                                      )}
+                                    </div>
+                                  </li>
+                                );
+                              })}
+                            </ol>
+                          ) : (
+                            <p className="text-gray-500">No instructions provided.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Nutritional Information */}
+                      <div className="mt-8">
+                        <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-500">Calories</div>
+                            <div className="text-xl font-semibold">{recipe.calories ?? 'N/A'}</div>
+                          </div>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-500">Protein</div>
+                            <div className="text-xl font-semibold">{recipe.nutritionFacts?.protein ?? 0}g</div>
+                          </div>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-500">Carbs</div>
+                            <div className="text-xl font-semibold">{recipe.nutritionFacts?.carbs ?? 0}g</div>
+                          </div>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="text-sm text-gray-500">Fat</div>
+                            <div className="text-xl font-semibold">{recipe.nutritionFacts?.fat ?? 0}g</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notes Section (Replaces Cooking Tips) */}
+                      {recipe.notes && recipe.notes.length > 0 && (
+                        <div className="mt-8 recipe-modal-notes">
+                          <h3 className="text-lg font-semibold mb-4">Notes</h3>
+                          <div className="bg-blue-50 p-4 rounded-lg"> {/* Optional: Changed background color */}
+                            <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+                              {recipe.notes.map((note, index) => (
+                                <li key={index}>{note}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* --- Action Buttons (Mobile - Visible below content, hidden md+) --- */}
+                      <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
+                          {/* Favorite Button */}
+                          <FavoriteButton
+                            recipeId={recipe.id}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
+                            onSuccess={onFavoriteChange}
+                          />
+                          {/* Print Button */}
+                          <button
+                            onClick={handleInitiatePrint}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                            title="Print Recipe"
+                          >
+                            <PrinterIcon className="h-5 w-5" />
+                            <span className="sr-only">Print Recipe</span>
+                          </button>
+                          {/* Export Dropdown (Mobile) */}
+                          <Menu as="div" className="relative inline-block text-left">
+                            <div>
+                              <Menu.Button
+                                className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 disabled:opacity-50"
+                                disabled={isExportingPdf}
+                                title="Export Recipe"
+                              >
+                                {isExportingPdf ? (
+                                  <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
+                                )}
+                              </Menu.Button>
+                            </div>
+                            <Transition
+                              as={Fragment}
+                              enter="transition ease-out duration-100"
+                              enterFrom="transform opacity-0 scale-95"
+                              enterTo="transform opacity-100 scale-100"
+                              leave="transition ease-in duration-75"
+                              leaveFrom="transform opacity-100 scale-100"
+                              leaveTo="transform opacity-0 scale-95"
+                            >
+                              {/* Opens upwards for mobile */}
+                              <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div className="px-1 py-1">
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportTxt} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Text (.txt)</button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportMd} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>Markdown (.md)</button>
+                                    )}
+                                  </Menu.Item>
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <button onClick={handleExportPdf} disabled={isExportingPdf} className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} group flex w-full items-center rounded-md px-2 py-2 text-sm disabled:opacity-50`}>PDF (.pdf)</button>
+                                    )}
+                                  </Menu.Item>
+                                </div>
+                              </Menu.Items>
+                            </Transition>
+                          </Menu>
+                          {/* Share Button */}
+                          <button
+                            onClick={handleShare}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative"
+                            title="Share Recipe"
+                          >
+                            <ShareIcon className="h-5 w-5" />
+                            <span className="sr-only">Share Recipe</span>
+                            {copied && (
+                              <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
+                                Copied!
+                              </span>
+                            )}
+                          </button>
+                          {/* Flag Button */}
+                          <button
+                            onClick={() => setShowFlagModal(true)}
+                            className="p-1 rounded-md text-gray-600 hover:bg-gray-100"
+                            title="Flag Issue"
+                          >
+                            <FlagIcon className="h-5 w-5" />
+                            <span className="sr-only">Flag Issue</span>
+                          </button>
+                      </div>
+
+                    </div>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

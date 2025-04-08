@@ -17,10 +17,9 @@ export default function AlbumSelectionDropdown({
   onCreateAndAddAlbum,
 }: AlbumSelectionDropdownProps) {
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // For create/add actions
+  const [isLoading, setIsLoading] = useState(true); // Start loading true
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -79,38 +78,63 @@ export default function AlbumSelectionDropdown({
     // No finally block for setIsSubmitting here, as success closes the component
   };
 
-  const handleCreateAlbumSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAlbumName.trim()) return;
+  // Modified to handle creation directly
+  const handleCreateAlbum = async () => {
+    const trimmedName = newAlbumName.trim();
+    if (!trimmedName) return;
     setIsSubmitting(true);
     setError(null);
     try {
-      await onCreateAndAddAlbum(newAlbumName.trim(), recipeId);
-      onClose(); // Close dropdown on success
+      await onCreateAndAddAlbum(trimmedName, recipeId);
+      onClose();
     } catch (err) {
        setError(err instanceof Error ? err.message : 'Failed to create album');
-       setIsSubmitting(false); // Only reset on error, success closes
+       setIsSubmitting(false);
     }
-     // No finally block for setIsSubmitting here, as success closes the component
+  };
+
+  // Handle Enter key in input
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent default form submission if wrapped in form
+      handleCreateAlbum();
+    }
   };
 
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg border border-gray-200 z-50 p-3"
+      className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg border border-gray-200 z-50 p-3 space-y-2"
       onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing immediately if parent handles it
     >
-      {isLoading && (
-          <div className="flex justify-center items-center p-4">
-              <LoadingSpinner />
-          </div>
-      )}
+      {/* Input for creating new album - Always visible */}
+      <div className="relative">
+        <input
+          type="text"
+          value={newAlbumName}
+          onChange={(e) => setNewAlbumName(e.target.value)}
+          onKeyDown={handleInputKeyDown} // Handle Enter key
+          placeholder="Create new album..."
+          className="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+          disabled={isSubmitting}
+          aria-label="Create new album"
+        />
+         {/* Optional: Add a visual cue like a small + button inside or next to input if desired */}
+      </div>
 
-      {!isLoading && !showCreateForm && (
-        <>
-          <p className="text-xs text-gray-500 mb-2 px-1">Add to Album</p>
-          <ul className="space-y-1 max-h-48 overflow-y-auto">
-            {/* TODO: Add "General" or default option if desired */}
+      {/* Divider */}
+      <div className="border-t border-gray-200"></div>
+
+      {/* Album List Section */}
+      <div className="space-y-1">
+        <p className="text-xs text-gray-500 px-1">Add to existing album</p>
+        {isLoading && (
+            <div className="flex justify-center items-center py-2">
+                <LoadingSpinner />
+            </div>
+        )}
+        {!isLoading && (
+          <ul className="space-y-1 max-h-40 overflow-y-auto"> {/* Added scrolling */}
             {albums.length === 0 && !error && (
                  <li className="text-sm text-gray-500 px-2 py-1">No albums yet.</li>
             )}
@@ -118,68 +142,20 @@ export default function AlbumSelectionDropdown({
               <li key={album.id}>
                 <button
                   onClick={() => handleSelectAlbum(album.id)}
-                  className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-gray-100 disabled:opacity-50 flex items-center"
+                  className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2" // Added gap
                   disabled={isSubmitting}
                 >
-                  {/* Basic Folder Icon */}
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2 text-gray-400">
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-400 flex-shrink-0"> {/* Added flex-shrink-0 */}
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                   </svg>
-                  {album.name}
-                  {isSubmitting && <LoadingSpinner />} 
+                  <span className="truncate">{album.name}</span> {/* Added truncate */} 
+                  {/* Removed LoadingSpinner from here, handled globally by isSubmitting disable */}
                 </button>
               </li>
             ))}
           </ul>
-          <div className="border-t border-gray-200 mt-2 pt-2">
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="w-full text-left text-sm px-2 py-1.5 rounded text-blue-600 hover:bg-blue-50 disabled:opacity-50 flex items-center"
-              disabled={isSubmitting}
-            >
-              {/* Plus Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Create New Album
-            </button>
-          </div>
-        </>
-      )}
-
-      {showCreateForm && (
-        <form onSubmit={handleCreateAlbumSubmit} className="space-y-2">
-           <p className="text-xs text-gray-500 mb-1 px-1">Create New Album</p>
-          <input
-            type="text"
-            value={newAlbumName}
-            onChange={(e) => setNewAlbumName(e.target.value)}
-            placeholder="Album name..."
-            className="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            required
-            disabled={isSubmitting}
-            autoFocus // Focus input when form appears
-          />
-          <div className="flex justify-end space-x-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setShowCreateForm(false)}
-              className="px-2 py-1 rounded border text-xs text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-2 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 disabled:opacity-50 flex items-center"
-              disabled={isSubmitting || !newAlbumName.trim()}
-            >
-              {isSubmitting ? <LoadingSpinner /> : null}
-              Create & Add
-            </button>
-          </div>
-        </form>
-      )}
+        )}
+      </div>
 
        {error && (
            <p className="text-red-500 text-xs mt-2 p-1 bg-red-50 rounded border border-red-200">
