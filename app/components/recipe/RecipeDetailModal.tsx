@@ -27,7 +27,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useUser } from '@clerk/nextjs';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -501,7 +500,6 @@ export default function RecipeDetailModal({
 
       const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
       const textImgProps = pdf.getImageProperties(textImgData);
-      const totalTextHeightScaled = (textImgProps.height * usableWidth) / textImgProps.width;
 
 
       let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
