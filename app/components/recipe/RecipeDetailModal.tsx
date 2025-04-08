@@ -498,8 +498,6 @@ export default function RecipeDetailModal({
           // Optionally add more html2canvas configs if needed
       });
 
-      const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
-
       let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
       let remainingTextCanvasHeight = textContentCanvas.height; // Use original canvas height for slicing
       let sourceY = 0; // The Y position on the source canvas to start slicing from
