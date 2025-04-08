@@ -499,8 +499,6 @@ export default function RecipeDetailModal({
       });
 
       const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
-      const textImgProps = pdf.getImageProperties(textImgData);
-
 
       let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
       let remainingTextCanvasHeight = textContentCanvas.height; // Use original canvas height for slicing
