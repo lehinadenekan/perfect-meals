@@ -8,8 +8,10 @@ import { Toaster } from 'react-hot-toast';
 
 export default function RootLayout({
   children,
+  modal
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -20,6 +22,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
+        {modal}
         <Toaster />
         {/* <Analytics /> */}
         {/* <SpeedInsights /> */}

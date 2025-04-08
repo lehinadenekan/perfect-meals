@@ -27,6 +27,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'react-hot-toast';
+import RecipeDisplay from '@/app/components/recipes/RecipeDisplay';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -54,37 +57,6 @@ interface PrintOptions {
   includeImage: boolean;
   includeNotes: boolean;
   // Add more options as needed (e.g., includeNutrition)
-}
-
-// Helper function to group ingredients
-function groupIngredients(ingredients: Recipe['ingredients']) {
-  const groups: {
-    main: Recipe['ingredients'];
-    spices: Recipe['ingredients'];
-    garnish: Recipe['ingredients'];
-    other: Recipe['ingredients'];
-  } = {
-    main: [],
-    spices: [],
-    garnish: [],
-    other: []
-  };
-
-  ingredients.forEach(ing => {
-    if (ing.notes?.toLowerCase().includes('garnish')) {
-      groups.garnish.push(ing);
-    } else if (['salt', 'pepper', 'cumin', 'paprika', 'oregano', 'thyme', 'basil', 'cayenne'].some(
-      spice => ing.name.toLowerCase().includes(spice)
-    )) {
-      groups.spices.push(ing);
-    } else if (ing.notes?.toLowerCase().includes('optional')) {
-      groups.other.push(ing);
-    } else {
-      groups.main.push(ing);
-    }
-  });
-
-  return groups;
 }
 
 // Helper function to format seconds into MM:SS
@@ -140,11 +112,6 @@ export default function RecipeDetailModal({
   const [isPrinting, setIsPrinting] = useState(false); // State to add print-specific classes
   const [isExportingPdf, setIsExportingPdf] = useState(false); // State for PDF export loading
   const modalContentRef = useRef<HTMLDivElement>(null); // Ref for the content area to export
-
-  // Group ingredients only if they exist
-  const ingredientGroups = (recipe.ingredients && Array.isArray(recipe.ingredients))
-    ? groupIngredients(recipe.ingredients)
-    : { main: [], spices: [], garnish: [], other: [] }; // Default empty groups
 
   // Effect to add recipe to recently viewed when modal opens
   useEffect(() => {
@@ -203,20 +170,25 @@ export default function RecipeDetailModal({
 
   // Function to handle copying the URL
   const handleShare = async () => {
+    // Construct the correct URL using the recipe ID
+    const url = `${window.location.origin}/recipes/${recipe.id}`;
+    
+    if (!recipe || !recipe.id) {
+        console.error('Share failed: Recipe or Recipe ID is missing.');
+        toast.error('Cannot share recipe, ID is missing.');
+        return;
+    }
+
     try {
-      const url = window.location.href; // Get current URL (assuming modal doesn't change route)
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      // Reset the copied state after a short delay
+      toast.success('Recipe link copied!'); // Use toast for feedback
+      setCopied(true); // Keep internal state if needed elsewhere
+      // Reset the copied state after a short delay if you rely on it for UI changes
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy URL: ', err);
-      // Optionally handle the error (e.g., show an error message)
+      toast.error('Failed to copy link.'); // Use toast for error feedback
     }
-  };
-
-  const adjustAmount = (amount: number) => {
-    return (amount * servingMultiplier).toFixed(1).replace(/\.0$/, '');
   };
 
   // --- Timer Functions ---
@@ -497,6 +469,11 @@ export default function RecipeDetailModal({
           logging: false, // Reduce console noise
           // Optionally add more html2canvas configs if needed
       });
+
+      const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
+      const textImgProps = pdf.getImageProperties(textImgData);
+      const totalTextHeightScaled = (textImgProps.height * usableWidth) / textImgProps.width;
+
 
       let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
       let remainingTextCanvasHeight = textContentCanvas.height; // Use original canvas height for slicing
@@ -835,7 +812,6 @@ export default function RecipeDetailModal({
                             title="Share Recipe"
                           >
                             <ShareIcon className="h-5 w-5" />
-                            <span className="sr-only">Share Recipe</span>
                             {/* Position copied confirmation appropriately for bottom layout */}
                             {copied && (
                               <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
@@ -865,64 +841,16 @@ export default function RecipeDetailModal({
                           <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
 
                           {/* Main Ingredients */}
-                          {ingredientGroups.main.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-700 mb-2">Main Ingredients</h4>
-                              <ul className="space-y-2">
-                                {ingredientGroups.main.map((ingredient, idx) => (
-                                  <li key={idx} className="text-gray-600">
-                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {/* Main ingredients are handled in RecipeDisplay */}
 
                           {/* Spices and Seasonings */}
-                          {ingredientGroups.spices.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-700 mb-2">Spices & Seasonings</h4>
-                              <ul className="space-y-2">
-                                {ingredientGroups.spices.map((ingredient, idx) => (
-                                  <li key={idx} className="text-gray-600">
-                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {/* Spices and seasonings are handled in RecipeDisplay */}
 
                           {/* Garnishes */}
-                          {ingredientGroups.garnish.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-700 mb-2">For Garnish</h4>
-                              <ul className="space-y-2">
-                                {ingredientGroups.garnish.map((ingredient, idx) => (
-                                  <li key={idx} className="text-gray-600">
-                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {/* Garnishes are handled in RecipeDisplay */}
 
                           {/* Other/Optional Ingredients */}
-                          {ingredientGroups.other.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="font-medium text-gray-700 mb-2">Optional Ingredients</h4>
-                              <ul className="space-y-2">
-                                {ingredientGroups.other.map((ingredient, idx) => (
-                                  <li key={idx} className="text-gray-600">
-                                    {adjustAmount(ingredient.amount)} {ingredient.unit} {ingredient.name}
-                                    {ingredient.notes && <span className="text-gray-500 text-sm"> ({ingredient.notes})</span>}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                          {/* Other ingredients are handled in RecipeDisplay */}
                         </div>
 
                         {/* Right Column - Instructions */}
@@ -1121,7 +1049,6 @@ export default function RecipeDetailModal({
                             title="Share Recipe"
                           >
                             <ShareIcon className="h-5 w-5" />
-                            <span className="sr-only">Share Recipe</span>
                             {copied && (
                               <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
                                 Copied!
