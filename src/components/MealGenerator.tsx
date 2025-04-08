@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import DietaryPreferenceSelector from './DietaryPreferenceSelector';
 import { Meal } from '../types';
 import { type Ingredient } from '../utils/dietary-filters';
+import Image from 'next/image';
 
 const MealGenerator: React.FC = () => {
   // State for filtered ingredients and generated meals
@@ -157,7 +158,14 @@ const MealGenerator: React.FC = () => {
           <div className="meals-grid">
             {generatedMeals.map(meal => (
               <div key={meal.id} className="meal-card">
-                {meal.imageUrl && <img src={meal.imageUrl} alt={meal.name} style={{ maxWidth: '100px' }} />}
+                {meal.imageUrl && 
+                  <Image 
+                    src={meal.imageUrl} 
+                    alt={meal.name} 
+                    width={100}
+                    height={100}
+                    style={{ maxWidth: '100px', height: 'auto' }}
+                  />}
                 <h3>{meal.name}</h3>
                 <p>{meal.description}</p>
                 <p>Tags: {meal.dietaryTags.join(', ')}</p>

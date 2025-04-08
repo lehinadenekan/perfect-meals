@@ -1,30 +1,28 @@
 'use client';
 
 import React, { useState, useEffect } from 'react'
-// Import the frontend Recipe type definition instead of the Prisma one
-// import { Recipe } from '@prisma/client' 
-import { Recipe } from '@/app/types/recipe'; // Assuming this is the correct path
+// Revert to using the frontend Recipe type
+import { Recipe } from '@/app/types/recipe'; 
 import RecipeCard from './RecipeCard'
 import RecipeDetailModal from './RecipeDetailModal'
 
+// Revert prop type
 interface RecipeListProps {
-  recipes: (Recipe & { isFavorite?: boolean })[]; // Expect recipes with favorite status
+  recipes: (Recipe & { isFavorite?: boolean })[]; 
 }
 
 export default function RecipeList({ recipes: initialRecipes }: RecipeListProps) {
-  // Use state to manage the list locally, allowing updates to favorite status
+  // Revert state type
   const [recipes, setRecipes] = useState(initialRecipes);
 
-  // --- State for Modal Control ---
+  // Revert modal state type
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Effect to update local state if the initialRecipes prop changes
   useEffect(() => {
     setRecipes(initialRecipes);
   }, [initialRecipes]);
 
-  // --- Callback for Favorite Changes ---
   const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
@@ -33,16 +31,16 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
           : recipe
       )
     );
-    // If the updated recipe is the one in the modal, update modal state too
     if (selectedRecipe && selectedRecipe.id === recipeId) {
+      // Ensure the update here matches the Recipe type
       setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
     }
   };
 
-  // --- Modal Handlers ---
-  const handleOpenModal = (recipe: Recipe) => {
-    // Find the latest version from state to ensure modal gets correct favorite status
+  // Revert handleOpenModal parameter type
+  const handleOpenModal = (recipe: Recipe) => { 
     const currentRecipeData = recipes.find(r => r.id === recipe.id) || recipe;
+    // Ensure selectedRecipe state matches Recipe type
     setSelectedRecipe(currentRecipeData);
     setIsModalOpen(true);
   };
@@ -52,21 +50,22 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
     setSelectedRecipe(null);
   };
 
+  // Revert filter logic check if needed (assuming FrontendRecipeType has these fields)
   const [filters, setFilters] = useState({
     vegetarian: false,
     vegan: false,
-    cuisine: ''
+    cuisine: '' 
   })
 
   const filteredRecipes = recipes.filter(recipe => {
     if (filters.vegetarian && !recipe.isVegetarian) return false
     if (filters.vegan && !recipe.isVegan) return false
-    if (filters.cuisine && recipe.cuisineType !== filters.cuisine) return false
+    if (filters.cuisine && recipe.cuisineType !== filters.cuisine) return false 
     return true
   })
 
   if (!recipes || recipes.length === 0) {
-    return <p className="text-center text-gray-500 py-8">No recipes to display.</p>; // Added some styling
+    return <p className="text-center text-gray-500 py-8">No recipes to display.</p>;
   }
 
   return (
@@ -108,8 +107,8 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
           filteredRecipes.map(recipe => (
             <RecipeCard
               key={recipe.id}
-              recipe={recipe}
-              onSelect={handleOpenModal}
+              recipe={recipe} // Should now match RecipeCard's expected prop type
+              onSelect={handleOpenModal} // Parameter type matches again
               onFavoriteChange={handleFavoriteChange}
             />
           ))
@@ -118,12 +117,11 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
         )}
       </div>
 
-      {/* Render Modal Conditionally */}
       {selectedRecipe && (
         <RecipeDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          recipe={selectedRecipe}
+          recipe={selectedRecipe} // Should now match RecipeDetailModal's expected prop type
           onFavoriteChange={handleFavoriteChange}
         />
       )}

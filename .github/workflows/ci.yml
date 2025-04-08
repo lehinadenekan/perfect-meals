@@ -1,0 +1,49 @@
+# .github/workflows/ci.yml
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [main] # Trigger on pushes to the main branch
+  pull_request:
+    branches: [main] # Trigger on pull requests targeting the main branch
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    strategy:
+      matrix:
+        node-version: [18.x] # Specify Node.js version (use LTS, adjust if needed based on your project)
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Action to check out your code
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm" # Enable caching for npm dependencies
+
+      - name: Install Dependencies
+        # Use npm ci for cleaner installs in CI, ensuring exact versions from lockfile
+        run: npm ci
+
+      - name: Run Lint
+        # Run the lint command defined in your package.json
+        run: npm run lint
+
+      - name: Run Type Check
+        # Use npx to ensure the project's TypeScript version is used
+        run: npx tsc --noEmit
+
+      - name: Run Build
+        # Run the build command defined in your package.json
+        # Include necessary env vars if build needs them (e.g., NEXT_PUBLIC_...)
+        # Secrets should NOT be placed here directly
+        run: npm run build
+        # env:
+        #   DATABASE_URL: ${{ secrets.DATABASE_URL }} # Example if build needs DB access (use secrets)
+        #   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }} # Example

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client';
+import Image from 'next/image';
 
 // Define the type for the fetched album data, including the nested recipe relation
 type FetchedAlbum = PrismaAlbum & {
@@ -146,7 +147,7 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {albums.map((album: FetchedAlbum) => (
+        {albums.map((album: FetchedAlbum, index) => (
           <div
             key={album.id}
             onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}
@@ -154,10 +155,13 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
           >
             <div className="aspect-video bg-gray-200 relative">
               {album.coverImage ? (
-                <img
+                <Image
                   src={album.coverImage}
                   alt={album.name}
                   className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={index < 3}
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">

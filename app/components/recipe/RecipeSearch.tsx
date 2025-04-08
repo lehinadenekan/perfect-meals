@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
 import { Recipe } from '@/app/types/recipe';
 import RecipeCard from './RecipeCard';
 import RecipeDetailModal from './RecipeDetailModal';
@@ -82,7 +82,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
     }
   ];
 
-  const searchRecipes = async () => {
+  const searchRecipes = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -120,7 +120,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, selectedDiets, onSearchResults]);
 
   useEffect(() => {
     if (searchQuery.length > 2 || selectedDiets.length > 0) {
@@ -132,7 +132,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
       setRecipes([]);
       onSearchResults([]);
     }
-  }, [searchQuery, selectedDiets, onSearchResults]);
+  }, [searchQuery, selectedDiets, onSearchResults, searchRecipes]);
 
   const toggleDiet = (diet: DietaryPreference) => {
     setSelectedDiets(prev =>

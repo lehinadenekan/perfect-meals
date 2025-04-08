@@ -27,9 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useUser } from '@clerk/nextjs';
 import { toast } from 'react-hot-toast';
-import RecipeDisplay from '@/app/components/recipes/RecipeDisplay';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -421,136 +419,46 @@ export default function RecipeDetailModal({
 
   // Handles PDF export (Client-side)
   const handleExportPdf = async () => {
+    if (!modalContentRef.current) return;
     setIsExportingPdf(true);
-    const pdf = new jsPDF('p', 'pt', 'a4'); // Use A4 page size
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const pdfMargin = 20; // Increased margin
-    const usableWidth = pdfWidth - pdfMargin * 2;
-    const usableHeight = pdfHeight - pdfMargin * 2;
-
-    // Find the parent modal content panel to add/remove class
-    const modalContentElement = document.getElementById('recipe-modal-content');
+    toast.loading('Generating PDF...');
 
     try {
-      // Add class to hide elements before capturing
-      modalContentElement?.classList.add('pdf-exporting');
-
-      // Capture the image container
-      const imageContainerElement = document.getElementById('recipe-modal-image-container');
-      let imageCanvas, imageBaseHeight = 0;
-      if (imageContainerElement) {
-        imageCanvas = await html2canvas(imageContainerElement, {
-          scale: 2, // Increase scale for better resolution
-          useCORS: true, // Important for external images
-          logging: false, // Reduce console noise
+        const canvas = await html2canvas(modalContentRef.current, {
+            scale: 2, // Increase scale for better resolution
+            useCORS: true, // If images are external
+            logging: false, // Disable excessive logging
         });
-        const imgData = imageCanvas.toDataURL('image/jpeg', 0.9); // Use JPEG for potentially smaller size
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgHeight = (imgProps.height * usableWidth) / imgProps.width;
-        pdf.addImage(imgData, 'JPEG', pdfMargin, pdfMargin, usableWidth, imgHeight);
-        imageBaseHeight = imgHeight + pdfMargin; // Position where text should start initially
-      } else {
-          console.warn("Recipe image container not found for PDF export.");
-      }
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt', // Use points for calculations
+            format: 'a4' // Standard A4 size
+        });
 
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
 
-      // Capture the text content container
-      const textContentElement = document.getElementById('recipe-modal-text-content');
-      if (!textContentElement) {
-          throw new Error("Recipe text content container not found for PDF export.");
-      }
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 10; // Add some top margin
 
-      const textContentCanvas = await html2canvas(textContentElement, {
-          scale: 2, // Increase scale for better resolution
-          scrollY: -window.scrollY, // Capture based on element, not window scroll
-          windowWidth: textContentElement.scrollWidth,
-          windowHeight: textContentElement.scrollHeight,
-          logging: false, // Reduce console noise
-          // Optionally add more html2canvas configs if needed
-      });
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
-      const textImgData = textContentCanvas.toDataURL('image/png'); // Use PNG for text clarity
-      const textImgProps = pdf.getImageProperties(textImgData);
-      const totalTextHeightScaled = (textImgProps.height * usableWidth) / textImgProps.width;
-
-
-      let currentTextY = imageBaseHeight + 10; // Start text below image + small gap
-      let remainingTextCanvasHeight = textContentCanvas.height; // Use original canvas height for slicing
-      let sourceY = 0; // The Y position on the source canvas to start slicing from
-
-      // Loop to add text pages
-      while (remainingTextCanvasHeight > 0) {
-        // If not the first text page, add a new page
-        if (sourceY > 0) {
-            pdf.addPage();
-            currentTextY = pdfMargin; // Reset Y for new page
-        }
-
-        // Calculate height of content that fits on the *current* page
-        let spaceLeftOnPage = usableHeight - (currentTextY - pdfMargin); // Subtract space already used (e.g., by image)
-        if (spaceLeftOnPage <= 0) { // If image took the whole page or more
-             pdf.addPage();
-             currentTextY = pdfMargin;
-             spaceLeftOnPage = usableHeight;
-        }
-
-        // Calculate the height of the slice from the source canvas
-        // Convert the spaceLeftOnPage (in PDF units) back to canvas pixel height
-        const sliceHeightPx = (spaceLeftOnPage / usableWidth) * textContentCanvas.width;
-
-        // Determine the actual height to slice: minimum of remaining height and calculated slice height
-        const currentSliceHeightPx = Math.min(remainingTextCanvasHeight, sliceHeightPx);
-        // Calculate the height this slice will occupy in the PDF
-        const pdfSliceHeight = (currentSliceHeightPx / textContentCanvas.width) * usableWidth;
-
-
-        // Create a temporary canvas for the slice
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = textContentCanvas.width;
-        sliceCanvas.height = currentSliceHeightPx;
-        const sliceCtx = sliceCanvas.getContext('2d');
-
-        // Draw the slice from the main text canvas onto the temporary canvas
-         sliceCtx?.drawImage(
-            textContentCanvas,
-            0, sourceY, // Source x, y
-            textContentCanvas.width, currentSliceHeightPx, // Source width, height
-            0, 0, // Destination x, y
-            textContentCanvas.width, currentSliceHeightPx // Destination width, height
-        );
-
-
-        // Add the slice image to the PDF
-        const sliceImgData = sliceCanvas.toDataURL('image/png');
-        pdf.addImage(sliceImgData, 'PNG', pdfMargin, currentTextY, usableWidth, pdfSliceHeight);
-
-        // Update remaining height and source Y position
-        remainingTextCanvasHeight -= currentSliceHeightPx;
-        sourceY += currentSliceHeightPx;
-        // Update currentTextY for the next iteration (though it resets if a new page is added)
-        currentTextY += pdfSliceHeight + 10; // Add a small gap between slices if on same page (unlikely with current logic)
-
-      }
-
-
-      pdf.save(`${recipe.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`); // Sanitize filename
+        // Clean up title for filename
+        const safeTitle = recipe.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        pdf.save(`${safeTitle}_recipe.pdf`);
+        toast.dismiss(); // Dismiss loading toast
+        toast.success('PDF exported successfully!');
 
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      // Type check the error before accessing its message property
-      let errorMessage = 'An unknown error occurred.';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error; // Handle if error is just a string
-      }
-      // Use the extracted message or the default
-      alert(`Failed to generate PDF. ${errorMessage || 'See console for details.'}`);
+        console.error("Error generating PDF:", error);
+        toast.dismiss();
+        toast.error("Failed to export PDF.");
     } finally {
-      // Always remove the class and reset loading state
-      modalContentElement?.classList.remove('pdf-exporting');
-      setIsExportingPdf(false);
+        setIsExportingPdf(false);
     }
   };
 

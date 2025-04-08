@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { act } from 'react';
-import { SessionProvider } from 'next-auth/react';
-import DietaryPreferenceSelector from '@/app/components/dietary/DietaryPreferenceSelector';
+import React, { useState } from 'react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import { SessionProvider, SessionProviderProps } from 'next-auth/react';
+import DietaryPreferenceSelector, { DietaryPreferenceSelectorProps } from '@/app/components/dietary/DietaryPreferenceSelector';
 import { server } from '@/src/mocks/server';
 import { rest } from 'msw';
-import { Recipe } from '@/types/recipe';
+import { Recipe } from '@/app/types/recipe';
 import { DietType, DIET_TYPES } from '@/types/diet';
 
 // Mock sub-components
@@ -46,6 +46,38 @@ jest.mock('@/app/hooks/usePreferenceUpdates', () => ({
   }),
 }));
 
+// Helper component to provide props and context
+const TestWrapper: React.FC<{ 
+    session?: SessionProviderProps['session']; 
+    children?: React.ReactNode;
+}> = ({ session, children }) => {
+  const [selectedDiets, setSelectedDiets] = useState<DietType[]>([]);
+  const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  
+  // Define only the props that DietaryPreferenceSelector actually uses
+  const propsToPass: DietaryPreferenceSelectorProps = {
+    selectedDiets,
+    setSelectedDiets,
+    excludedFoods,
+    setExcludedFoods,
+    selectedRegions,
+    setSelectedRegions,
+    recipes,
+    setRecipes,
+    currentStep,
+    setCurrentStep,
+  };
+
+  return (
+    <SessionProvider session={session}> 
+      {children || <DietaryPreferenceSelector {...propsToPass} />}
+    </SessionProvider>
+  );
+};
+
 describe('DietaryPreferenceSelector', () => {
   const mockDietTypes: DietType[] = ['vegan', 'gluten-free'];
   
@@ -56,11 +88,7 @@ describe('DietaryPreferenceSelector', () => {
 
   it('renders all dietary preference options', async () => {
     await act(async () => {
-      render(
-        <SessionProvider session={null}>
-          <DietaryPreferenceSelector />
-        </SessionProvider>
-      );
+      render(<TestWrapper session={null} />); // Use TestWrapper
     });
 
     expect(screen.getByText('Choose Your Dietary Preferences')).toBeInTheDocument();
@@ -69,11 +97,7 @@ describe('DietaryPreferenceSelector', () => {
 
   it('allows selection of multiple dietary preferences', async () => {
     await act(async () => {
-      render(
-        <SessionProvider session={null}>
-          <DietaryPreferenceSelector />
-        </SessionProvider>
-      );
+      render(<TestWrapper session={null} />); // Use TestWrapper
     });
 
     const veganButton = screen.getByRole('button', { name: DIET_TYPES['vegan'].title });
@@ -108,11 +132,7 @@ describe('DietaryPreferenceSelector', () => {
     );
 
     await act(async () => {
-      render(
-        <SessionProvider session={null}>
-          <DietaryPreferenceSelector />
-        </SessionProvider>
-      );
+      render(<TestWrapper session={null} />); // Use TestWrapper
     });
 
     const veganButton = screen.getByRole('button', { name: DIET_TYPES['vegan'].title });
@@ -132,11 +152,7 @@ describe('DietaryPreferenceSelector', () => {
 
   it('clears all preferences when clear button is clicked', async () => {
     await act(async () => {
-      render(
-        <SessionProvider session={null}>
-          <DietaryPreferenceSelector />
-        </SessionProvider>
-      );
+      render(<TestWrapper session={null} />); // Use TestWrapper
     });
 
     const veganButton = screen.getByRole('button', { name: DIET_TYPES['vegan'].title });
@@ -175,11 +191,7 @@ describe('DietaryPreferenceSelector', () => {
     );
 
     await act(async () => {
-      render(
-        <SessionProvider session={mockSession}>
-          <DietaryPreferenceSelector />
-        </SessionProvider>
-      );
+      render(<TestWrapper session={mockSession} />); // Use TestWrapper with session
     });
 
     await waitFor(() => {

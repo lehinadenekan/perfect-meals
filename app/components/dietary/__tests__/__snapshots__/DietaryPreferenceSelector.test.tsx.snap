@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DietaryPreferenceSelector Snapshot Testing matches snapshot 1`] = `null`;
+
+exports[`DietaryPreferenceSelector Snapshot Testing matches snapshot with different tabs active 1`] = `null`;
+
+exports[`DietaryPreferenceSelector Snapshot Testing matches snapshot with different tabs active 2`] = `null`;
+
+exports[`DietaryPreferenceSelector Snapshot Testing matches snapshot with different tabs active 3`] = `null`;

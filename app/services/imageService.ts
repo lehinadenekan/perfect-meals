@@ -132,4 +132,5 @@ export class ImageService {
   }
 }
 
-export default new ImageService(); 
+const imageServiceInstance = new ImageService();
+export default imageServiceInstance; 

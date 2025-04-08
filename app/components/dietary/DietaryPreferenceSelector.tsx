@@ -14,7 +14,8 @@ import DataPills from './DataPills';
 const TOP_ROW_DIETS: DietType[] = ['fermented', 'gluten-free', 'lactose-free', 'low-FODMAP'];
 const BOTTOM_ROW_DIETS: DietType[] = ['nut-free', 'pescatarian', 'vegan', 'vegetarian'];
 
-interface DietaryPreferenceSelectorProps {
+// Export the props interface
+export interface DietaryPreferenceSelectorProps {
   selectedDiets: DietType[];
   setSelectedDiets: Dispatch<SetStateAction<DietType[]>>;
   excludedFoods: string[];
@@ -37,7 +38,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
   recipes,
   setRecipes,
   currentStep,
-  setCurrentStep
+  setCurrentStep,
 }) => {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -55,16 +56,18 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
     setSelectedRegions([]);
   }, []); // Empty dependency array means this runs once on mount
 
+  // Load preferences from localStorage on mount
   useEffect(() => {
     // Only run on client
     if (typeof window !== 'undefined') {
       const storedPrefs = localStorage.getItem('dietaryPrefs');
       if (storedPrefs) {
-        try { // Add try-catch for JSON.parse
+        try { 
           const parsedPrefs = JSON.parse(storedPrefs);
-          setSelectedDiets(parsedPrefs.selectedDiets || []);
-          setExcludedFoods(parsedPrefs.excludedFoods || []);
-          setSelectedRegions(parsedPrefs.selectedRegions || []);
+          // Update state directly inside useEffect
+          setSelectedDiets(currentDiets => parsedPrefs.selectedDiets || currentDiets);
+          setExcludedFoods(currentFoods => parsedPrefs.excludedFoods || currentFoods);
+          setSelectedRegions(currentRegions => parsedPrefs.selectedRegions || currentRegions);
         } catch (error) {
           console.error("Failed to parse dietaryPrefs from localStorage", error);
           // Optionally clear the invalid item
@@ -72,8 +75,8 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
         }
       }
     }
-    // Added missing dependencies
-  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
+  }, []); // Now depends only on initialization, so setters are not needed in deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Existing handlers
   const handleDietToggle = async (dietType: DietType) => {

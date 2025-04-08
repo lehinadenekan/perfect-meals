@@ -102,26 +102,22 @@ describe('Prisma Operations', () => {
           servings: 2,
           difficulty: 'EASY',
           cuisineType: 'ITALIAN',
-          cuisine: {
-            connect: { id: '1' }
-          },
-          author: {
-            connect: { email: 'test@example.com' }
-          },
+          authorId: 'test-user-id',
           isVegetarian: false,
           isVegan: false,
           isGlutenFree: true,
           isLactoseFree: true,
           isNutFree: true,
-          type: 'DINNER',
-          authenticity: 'TRADITIONAL',
-          cookingMethods: ['BAKE'],
-          spiceLevel: 'MILD',
-          subCuisineType: 'NORTHERN_ITALIAN',
-          calories: 500,
+          needsDietaryReview: false,
           regionOfOrigin: 'Italy',
-          averageRating: 0,
-          showCount: 0
+          notes: [],
+          calories: 500,
+          isFermented: false,
+          isLowFodmap: false,
+          isPescatarian: false,
+          cuisines: {
+            connect: { id: '1' }
+          }
         }
       });
       expect(recipe).toBeDefined();

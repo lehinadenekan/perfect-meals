@@ -1,143 +1,127 @@
-import { PrismaClient, User, UserPreference, Recipe, Ingredient, Instruction, NutritionFacts } from '@prisma/client';
-import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { PrismaClient } from '@prisma/client';
+import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended';
+import { createMockRecipe } from '@/src/test/utils/test-utils'; // Import the utility
 
 export type MockPrismaClient = DeepMockProxy<PrismaClient>;
 
-export const createMockPrismaClient = () => {
-  const prisma = mockDeep<PrismaClient>();
-  
-  // Mock transaction behavior
-  prisma.$transaction.mockImplementation((args) => {
+export const createMockPrismaClient = (): DeepMockProxy<PrismaClient> => {
+  return mockDeep<PrismaClient>();
+};
+
+// --- Define Base Mock Data --- 
+// User
+export const mockUserData = { id: '1', email: 'test@example.com', name: 'Test User', emailVerified: null, image: null };
+
+// UserPreference
+export const mockUserPreference = { 
+  id: '1', 
+  userEmail: 'test@example.com', 
+  dietTypes: ['vegan'], 
+  excludedFoods: ['nuts'], 
+  cookingTime: 'MEDIUM', 
+  mealPrep: false, 
+  servingSize: 2 
+};
+
+// Recipe (using the utility)
+// We might need overrides if the base mock doesn't fit all test cases
+export const mockRecipe = createMockRecipe({ 
+  id: '1', 
+  title: 'Vegan Delight Test Util', 
+  authorId: mockUserData.id, // Link to mock user
+  // Add specific overrides needed for tests here
+  isVegan: true,
+  isVegetarian: true,
+  isGlutenFree: true,
+});
+
+// Ingredient
+export const mockIngredient = {
+  id: 'ing1',
+  name: 'Tomato',
+  amount: 1,
+  unit: 'cup',
+  notes: 'diced',
+  recipeId: mockRecipe.id,
+  isFermented: false, // Ensure field is present
+};
+
+// Instruction
+export const mockInstruction = {
+  id: 'inst1',
+  stepNumber: 1,
+  description: 'Dice tomatoes',
+  recipeId: mockRecipe.id
+};
+
+// NutritionFacts
+export const mockNutrition = {
+  id: 'nut1',
+  protein: 5,
+  carbs: 10,
+  fat: 2,
+  fiber: 3,
+  sugar: 5,
+  sodium: 100,
+  recipeId: mockRecipe.id
+};
+// --- End Base Mock Data ---
+
+
+// Setup mock implementations
+export const setupPrismaMocks = (prisma: DeepMockProxy<PrismaClient>) => {
+  // Mock transaction implementation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prisma.$transaction.mockImplementation(async (args: any) => { // Keep any, disable lint rule for this line
     if (typeof args === 'function') {
-      return args(prisma);
-    }
-    return Promise.all(args);
+      return await args(prisma); 
+    } 
+    throw new Error('Mock transaction only supports callback function');
   });
 
-  return prisma;
-};
-
-export const mockUserData: User = {
-  id: '1',
-  email: 'test@example.com',
-  name: 'Test User',
-  emailVerified: new Date(),
-  image: null
-};
-
-export const mockUserPreference: UserPreference = {
-  id: '1',
-  userEmail: 'test@example.com',
-  cookingTime: 'MEDIUM',
-  mealPrep: false,
-  servingSize: 2,
-  dietTypes: ['vegan', 'gluten-free'],
-  excludedFoods: ['mushrooms']
-};
-
-export const mockIngredients: Ingredient[] = [
-  {
-    id: '1',
-    name: 'Coconut Milk',
-    amount: 400,
-    unit: 'ml',
-    notes: 'Full fat',
-    recipeId: '1'
-  }
-];
-
-export const mockInstructions: Instruction[] = [
-  {
-    id: '1',
-    stepNumber: 1,
-    description: 'Cook vegetables',
-    recipeId: '1'
-  }
-];
-
-export const mockNutritionFacts: NutritionFacts = {
-  id: '1',
-  protein: 10,
-  carbs: 45,
-  fat: 15,
-  fiber: 5,
-  sugar: 3,
-  sodium: 400,
-  recipeId: '1'
-};
-
-export const mockRecipe: Recipe = {
-  id: '1',
-  title: 'Vegan Curry',
-  description: 'A delicious vegan curry',
-  cookingTime: 45,
-  servings: 4,
-  difficulty: 'MEDIUM',
-  cuisineType: 'ASIAN',
-  regionOfOrigin: 'Thailand',
-  imageUrl: 'https://example.com/curry.jpg',
-  videoUrl: null,
-  calories: 450,
-  authorId: '1',
-  isVegetarian: true,
-  isVegan: true,
-  isGlutenFree: true,
-  isLactoseFree: true,
-  isNutFree: true,
-  averageRating: 4.5,
-  type: 'DINNER',
-  cuisineId: '1',
-  authenticity: 'TRADITIONAL',
-  cookingMethods: ['STIR_FRY', 'SIMMER'],
-  spiceLevel: 'MEDIUM',
-  subCuisineType: 'THAI',
-  jobId: null,
-  showCount: 0,
-  createdAt: new Date(),
-  updatedAt: new Date()
-};
-
-export const setupPrismaMocks = (prisma: MockPrismaClient) => {
-  // User operations
+  // Mock user data
   prisma.user.findUnique.mockResolvedValue(mockUserData);
-  prisma.user.findFirst.mockResolvedValue(mockUserData);
-  prisma.user.create.mockResolvedValue(mockUserData);
-  prisma.user.update.mockResolvedValue(mockUserData);
+  // @ts-expect-error Mock return type doesn't fully match Prisma client type
+  prisma.user.create.mockImplementation(async (args) => ({ 
+      ...mockUserData, 
+      id: `new-user-${Date.now()}`,
+      ...(args.data) 
+  }));
 
-  // UserPreference operations
+  // Mock user preference data
   prisma.userPreference.findUnique.mockResolvedValue(mockUserPreference);
-  prisma.userPreference.findFirst.mockResolvedValue(mockUserPreference);
-  prisma.userPreference.create.mockResolvedValue(mockUserPreference);
-  prisma.userPreference.update.mockResolvedValue(mockUserPreference);
-  prisma.userPreference.upsert.mockResolvedValue(mockUserPreference);
+  // @ts-expect-error Mock return type doesn't fully match Prisma client type
+  prisma.userPreference.update.mockImplementation(async (args) => ({ 
+      ...mockUserPreference, 
+      ...(args.data)
+  }));
+  // @ts-expect-error Mock return type doesn't fully match Prisma client type
+  prisma.userPreference.upsert.mockImplementation(async (args) => ({ 
+      ...mockUserPreference, 
+      ...(args.update)
+  }));
 
-  // Recipe operations
-  prisma.recipe.findMany.mockResolvedValue([mockRecipe]);
-  prisma.recipe.create.mockResolvedValue(mockRecipe);
+  // Mock recipe data
+  prisma.recipe.findMany.mockResolvedValue([mockRecipe]); 
   prisma.recipe.findUnique.mockResolvedValue(mockRecipe);
+  // @ts-expect-error Mock return type doesn't fully match Prisma client type
+  prisma.recipe.create.mockImplementation(async (args) => ({ 
+      ...mockRecipe, 
+      id: `new-recipe-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...(args.data)
+  }));
+  
+  // Mock related data lookups if needed by tests
+  prisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
+  prisma.instruction.findMany.mockResolvedValue([mockInstruction]);
+  prisma.nutritionFacts.findUnique.mockResolvedValue(mockNutrition);
 
-  // Related model operations
-  prisma.ingredient.findMany.mockResolvedValue(mockIngredients);
-  prisma.instruction.findMany.mockResolvedValue(mockInstructions);
-  prisma.nutritionFacts.findUnique.mockResolvedValue(mockNutritionFacts);
-
-  return {
-    clearMocks: () => {
-      prisma.user.findUnique.mockClear();
-      prisma.user.findFirst.mockClear();
-      prisma.user.create.mockClear();
-      prisma.user.update.mockClear();
-      prisma.userPreference.findUnique.mockClear();
-      prisma.userPreference.findFirst.mockClear();
-      prisma.userPreference.create.mockClear();
-      prisma.userPreference.update.mockClear();
-      prisma.userPreference.upsert.mockClear();
-      prisma.recipe.findMany.mockClear();
-      prisma.recipe.create.mockClear();
-      prisma.recipe.findUnique.mockClear();
-      prisma.ingredient.findMany.mockClear();
-      prisma.instruction.findMany.mockClear();
-      prisma.nutritionFacts.findUnique.mockClear();
-    }
+  // Function to clear mocks between tests
+  const clearMocks = () => {
+    mockReset(prisma); // Use mockReset from jest-mock-extended
   };
+
+  return { prisma, clearMocks };
 }; 

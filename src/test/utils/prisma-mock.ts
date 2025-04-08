@@ -32,8 +32,10 @@ export const Prisma = {
 };
 
 // For CommonJS compatibility
-export default {
+const prismaMockExports = {
   prismaMock,
   PrismaClient: mockPrismaClient,
   Prisma
-}; 
+};
+
+export default prismaMockExports; 

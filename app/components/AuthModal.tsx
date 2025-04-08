@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import Image from 'next/image'
 import { signIn, useSession } from 'next-auth/react'
 
 interface AuthModalProps {
@@ -123,7 +124,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       disabled={isLoading || status === 'loading'}
                       className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <img className="h-5 w-5" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" />
+                      <Image className="h-5 w-5" src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" width={20} height={20} />
                       {isLoading ? 'Signing in...' : 'Continue with Google'}
                     </button>
 
@@ -132,7 +133,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       disabled={isLoading || status === 'loading'}
                       className="flex w-full items-center justify-center gap-3 rounded-md bg-[#1877F2] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#166FE5] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <img className="h-5 w-5" src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook logo" />
+                      <Image className="h-5 w-5" src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook logo" width={20} height={20} />
                       {isLoading ? 'Signing in...' : 'Continue with Facebook'}
                     </button>
                   </div>
