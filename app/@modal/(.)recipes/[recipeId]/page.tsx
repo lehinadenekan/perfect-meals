@@ -51,37 +51,42 @@ export default function RecipeModalPage({ params }: { params: { recipeId: string
           isFermented: fetchedRecipe.isFermented ?? false,
 
           // Map ingredients, adding recipeId
+          // Let TS infer input type, map to target type Ingredient
           ingredients: (fetchedRecipe.ingredients || []).map((ing): Ingredient => ({
             ...ing,
+            id: ing.id, // Ensure ID is mapped if needed by target type
             recipeId: fetchedRecipe.id, // Add the recipeId
-            notes: ing.notes || undefined, // Ensure notes is string | undefined
+            notes: ing.notes ?? undefined, // Coalesce null to undefined
           })),
           
           // Map instructions, adding recipeId
+          // Let TS infer input type, map to target type Instruction
           instructions: (fetchedRecipe.instructions || []).map((inst): Instruction => ({
             ...inst,
+            id: inst.id, // Ensure ID is mapped if needed by target type
             recipeId: fetchedRecipe.id, // Add the recipeId
           })),
 
           // --- Provide defaults for fields missing in Prisma Recipe / RecipeDetailData ---
-          // These defaults align with the app/types/recipe.ts definition
-          type: (fetchedRecipe as any).type || 'main', // Prisma might not have type, use default
-          cuisineId: (fetchedRecipe as any).cuisineId || '', // Prisma might not have cuisineId
-          authenticity: (fetchedRecipe as any).authenticity || 'unknown', // Prisma might not have authenticity
-          cookingMethods: (fetchedRecipe as any).cookingMethods || [], // Prisma might not have cookingMethods
-          spiceLevel: (fetchedRecipe as any).spiceLevel || 'medium', // Prisma might not have spiceLevel
-          subCuisineType: (fetchedRecipe as any).subCuisineType || undefined,
-          jobId: (fetchedRecipe as any).jobId || undefined,
-          showCount: (fetchedRecipe as any).showCount || 0,
+          // Use direct access and nullish coalescing for defaults
+          type: ('type' in fetchedRecipe && typeof fetchedRecipe.type === 'string') ? fetchedRecipe.type : 'main',
+          cuisineId: ('cuisineId' in fetchedRecipe && typeof fetchedRecipe.cuisineId === 'string') ? fetchedRecipe.cuisineId : '',
+          authenticity: ('authenticity' in fetchedRecipe && typeof fetchedRecipe.authenticity === 'string') ? fetchedRecipe.authenticity : 'unknown',
+          cookingMethods: ('cookingMethods' in fetchedRecipe && Array.isArray(fetchedRecipe.cookingMethods)) ? fetchedRecipe.cookingMethods : [],
+          spiceLevel: ('spiceLevel' in fetchedRecipe && typeof fetchedRecipe.spiceLevel === 'string') ? fetchedRecipe.spiceLevel : 'medium',
+          subCuisineType: ('subCuisineType' in fetchedRecipe && typeof fetchedRecipe.subCuisineType === 'string') ? fetchedRecipe.subCuisineType : undefined,
+          jobId: ('jobId' in fetchedRecipe && typeof fetchedRecipe.jobId === 'string') ? fetchedRecipe.jobId : undefined,
+          showCount: ('showCount' in fetchedRecipe && typeof fetchedRecipe.showCount === 'number') ? fetchedRecipe.showCount : 0,
           hasFeatureFermented: fetchedRecipe.isFermented ?? false,
-          // Defaulting hasFermentedIngredients and hasFish as they require more data/logic
           hasFermentedIngredients: false, 
           hasFish: false, 
-          notes: (fetchedRecipe as any).notes || [], // Prisma might have notes, check type
-          author: undefined, // Author data was not included in the fetch
-          nutritionFacts: (fetchedRecipe as any).nutritionFacts || undefined, // NutritionFacts was not included
-          averageRating: (fetchedRecipe as any).averageRating || null, // Prisma might not have averageRating
-          // Ensure date types are Date objects (Prisma returns Date)
+          notes: ('notes' in fetchedRecipe && Array.isArray(fetchedRecipe.notes)) ? fetchedRecipe.notes : [],
+          authorId: ('authorId' in fetchedRecipe && typeof fetchedRecipe.authorId === 'string') ? fetchedRecipe.authorId : 'default-author-id',
+          author: undefined,
+          nutritionFacts: undefined,
+          averageRating: ('averageRating' in fetchedRecipe && typeof fetchedRecipe.averageRating === 'number') ? fetchedRecipe.averageRating : undefined,
+          
+          // Ensure date types are Date objects
           createdAt: typeof fetchedRecipe.createdAt === 'string' ? new Date(fetchedRecipe.createdAt) : fetchedRecipe.createdAt,
           updatedAt: typeof fetchedRecipe.updatedAt === 'string' ? new Date(fetchedRecipe.updatedAt) : fetchedRecipe.updatedAt,
           // Remove fields not present in the target Recipe type
