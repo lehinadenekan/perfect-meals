@@ -1,5 +1,6 @@
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth'; // Adjust path based on your auth setup
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -8,7 +9,7 @@ const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
