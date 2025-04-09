@@ -47,3 +47,7 @@ jobs:
         # env:
         #   DATABASE_URL: ${{ secrets.DATABASE_URL }} # Example if build needs DB access (use secrets)
         #   NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }} # Example
+
+      - name: Run Tests
+        # Run the test command defined in your package.json
+        run: npm test

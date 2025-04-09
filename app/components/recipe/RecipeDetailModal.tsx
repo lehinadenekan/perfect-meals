@@ -747,18 +747,30 @@ export default function RecipeDetailModal({
                         {/* Left Column - Ingredients */}
                         <div>
                           <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
+                          {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                            <ul className="space-y-2 list-disc list-inside">
+                              {recipe.ingredients.map((ing, index) => {
+                                // Calculate adjusted amount
+                                const originalAmount = typeof ing.amount === 'number' ? ing.amount : parseFloat(ing.amount);
+                                const adjustedAmount = !isNaN(originalAmount) ? (originalAmount * servingMultiplier) : ing.amount;
+                                // Format adjusted amount (e.g., round or show one decimal)
+                                const displayAmount = typeof adjustedAmount === 'number' ? 
+                                    Number.isInteger(adjustedAmount) ? adjustedAmount : adjustedAmount.toFixed(1) 
+                                    : adjustedAmount;
 
-                          {/* Main Ingredients */}
-                          {/* Main ingredients are handled in RecipeDisplay */}
-
-                          {/* Spices and Seasonings */}
-                          {/* Spices and seasonings are handled in RecipeDisplay */}
-
-                          {/* Garnishes */}
-                          {/* Garnishes are handled in RecipeDisplay */}
-
-                          {/* Other/Optional Ingredients */}
-                          {/* Other ingredients are handled in RecipeDisplay */}
+                                return (
+                                  <li key={ing.id || index} className="text-gray-700"> {/* Match text color */}
+                                    <span className="font-medium">{displayAmount}</span>
+                                    <span className="ml-1">{ing.unit || ''}</span>
+                                    <span className="ml-2">{ing.name}</span>
+                                    {ing.notes && <span className="text-gray-500 text-sm ml-1">({ing.notes})</span>}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500">No ingredients listed.</p>
+                          )}
                         </div>
 
                         {/* Right Column - Instructions */}

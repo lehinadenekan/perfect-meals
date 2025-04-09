@@ -982,7 +982,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     difficulty: "MEDIUM",
     cuisineType: "Europe",
     regionOfOrigin: "Italy",
-    imageUrl: "https://saltedmint.com/wp-content/uploads/2024/03/Tiramisu-Cake-1.jpg",
+    imageUrl: "/images/recipes/tiramisu.jpg",
     calories: 380, // Approximate per serving
     type: "DESSERT",
     isVegetarian: true,
@@ -1256,59 +1256,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       sodium: 450
     }
   },
-  {
-    title: "Souvlaki",
-    description: "Tender cubes of marinated meat grilled on skewers, traditionally served with pita bread, tzatziki, and a variety of accompaniments. While popular throughout Greece, Athens is particularly known for its souvlaki stands. The dish has ancient origins, with similar preparations mentioned in the works of Aristotle.",
-    cookingTime: 40,
-    servings: 4,
-    difficulty: "EASY",
-    cuisineType: "Europe",
-    regionOfOrigin: "Greece",
-    imageUrl: "https://cdn.apartmenttherapy.info/image/upload/f_auto,q_auto:eco,c_fill,g_auto,w_1456,h_1092/k%2FPhoto%2FRecipes%2F2023-02-chicken-souvlaki%2F230104_ATKitchn_chicken-souvlaki_0287",
-    calories: 380, // Note: Calories likely higher when served with pita and tzatziki
-    type: "MAIN",
-    isVegetarian: false,
-    isVegan: false,
-    isGlutenFree: false, // Due to Pita Bread
-    isPescatarian: false,
-    isLactoseFree: false, // Due to Tzatziki Sauce (unless made lactose-free)
-    isNutFree: true,
-    isFermented: false, // Core ingredients are not fermented; Tzatziki uses yogurt (fermented).
-    isLowFodmap: false,
-    ingredients: [
-      { name: "Chicken or Pork", amount: 1, unit: "kg", notes: "cut into 1-inch cubes" },
-      { name: "Olive Oil", amount: 60, unit: "ml" },
-      { name: "Lemon Juice", amount: 60, unit: "ml" },
-      { name: "Garlic", amount: 4, unit: "cloves", notes: "minced" },
-      { name: "Oregano", amount: 2, unit: "tablespoons", notes: "dried" },
-      { name: "Pita Bread", amount: 8, unit: "pieces" }, // Often served with
-      { name: "Tzatziki Sauce", amount: 1, unit: "cup" } // Often served with
-    ],
-    instructions: [
-      { stepNumber: 1, description: "Mix olive oil, lemon juice, garlic, and oregano for marinade" },
-      { stepNumber: 2, description: "Marinate meat cubes for at least 2 hours" },
-      { stepNumber: 3, description: "Thread meat onto skewers" },
-      { stepNumber: 4, description: "Grill for 10-12 minutes, turning occasionally" },
-      { stepNumber: 5, description: "Serve with warm pita bread and tzatziki" }
-    ],
-    notes: [
-      "Can be made with either chicken or pork",
-      "Best served immediately while hot",
-      "Traditional street food in Greece",
-      "High-FODMAP ingredients include: Garlic, Pita Bread (contains wheat), Tzatziki Sauce (contains garlic and often lactose from yogurt).",
-      "Low-FODMAP ingredients include: Chicken/Pork, Olive Oil, Lemon Juice, Oregano.",
-      "To make this strictly low-FODMAP: Replace minced garlic with garlic-infused oil in the marinade. Serve with gluten-free pita bread (check ingredients). Use a homemade low-FODMAP tzatziki sauce made with lactose-free yogurt and garlic-infused oil instead of fresh garlic.",
-      "Nutrient Profile: Chicken/Pork is high in protein, B vitamins (especially B12, B6, niacin), selenium, phosphorus, and zinc. Olive Oil provides monounsaturated fats and Vitamin E. Lemon Juice offers Vitamin C. Garlic contains manganese, Vitamin B6, Vitamin C, and selenium, plus allicin compounds. Oregano provides antioxidants. Pita Bread (typically wheat) offers carbohydrates, some fiber, and B vitamins. Tzatziki Sauce (typically yogurt-based) contributes calcium, protein, probiotics (if live cultures), B vitamins; cucumber adds hydration and Vitamin K."
-    ],
-    nutritionFacts: { // Represents marinade & meat primarily
-      protein: 30,
-      carbs: 18, // Higher with pita
-      fat: 18, // Higher with oil & tzatziki
-      fiber: 3, // Higher with pita
-      sugar: 4,
-      sodium: 750 // Higher with added salt & accompaniments
-    }
-  },
+  
   {
     title: "Dolmades",
     description: "Grape leaves stuffed with a savory rice mixture, often served as a meze. While found throughout the Mediterranean and Middle East, Greek dolmades are distinctive for their use of fresh herbs and lemon. The dish dates back to the time of Alexander the Great and was a way to preserve grape leaves after the harvest.",
@@ -1371,7 +1319,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     difficulty: "MEDIUM",
     cuisineType: "Europe",
     regionOfOrigin: "Greece",
-    imageUrl: "https://img.kidspot.com.au/1dPTfhvI/w643-h428-cfill-q90/kk/2015/03/pastitsio-604476-1.jpg",
+    imageUrl: "/images/recipes/pastitsio.jpg",
     calories: 550,
     type: "MAIN",
     isVegetarian: false,
@@ -2308,7 +2256,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     difficulty: "EASY",
     cuisineType: "Europe",
     regionOfOrigin: "Greece",
-    imageUrl: "https://cdn.apartmenttherapy.info/image/upload/f_auto,q_auto:eco,c_fill,g_auto,w_1456,h_1092/k%2FPhoto%2FRecipes%2F2023-02-chicken-souvlaki%2F230104_ATKitchn_chicken-souvlaki_0287",
+    imageUrl: "/images/recipes/souvlaki.jpg",
     calories: 380, // Note: Calories likely higher when served with pita and tzatziki
     type: "MAIN",
     isVegetarian: false,
@@ -2407,62 +2355,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       sodium: 400
     }
   },
-  {
-    title: "Pastitsio",
-    description: "A hearty baked pasta dish layered with ground meat, tubular pasta, and topped with béchamel sauce. Often called 'Greek lasagna,' this dish shows the influence of Italian cuisine on Greek cooking, particularly in regions like the Ionian Islands, which were under Venetian rule.",
-    cookingTime: 90,
-    servings: 8,
-    difficulty: "MEDIUM",
-    cuisineType: "Europe",
-    regionOfOrigin: "Greece",
-    imageUrl: "https://img.kidspot.com.au/1dPTfhvI/w643-h428-cfill-q90/kk/2015/03/pastitsio-604476-1.jpg",
-    calories: 550,
-    type: "MAIN",
-    isVegetarian: false,
-    isVegan: false,
-    isGlutenFree: false, // Contains wheat pasta and flour
-    isPescatarian: false,
-    isLactoseFree: false, // Contains milk and butter
-    isNutFree: true, // Note: Nutmeg is a seed, not a nut.
-    isFermented: false, // Main ingredients are not typically fermented.
-    isLowFodmap: false,
-    ingredients: [
-      { name: "Penne or Bucatini", amount: 500, unit: "grams" }, // Wheat-based
-      { name: "Ground Beef", amount: 750, unit: "grams" },
-      { name: "Onion", amount: 1, unit: "large", notes: "chopped" },
-      { name: "Garlic", amount: 3, unit: "cloves", notes: "minced" },
-      { name: "Tomato Paste", amount: 2, unit: "tablespoons" },
-      { name: "Milk", amount: 1, unit: "liter" }, // Contains lactose
-      { name: "Flour", amount: 100, unit: "grams" }, // Wheat-based
-      { name: "Butter", amount: 100, unit: "grams" }, // Contains lactose
-      { name: "Nutmeg", amount: 0.5, unit: "teaspoon" },
-      { name: "Eggs", amount: 2, unit: "large" }
-    ],
-    instructions: [
-      { stepNumber: 1, description: "Cook pasta and prepare meat sauce with tomatoes and spices" },
-      { stepNumber: 2, description: "Make béchamel sauce with butter, flour, and milk" },
-      { stepNumber: 3, description: "Layer pasta, meat sauce in baking dish" },
-      { stepNumber: 4, description: "Top with béchamel sauce" },
-      { stepNumber: 5, description: "Bake until golden brown" }
-    ],
-    notes: [
-      "Can be made ahead and reheated",
-      "Traditional Sunday dinner dish",
-      "Freezes well",
-      "High-FODMAP ingredients include: Pasta (wheat), Onion, Garlic, Milk (lactose), Flour (wheat). Butter contains lactose but is often low-FODMAP in typical serving sizes.",
-      "Low-FODMAP ingredients include: Ground Beef, Tomato Paste (in moderation), Nutmeg, Eggs.",
-      "To make this strictly low-FODMAP: Use gluten-free pasta. Replace onion and garlic with green tops of spring onions and garlic-infused oil. For the béchamel, use lactose-free milk, a low-FODMAP fat source (like olive oil or more butter if tolerated), and gluten-free flour blend (check ingredients for high-FODMAP items like soy or bean flours).",
-      "Nutrient Profile: Pasta provides carbohydrates and B vitamins. Ground Beef is rich in protein, iron, zinc, selenium, and B vitamins (B12, B6, niacin). Onion offers Vitamin C, B6, folate, manganese. Garlic provides manganese, Vitamin B6, C, selenium, and allicin. Tomato Paste is a concentrated source of lycopene, Vitamin C, and potassium. Milk is high in calcium, Vitamin D (if fortified), protein, B12, and riboflavin. Flour provides carbohydrates. Butter contributes fat, Vitamin A, and D. Nutmeg adds trace minerals. Eggs offer high-quality protein, Vitamin D, B12, selenium, and choline."
-    ],
-    nutritionFacts: { // Fat seems low given beef, butter, eggs, milk. Carbs seem low for pasta amount.
-      protein: 45,
-      carbs: 28,
-      fat: 2,
-      fiber: 6,
-      sugar: 6,
-      sodium: 700
-    }
-  },
+ 
   {
     title: "Avgolemono",
     description: "A silky, citrus-scented soup made with chicken broth, rice or orzo, and finished with eggs and lemon juice. This comforting soup is considered a national dish of Greece and is often served during winter months or to those feeling under the weather. While common throughout Greece, each region has its own variation.",
@@ -3277,7 +3170,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       difficulty: "MEDIUM",
       cuisineType: "Europe",
       regionOfOrigin: "England",
-      imageUrl: "https://realfood.tesco.com/media/images/Fish-parsnip-chips-mushy-peas-recipe-1400x919-6be59267-426e-46e6-8e14-8678222acfbd-0-1400x919.jpg",
+      imageUrl: "/images/recipes/fishandchips.jpg",
       calories: 900,
       type: "MAIN",
       isVegetarian: false,
@@ -3335,7 +3228,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       difficulty: "MEDIUM",
       cuisineType: "Europe",
       regionOfOrigin: "England",
-      imageUrl: "https://images.services.kitchenstories.io/UeP1liDnJU3zMQIYEQcW2yiNwKo=/1920x0/filters:quality(85)/images.kitchenstories.io/wagtailOriginalImages/R152-cozy_shepherds_pie_title.jpg",
+      imageUrl: "/images/recipes/shepherdspie.jpg",
       calories: 600,
       type: "MAIN",
       isVegetarian: false,
@@ -3499,7 +3392,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       difficulty: "MEDIUM",
       cuisineType: "Asia",
       regionOfOrigin: "Palestine",
-      imageUrl: "https://palestineinadish.com/wp-content/uploads/2024/06/maftoul-main-photo-1B-scaled.jpg",
+      imageUrl: "/images/recipes/maftoul.jpg",
       calories: 450,
       type: "MAIN",
       isVegetarian: false,
@@ -4442,7 +4335,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
         difficulty: 'EASY',
         cuisineType: 'Africa',
         regionOfOrigin: 'Tanzania',
-        imageUrl: 'https://binnyjs.wordpress.com/wp-content/uploads/2016/04/img_4510.jpg?w=620',
+        imageUrl: '/images/recipes/maharagwe_ya_nazi.jpg',
         calories: 300,
         type: 'MAIN',
         isVegetarian: true,
@@ -4497,7 +4390,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
         difficulty: 'MEDIUM',
         cuisineType: 'Africa',
         regionOfOrigin: 'Tanzania',
-        imageUrl: 'https://img-global.cpcdn.com/recipes/ff8444766a683427/1360x1928cq70/kaimati-recipe-main-photo.webp',
+        imageUrl: '/images/recipes/kaimati.jpg',
         calories: 350,
         type: 'DESSERT',
         isVegetarian: true,

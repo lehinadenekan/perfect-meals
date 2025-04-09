@@ -1,0 +1,155 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+// REMOVE: import { getRecipeById } from '@/app/lib/data'; 
+import type { RecipeDetailData } from '@/app/lib/data'; 
+import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal'; 
+import type { Recipe, Ingredient, Instruction } from '@/app/types/recipe'; 
+
+export default function RecipeModalPage({ params }: { params: { recipeId: string } }) {
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchRecipeFromApi = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/recipes/${params.recipeId}`);
+        if (!response.ok) {
+          // Handle HTTP errors (e.g., 404 Not Found, 500 Server Error)
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        
+        const fetchedRecipe: RecipeDetailData = await response.json();
+        
+        // Transform RecipeDetailData to Recipe
+        const modalRecipe: Recipe = {
+          // Spread the base fields from fetchedRecipe (Prisma Recipe)
+          ...fetchedRecipe,
+          // Explicitly handle null/undefined mismatches
+          description: fetchedRecipe.description ?? undefined,
+          cookingTime: fetchedRecipe.cookingTime ?? 30, // Default if null
+          servings: fetchedRecipe.servings ?? 4, // Default if null
+          difficulty: fetchedRecipe.difficulty ?? 'Medium', // Default if null
+          cuisineType: fetchedRecipe.cuisineType ?? 'Unknown', // Default if null
+          regionOfOrigin: fetchedRecipe.regionOfOrigin ?? undefined, // Convert null to undefined
+          imageUrl: fetchedRecipe.imageUrl ?? undefined, // Convert null to undefined
+          calories: fetchedRecipe.calories ?? undefined, // Convert null to undefined
+          // Provide defaults for boolean flags if null
+          isVegetarian: fetchedRecipe.isVegetarian ?? false,
+          isVegan: fetchedRecipe.isVegan ?? false,
+          isGlutenFree: fetchedRecipe.isGlutenFree ?? false,
+          isNutFree: fetchedRecipe.isNutFree ?? false,
+          isLowFodmap: fetchedRecipe.isLowFodmap ?? false,
+          isLactoseFree: fetchedRecipe.isLactoseFree ?? false,
+          isPescatarian: fetchedRecipe.isPescatarian ?? false,
+          isFermented: fetchedRecipe.isFermented ?? false,
+
+          // Map ingredients, adding recipeId
+          ingredients: (fetchedRecipe.ingredients || []).map((ing): Ingredient => ({
+            ...ing,
+            recipeId: fetchedRecipe.id, // Add the recipeId
+            notes: ing.notes || undefined, // Ensure notes is string | undefined
+          })),
+          
+          // Map instructions, adding recipeId
+          instructions: (fetchedRecipe.instructions || []).map((inst): Instruction => ({
+            ...inst,
+            recipeId: fetchedRecipe.id, // Add the recipeId
+          })),
+
+          // --- Provide defaults for fields missing in Prisma Recipe / RecipeDetailData ---
+          // These defaults align with the app/types/recipe.ts definition
+          type: (fetchedRecipe as any).type || 'main', // Prisma might not have type, use default
+          cuisineId: (fetchedRecipe as any).cuisineId || '', // Prisma might not have cuisineId
+          authenticity: (fetchedRecipe as any).authenticity || 'unknown', // Prisma might not have authenticity
+          cookingMethods: (fetchedRecipe as any).cookingMethods || [], // Prisma might not have cookingMethods
+          spiceLevel: (fetchedRecipe as any).spiceLevel || 'medium', // Prisma might not have spiceLevel
+          subCuisineType: (fetchedRecipe as any).subCuisineType || undefined,
+          jobId: (fetchedRecipe as any).jobId || undefined,
+          showCount: (fetchedRecipe as any).showCount || 0,
+          hasFeatureFermented: fetchedRecipe.isFermented ?? false,
+          // Defaulting hasFermentedIngredients and hasFish as they require more data/logic
+          hasFermentedIngredients: false, 
+          hasFish: false, 
+          notes: (fetchedRecipe as any).notes || [], // Prisma might have notes, check type
+          author: undefined, // Author data was not included in the fetch
+          nutritionFacts: (fetchedRecipe as any).nutritionFacts || undefined, // NutritionFacts was not included
+          averageRating: (fetchedRecipe as any).averageRating || null, // Prisma might not have averageRating
+          // Ensure date types are Date objects (Prisma returns Date)
+          createdAt: typeof fetchedRecipe.createdAt === 'string' ? new Date(fetchedRecipe.createdAt) : fetchedRecipe.createdAt,
+          updatedAt: typeof fetchedRecipe.updatedAt === 'string' ? new Date(fetchedRecipe.updatedAt) : fetchedRecipe.updatedAt,
+          // Remove fields not present in the target Recipe type
+          // categories: (fetchedRecipe as any).categories || [], // Removed
+          // tags: (fetchedRecipe as any).tags || [],       // Removed
+        };
+
+        setRecipe(modalRecipe); 
+
+      } catch (err) {
+        console.error('Failed to fetch recipe for modal:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load recipe.');
+        // Optionally close modal on error
+        // router.back();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (params.recipeId) {
+      // Call the new fetch function
+      fetchRecipeFromApi(); 
+    } else {
+        // If no recipeId, likely an error state, close the modal
+        router.back();
+    }
+    
+    // Cleanup function if needed
+    // return () => {};
+
+  }, [params.recipeId, router]);
+
+  const handleClose = () => {
+    router.back(); // Navigate back to close the modal
+  };
+
+  // Optional: Render a loading state within the modal structure if desired
+  // Or rely on RecipeDetailModal's internal handling if it exists
+  if (isLoading) {
+    // You could return a skeleton/loading version of the modal
+    // Or just null/fragment while loading, letting the overlay show
+    return null; // Or <ModalLoadingSkeleton />;
+  }
+
+  if (error || !recipe) {
+    // Handle error state - maybe show error in a simple modal or just close
+    console.error("Error loading recipe modal:", error);
+     // You might want to show a toast notification here
+    // For now, just close the modal route
+     // Temporarily disable closing on error to see potential error messages
+     // useEffect(() => { router.back(); }, [router]); 
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleClose}>
+            <div className="bg-white p-4 rounded shadow-lg text-red-600" onClick={(e) => e.stopPropagation()}>
+                Error loading recipe: {error || 'Recipe data missing.'}
+                 <button onClick={handleClose} className="ml-4 text-sm text-blue-500">Close</button>
+            </div>
+        </div>
+    );
+  }
+
+  // Render the actual modal content
+  return (
+    <RecipeDetailModal
+      recipe={recipe}
+      isOpen={true} // This component only renders when the route is matched (intercepted)
+      onClose={handleClose}
+      // Pass other necessary props like onFavoriteChange if needed/available
+    />
+  );
+} 
