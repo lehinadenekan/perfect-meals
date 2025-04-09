@@ -2,6 +2,7 @@
 /node_modules
 /.pnp
 .pnp.js
+package-lock.json # Ignore npm lock file when using pnpm
 
 # testing
 /coverage
