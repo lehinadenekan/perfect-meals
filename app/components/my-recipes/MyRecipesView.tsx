@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
 import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
 import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import { PlusCircleIcon } from '@heroicons/react/24/outline';
 
 interface MyRecipesViewProps {
@@ -127,7 +127,7 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
                 <RecipeCard
                   recipe={recipe}
                   onSelect={handleOpenModal}
-                  onFavoriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavoriteChange}
                 />
               </div>
             ))}
@@ -141,7 +141,7 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavoriteChange}
         />
       )}
     </>

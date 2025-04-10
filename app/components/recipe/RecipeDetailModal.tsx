@@ -16,24 +16,27 @@ import {
   ForwardIcon,
   ArrowDownTrayIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  PencilSquareIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import Image from 'next/image';
-import FavoriteButton from '../shared/FavoriteButton';
+import FavoriteButton from '../shared/FavouriteButton';
 import FlagSubmission from './FlagSubmission';
-import { addRecentlyViewed } from '@/app/utils/recentlyViewed';
+import { addRecentlyViewed } from '@/lib/utils/recentlyViewed';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { toast } from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
   isOpen: boolean;
   onClose: () => void;
-  onFavoriteChange?: (recipeId: string, newIsFavorite: boolean) => void;
+  onFavouriteChange?: (recipeId: string, newIsFavourite: boolean) => void;
   onGoToPrevious?: () => void;
   onGoToNext?: () => void;
   canGoPrevious?: boolean;
@@ -92,12 +95,14 @@ export default function RecipeDetailModal({
   recipe,
   isOpen,
   onClose,
-  onFavoriteChange,
+  onFavouriteChange,
   onGoToPrevious,
   onGoToNext,
   canGoPrevious = false,
   canGoNext = false
 }: RecipeDetailModalProps) {
+  const { data: session } = useSession();
+  const isAuthor = session?.user?.id === recipe?.authorId;
   const [servingMultiplier, setServingMultiplier] = useState(1);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -646,13 +651,12 @@ export default function RecipeDetailModal({
                         </div>
 
                         {/* Right Side: Action Buttons (Desktop - Visible md+) */}
-                        {/* Added hidden md:flex */}
                         <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
                           {/* Favorite Button */}
                           <FavoriteButton
                             recipeId={recipe.id}
                             className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
-                            onSuccess={onFavoriteChange}
+                            onSuccess={onFavouriteChange}
                           />
                           {/* Print Button */}
                           <button
@@ -679,7 +683,6 @@ export default function RecipeDetailModal({
                                 ) : (
                                   <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
                                 )}
-                                {/* No chevron needed for mobile? Optional. */}
                               </Menu.Button>
                             </div>
                             <Transition
@@ -720,7 +723,6 @@ export default function RecipeDetailModal({
                             title="Share Recipe"
                           >
                             <ShareIcon className="h-5 w-5" />
-                            {/* Position copied confirmation appropriately for bottom layout */}
                             {copied && (
                               <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">
                                 Copied!
@@ -736,6 +738,29 @@ export default function RecipeDetailModal({
                             <FlagIcon className="h-5 w-5" />
                             <span className="sr-only">Flag Issue</span>
                           </button>
+
+                          {/* --- START: Add Author Buttons --- */}
+                          {isAuthor && (
+                            <>
+                              <button
+                                onClick={() => { /* TODO: Implement Edit Action */ console.log('Edit clicked'); }}
+                                className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                                title="Edit Recipe"
+                              >
+                                <PencilSquareIcon className="h-5 w-5" />
+                                <span className="sr-only">Edit Recipe</span>
+                              </button>
+                              <button
+                                onClick={() => { /* TODO: Implement Delete Action */ console.log('Delete clicked'); }}
+                                className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600"
+                                title="Delete Recipe"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                                <span className="sr-only">Delete Recipe</span>
+                              </button>
+                            </>
+                          )}
+                          {/* --- END: Add Author Buttons --- */}
                         </div>
                       </div>
 
@@ -902,7 +927,7 @@ export default function RecipeDetailModal({
                           <FavoriteButton
                             recipeId={recipe.id}
                             className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500"
-                            onSuccess={onFavoriteChange}
+                            onSuccess={onFavouriteChange}
                           />
                           {/* Print Button */}
                           <button
@@ -984,6 +1009,29 @@ export default function RecipeDetailModal({
                             <FlagIcon className="h-5 w-5" />
                             <span className="sr-only">Flag Issue</span>
                           </button>
+
+                          {/* --- START: Add Author Buttons --- */}
+                          {isAuthor && (
+                            <>
+                              <button
+                                onClick={() => { /* TODO: Implement Edit Action */ console.log('Edit clicked'); }}
+                                className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                                title="Edit Recipe"
+                              >
+                                <PencilSquareIcon className="h-5 w-5" />
+                                <span className="sr-only">Edit Recipe</span>
+                              </button>
+                              <button
+                                onClick={() => { /* TODO: Implement Delete Action */ console.log('Delete clicked'); }}
+                                className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600"
+                                title="Delete Recipe"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                                <span className="sr-only">Delete Recipe</span>
+                              </button>
+                            </>
+                          )}
+                          {/* --- END: Add Author Buttons --- */}
                       </div>
 
                     </div>

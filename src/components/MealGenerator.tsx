@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DietaryPreferenceSelector from './DietaryPreferenceSelector';
-import { Meal } from '../types';
-import { type Ingredient } from '../utils/dietary-filters';
+import { Meal } from '@/lib/types';
+import { type Ingredient } from '@/lib/utils/dietary-filters';
 import Image from 'next/image';
 
 const MealGenerator: React.FC = () => {

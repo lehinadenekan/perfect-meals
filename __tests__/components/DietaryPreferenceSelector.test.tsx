@@ -4,7 +4,7 @@ import { SessionProvider, SessionProviderProps } from 'next-auth/react';
 import DietaryPreferenceSelector, { DietaryPreferenceSelectorProps } from '@/app/components/dietary/DietaryPreferenceSelector';
 import { server } from '@/src/mocks/server';
 import { rest } from 'msw';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import { DietType, DIET_TYPES } from '@/types/diet';
 
 // Mock sub-components

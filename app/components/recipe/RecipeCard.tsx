@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import Image from 'next/image';
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { analyzeDietary } from '@/app/utils/dietary-classification';
+import { analyzeDietary } from '@/lib/utils/dietary-classification';
 import DietaryInfo from './DietaryInfo';
 import { DietaryFeedback } from './DietaryFeedback';
-import FavoriteButton from '../shared/FavoriteButton';
+import FavoriteButton from '../shared/FavouriteButton';
 import AddToAlbumButton from '../albums/AddToAlbumButton';
 import AlbumSelectionDropdown from '../albums/AlbumSelectionDropdown';
 
 interface RecipeCardProps {
-  recipe: Recipe & { isFavorite?: boolean };
+  recipe: Recipe & { isFavourite?: boolean };
   onFlagClick?: () => void;
   onAlbumUpdate?: () => void;
   onSelect: (recipe: Recipe) => void;
-  onFavoriteChange: (recipeId: string, newIsFavorite: boolean) => void;
+  onFavouriteChange: (recipeId: string, newIsFavorite: boolean) => void;
 }
 
 export default function RecipeCard({
@@ -24,7 +24,7 @@ export default function RecipeCard({
   onFlagClick,
   onAlbumUpdate,
   onSelect,
-  onFavoriteChange
+  onFavouriteChange
 }: RecipeCardProps) {
   const { data: session } = useSession();
   console.log(`RecipeCard rendering with recipe:`, recipe);
@@ -158,8 +158,8 @@ export default function RecipeCard({
           <div className="flex items-center space-x-2 relative">
             <FavoriteButton
               recipeId={recipe.id}
-              initialIsFavorite={recipe.isFavorite}
-              onSuccess={onFavoriteChange}
+              initialIsFavourite={recipe.isFavourite}
+              onSuccess={onFavouriteChange}
             />
             <AddToAlbumButton
               onClick={handleAddToAlbumButtonClick}

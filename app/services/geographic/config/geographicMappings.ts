@@ -1,4 +1,4 @@
-import { GeographicOrigin } from '@/app/types/geographic';
+import { GeographicOrigin } from '@/lib/types/geographic';
 
 export interface RegionalCuisine {
   origin: GeographicOrigin;

@@ -6,10 +6,10 @@ import {
   BeakerIcon,
 } from '@heroicons/react/24/outline';
 // Remove the old Recipe type import
-// import { Recipe } from '@/app/types/recipe'; 
+// import { Recipe } from '@/lib/types/recipe'; 
 
 // Use the type defined in lib/data.ts
-import { RecipeDetailData } from '@/app/lib/data'; 
+import { RecipeDetailData } from '@/lib/data/recipes'; 
 
 // Define props using the server data type
 interface RecipeDisplayProps {

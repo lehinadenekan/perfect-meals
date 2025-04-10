@@ -1,0 +1,44 @@
+// app/api/user/preferences/favourites/ids/route.ts
+import { NextResponse } from 'next/server';
+import { auth } from '../../../../../../auth'; // Corrected path to root
+import { prisma } from '../../../../../../lib/prisma'; // Corrected path to root
+
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    // Not authenticated
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
+  try {
+    const userWithFavouriteIds = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        savedRecipes: {
+          select: {
+            id: true, // Select only the ID of each favourite recipe
+          },
+          // Note: Cannot order by createdAt on the relation directly
+          // If order is important, fetch IDs and then sort, or adjust schema if possible
+          // orderBy: { 
+          //   createdAt: 'desc',
+          // }
+        },
+      },
+    });
+
+    // If user not found or has no favourites, return empty array
+    const favouriteIds = userWithFavouriteIds?.savedRecipes.map((recipe: { id: string }) => recipe.id) || []; // Corrected field name
+
+    return NextResponse.json(favouriteIds);
+
+  } catch (error) {
+    console.error('API Error fetching favourite IDs:', error);
+    return NextResponse.json({ error: 'Failed to fetch favourite recipe IDs' }, { status: 500 });
+  }
+}

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { Recipe } from '@/app/types/recipe';
+import { authOptions } from '@/lib/auth'; // Assuming this is correct now
+import { prisma } from '@/lib/prisma'; // Assuming this is correct now
 
-// Get user's favorite recipes
+// Get user's favourite recipes
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check for auth
     if (!session?.user?.email) {
       return NextResponse.json([], { status: 200 }); // Return empty array instead of error for unauthenticated users
@@ -30,7 +29,7 @@ export async function GET() {
                 image: true
               }
             },
-            nutritionFacts: true,
+            nutritionFacts: true, // It's already included here
             categories: true,
             cuisines: true,
             tags: true
@@ -39,87 +38,88 @@ export async function GET() {
       },
     });
 
-    // Transform the recipes to match the frontend Recipe type
-    const transformedRecipes: Recipe[] = (user?.savedRecipes || []).map(recipe => {
-      const authorData = recipe.author ? {
-        authorId: recipe.author.id,
-        name: recipe.author.name || '',
+    // Transform the recipes based on fetched data
+    const transformedRecipes = (user?.savedRecipes || []).map(recipe => {
+      // This authorData construction seems overly complex and might be causing issues
+      // It incorrectly includes nutritionFacts: undefined
+      // Let's simplify and correct the transformation
+      const author = recipe.author ? {
+        id: recipe.author.id,
+        name: recipe.author.name || undefined,
+        email: recipe.author.email || undefined, // Include email if needed by Recipe type
         image: recipe.author.image || undefined,
-        isVegetarian: recipe.isVegetarian || false,
-        isVegan: recipe.isVegan || false,
-        isGlutenFree: recipe.isGlutenFree || false,
-        isNutFree: recipe.isNutFree || false,
-        isLowFodmap: recipe.isLowFodmap || false,
-        isLactoseFree: recipe.isLactoseFree || false,
-        isPescatarian: recipe.isPescatarian || false,
-        isFermented: recipe.isFermented || false,
-        updatedAt: recipe.updatedAt,
-        imageUrl: recipe.author.image || undefined,
-        videoUrl: undefined,
-        author: undefined,
-        notes: undefined,
-        nutritionFacts: undefined
       } : undefined;
 
+
       return {
+        // Recipe Info
         id: recipe.id,
         title: recipe.title,
         description: recipe.description || undefined,
-        cookingTime: recipe.cookingTime || 30,
-        servings: recipe.servings || 4,
-        difficulty: recipe.difficulty || 'medium',
-        cuisineType: recipe.cuisineType || recipe.cuisines[0]?.name || 'Global',
-        regionOfOrigin: recipe.regionOfOrigin || recipe.cuisines[0]?.region || 'Global',
+        cookingTime: recipe.cookingTime || undefined, // Prefer undefined over default number?
+        servings: recipe.servings || undefined, // Prefer undefined over default number?
+        difficulty: recipe.difficulty || undefined,
+        cuisineType: recipe.cuisines[0]?.name || undefined, // Use first cuisine name
+        regionOfOrigin: recipe.cuisines[0]?.region || undefined, // Use first cuisine region
         imageUrl: recipe.imageUrl || undefined,
-        calories: recipe.nutritionFacts ? 
-          Math.round(
-            (recipe.nutritionFacts.protein || 0) * 4 + 
-            (recipe.nutritionFacts.carbs || 0) * 4 + 
-            (recipe.nutritionFacts.fat || 0) * 9
-          ) : undefined,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt,
+
+        // Author Info
         authorId: recipe.authorId,
-        author: authorData,
-        type: recipe.categories[0]?.name || 'main',
-        cuisineId: recipe.cuisines[0]?.id || '',
-        authenticity: 'traditional',
-        cookingMethods: recipe.cuisines[0]?.cookingMethods || [],
-        spiceLevel: 'medium',
-        showCount: 0,
-        hasFeatureFermented: recipe.isFermented || false,
-        hasFermentedIngredients: recipe.ingredients.some(i => i.isFermented),
-        hasFish: false,
-        isVegetarian: recipe.isVegetarian || false,
-        isVegan: recipe.isVegan || false,
-        isGlutenFree: recipe.isGlutenFree || false,
-        isNutFree: recipe.isNutFree || false,
-        isLowFodmap: recipe.isLowFodmap || false,
-        isLactoseFree: recipe.isLactoseFree || false,
-        isPescatarian: recipe.isPescatarian || false,
-        isFermented: recipe.isFermented || false,
+        author: author, // Use the correctly structured author object
+
+        // Ingredients & Instructions
         ingredients: recipe.ingredients.map(i => ({
           ...i,
           notes: i.notes || undefined
         })),
         instructions: recipe.instructions,
-        createdAt: recipe.createdAt,
-        updatedAt: recipe.updatedAt
+
+        // Categorization & Tags (simplified, adjust if Recipe type needs more)
+        type: recipe.categories[0]?.name || undefined, // Use first category name
+        cuisineId: recipe.cuisines[0]?.id || undefined, // Use first cuisine ID
+        tags: recipe.tags.map(t => t.name), // Assuming Recipe type wants tag names as string[]
+
+        // Boolean Flags
+        isVegetarian: recipe.isVegetarian ?? false,
+        isVegan: recipe.isVegan ?? false,
+        isGlutenFree: recipe.isGlutenFree ?? false,
+        isNutFree: recipe.isNutFree ?? false,
+        isLowFodmap: recipe.isLowFodmap ?? false,
+        isLactoseFree: recipe.isLactoseFree ?? false,
+        isPescatarian: recipe.isPescatarian ?? false,
+        isFermented: recipe.isFermented ?? false, // Assuming this represents the whole recipe feature
+
+        // Nutrition
+        calories: recipe.nutritionFacts ?
+          Math.round(
+            (recipe.nutritionFacts.protein || 0) * 4 +
+            (recipe.nutritionFacts.carbs || 0) * 4 +
+            (recipe.nutritionFacts.fat || 0) * 9
+          ) : undefined,
+        // Pass the whole nutritionFacts object if it exists
+        nutritionFacts: recipe.nutritionFacts || undefined,
+
+        // No need to add fields like authenticity, cookingMethods etc. here
+        // as we are no longer forcing it into the specific frontend Recipe type.
       };
     });
 
     // Return empty array if user not found or no saved recipes
     return NextResponse.json(transformedRecipes);
   } catch (error) {
-    console.error('Error fetching favorite recipes:', error);
+    console.error('Error fetching favourite recipes:', error);
     // Return empty array instead of error for better UI experience
     return NextResponse.json([], { status: 200 });
   }
 }
 
-// Add or remove a recipe from favorites
+// Add or remove a recipe from favourites
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check for auth
     if (!session?.user?.email) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     // Parse request body
     const body = await request.json().catch(() => ({}));
     const { recipeId, action } = body;
-    
+
     if (!recipeId || !['add', 'remove'].includes(action)) {
       return NextResponse.json(
         { success: false, error: 'Invalid request parameters' },
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Recipe not found' }, { status: 404 });
     }
 
-    // Add or remove recipe from favorites
+    // Add or remove recipe from favourites
     if (action === 'add') {
       await prisma.user.update({
         where: { id: user.id },
@@ -178,10 +178,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating favorite recipes:', error);
+    console.error('Error updating favourite recipes:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to update favorite recipes' },
+      { success: false, error: 'Failed to update favourite recipes' },
       { status: 500 }
     );
   }
-} 
+}

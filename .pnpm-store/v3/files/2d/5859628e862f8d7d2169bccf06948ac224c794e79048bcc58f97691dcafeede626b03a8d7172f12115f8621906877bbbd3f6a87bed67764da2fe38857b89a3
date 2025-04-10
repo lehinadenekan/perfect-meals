@@ -120,7 +120,7 @@ var isValidHostLabel = /* @__PURE__ */ __name((value, allowSubDomains = false) =
   return true;
 }, "isValidHostLabel");
 
-// src/utils/customEndpointFunctions.ts
+// 'lib/utils/customEndpointFunctions.ts
 var customEndpointFunctions = {};
 
 // src/debug/debugId.ts
@@ -141,7 +141,7 @@ function toDebugString(input) {
 }
 __name(toDebugString, "toDebugString");
 
-// src/types/EndpointError.ts
+// 'lib types'/EndpointError.ts
 var EndpointError = class extends Error {
   static {
     __name(this, "EndpointError");
@@ -261,7 +261,7 @@ var substring = /* @__PURE__ */ __name((input, start, stop, reverse) => {
 // src/lib/uriEncode.ts
 var uriEncode = /* @__PURE__ */ __name((value) => encodeURIComponent(value).replace(/[!*'()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`), "uriEncode");
 
-// src/utils/endpointFunctions.ts
+// 'lib/utils/endpointFunctions.ts
 var endpointFunctions = {
   booleanEquals,
   getAttr,
@@ -274,7 +274,7 @@ var endpointFunctions = {
   uriEncode
 };
 
-// src/utils/evaluateTemplate.ts
+// 'lib/utils/evaluateTemplate.ts
 var evaluateTemplate = /* @__PURE__ */ __name((template, options) => {
   const evaluatedTemplateArr = [];
   const templateContext = {
@@ -310,7 +310,7 @@ var evaluateTemplate = /* @__PURE__ */ __name((template, options) => {
   return evaluatedTemplateArr.join("");
 }, "evaluateTemplate");
 
-// src/utils/getReferenceValue.ts
+// 'lib/utils/getReferenceValue.ts
 var getReferenceValue = /* @__PURE__ */ __name(({ ref }, options) => {
   const referenceRecord = {
     ...options.endpointParams,
@@ -319,7 +319,7 @@ var getReferenceValue = /* @__PURE__ */ __name(({ ref }, options) => {
   return referenceRecord[ref];
 }, "getReferenceValue");
 
-// src/utils/evaluateExpression.ts
+// 'lib/utils/evaluateExpression.ts
 var evaluateExpression = /* @__PURE__ */ __name((obj, keyName, options) => {
   if (typeof obj === "string") {
     return evaluateTemplate(obj, options);
@@ -331,7 +331,7 @@ var evaluateExpression = /* @__PURE__ */ __name((obj, keyName, options) => {
   throw new EndpointError(`'${keyName}': ${String(obj)} is not a string, function or reference.`);
 }, "evaluateExpression");
 
-// src/utils/callFunction.ts
+// 'lib/utils/callFunction.ts
 var callFunction = /* @__PURE__ */ __name(({ fn, argv }, options) => {
   const evaluatedArgs = argv.map(
     (arg) => ["boolean", "number"].includes(typeof arg) ? arg : evaluateExpression(arg, "arg", options)
@@ -343,7 +343,7 @@ var callFunction = /* @__PURE__ */ __name(({ fn, argv }, options) => {
   return endpointFunctions[fn](...evaluatedArgs);
 }, "callFunction");
 
-// src/utils/evaluateCondition.ts
+// 'lib/utils/evaluateCondition.ts
 var evaluateCondition = /* @__PURE__ */ __name(({ assign, ...fnArgs }, options) => {
   if (assign && assign in options.referenceRecord) {
     throw new EndpointError(`'${assign}' is already defined in Reference Record.`);
@@ -356,7 +356,7 @@ var evaluateCondition = /* @__PURE__ */ __name(({ assign, ...fnArgs }, options) 
   };
 }, "evaluateCondition");
 
-// src/utils/evaluateConditions.ts
+// 'lib/utils/evaluateConditions.ts
 var evaluateConditions = /* @__PURE__ */ __name((conditions = [], options) => {
   const conditionsReferenceRecord = {};
   for (const condition of conditions) {
@@ -378,7 +378,7 @@ var evaluateConditions = /* @__PURE__ */ __name((conditions = [], options) => {
   return { result: true, referenceRecord: conditionsReferenceRecord };
 }, "evaluateConditions");
 
-// src/utils/getEndpointHeaders.ts
+// 'lib/utils/getEndpointHeaders.ts
 var getEndpointHeaders = /* @__PURE__ */ __name((headers, options) => Object.entries(headers).reduce(
   (acc, [headerKey, headerVal]) => ({
     ...acc,
@@ -393,7 +393,7 @@ var getEndpointHeaders = /* @__PURE__ */ __name((headers, options) => Object.ent
   {}
 ), "getEndpointHeaders");
 
-// src/utils/getEndpointProperty.ts
+// 'lib/utils/getEndpointProperty.ts
 var getEndpointProperty = /* @__PURE__ */ __name((property, options) => {
   if (Array.isArray(property)) {
     return property.map((propertyEntry) => getEndpointProperty(propertyEntry, options));
@@ -413,7 +413,7 @@ var getEndpointProperty = /* @__PURE__ */ __name((property, options) => {
   }
 }, "getEndpointProperty");
 
-// src/utils/getEndpointProperties.ts
+// 'lib/utils/getEndpointProperties.ts
 var getEndpointProperties = /* @__PURE__ */ __name((properties, options) => Object.entries(properties).reduce(
   (acc, [propertyKey, propertyVal]) => ({
     ...acc,
@@ -422,7 +422,7 @@ var getEndpointProperties = /* @__PURE__ */ __name((properties, options) => Obje
   {}
 ), "getEndpointProperties");
 
-// src/utils/getEndpointUrl.ts
+// 'lib/utils/getEndpointUrl.ts
 var getEndpointUrl = /* @__PURE__ */ __name((endpointUrl, options) => {
   const expression = evaluateExpression(endpointUrl, "Endpoint URL", options);
   if (typeof expression === "string") {
@@ -436,7 +436,7 @@ var getEndpointUrl = /* @__PURE__ */ __name((endpointUrl, options) => {
   throw new EndpointError(`Endpoint URL must be a string, got ${typeof expression}`);
 }, "getEndpointUrl");
 
-// src/utils/evaluateEndpointRule.ts
+// 'lib/utils/evaluateEndpointRule.ts
 var evaluateEndpointRule = /* @__PURE__ */ __name((endpointRule, options) => {
   const { conditions, endpoint } = endpointRule;
   const { result, referenceRecord } = evaluateConditions(conditions, options);
@@ -460,7 +460,7 @@ var evaluateEndpointRule = /* @__PURE__ */ __name((endpointRule, options) => {
   };
 }, "evaluateEndpointRule");
 
-// src/utils/evaluateErrorRule.ts
+// 'lib/utils/evaluateErrorRule.ts
 var evaluateErrorRule = /* @__PURE__ */ __name((errorRule, options) => {
   const { conditions, error } = errorRule;
   const { result, referenceRecord } = evaluateConditions(conditions, options);
@@ -475,7 +475,7 @@ var evaluateErrorRule = /* @__PURE__ */ __name((errorRule, options) => {
   );
 }, "evaluateErrorRule");
 
-// src/utils/evaluateTreeRule.ts
+// 'lib/utils/evaluateTreeRule.ts
 var evaluateTreeRule = /* @__PURE__ */ __name((treeRule, options) => {
   const { conditions, rules } = treeRule;
   const { result, referenceRecord } = evaluateConditions(conditions, options);
@@ -488,7 +488,7 @@ var evaluateTreeRule = /* @__PURE__ */ __name((treeRule, options) => {
   });
 }, "evaluateTreeRule");
 
-// src/utils/evaluateRules.ts
+// 'lib/utils/evaluateRules.ts
 var evaluateRules = /* @__PURE__ */ __name((rules, options) => {
   for (const rule of rules) {
     if (rule.type === "endpoint") {

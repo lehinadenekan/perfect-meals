@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import { initializeSocket } from './app/lib/socket';
+import { initializeSocket } from './lib/socket';
 
 const PORT = 3000; // Force port 3000
 const dev = process.env.NODE_ENV !== 'production';

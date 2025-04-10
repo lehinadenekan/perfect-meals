@@ -4,7 +4,7 @@ import * as Progress from '@radix-ui/react-progress';
 import { DietType, DIET_TYPES } from '@/types/diet';
 import GeographicFilter from './GeographicFilter';
 import MealCarousel from '../recipe/MealCarousel';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
 import { ExcludedFoodsInput } from './ExcludedFoodsInput';
 import { DIET_ICONS } from '@/app/config/dietaryIcons';

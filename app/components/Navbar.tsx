@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import AuthModal from './AuthModal';
 import { Search, Home } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
   onHomeClick: () => void;
@@ -12,6 +13,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -112,7 +114,7 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
                       <div className="py-1">
                         <button
                           onClick={() => {
-                            window.dispatchEvent(new CustomEvent('showFavoriteRecipes'));
+                            router.push('/favourite-recipes');
                             setIsDropdownOpen(false);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -121,7 +123,7 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
                         </button>
                         <button
                           onClick={() => {
-                            window.dispatchEvent(new CustomEvent('showRecentlyViewed'));
+                            router.push('/recently-viewed');
                             setIsDropdownOpen(false);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

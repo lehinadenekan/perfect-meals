@@ -3,7 +3,7 @@ import RecipeCard from '../recipe/RecipeCard';
 import RecipeDetailModal from '../recipe/RecipeDetailModal';
 // Import necessary Prisma types
 import type { Album as PrismaAlbum, RecipeToAlbum, Recipe as PrismaRecipe } from '@prisma/client';
-import { Recipe as FrontendRecipe } from '@/app/types/recipe'; // Import frontend Recipe type
+import { Recipe as FrontendRecipe } from '@/lib/types/recipe'; // Import frontend Recipe type
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 // Remove local interface definitions
@@ -30,7 +30,7 @@ interface Album {
 // Define the type for the fetched album data
 type FetchedAlbum = PrismaAlbum & {
   recipes: (RecipeToAlbum & {
-    recipe: PrismaRecipe & { isFavorite?: boolean }; // Expect full PrismaRecipe + isFavorite
+    recipe: PrismaRecipe & { isFavourite?: boolean }; // Expect full PrismaRecipe + isFavourite
   })[];
 };
 
@@ -43,11 +43,11 @@ interface AlbumDetailsViewProps {
 }
 
 export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: AlbumDetailsViewProps) {
-  // Local state uses the frontend Recipe type, plus isFavorite
-  const [recipes, setRecipes] = useState<(FrontendRecipe & { isFavorite?: boolean })[]>([]);
+  // Local state uses the frontend Recipe type, plus isFavourite
+  const [recipes, setRecipes] = useState<(FrontendRecipe & { isFavourite?: boolean })[]>([]);
 
   // --- State for Modal Control ---
-  const [selectedRecipe, setSelectedRecipe] = useState<(FrontendRecipe & { isFavorite?: boolean }) | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<(FrontendRecipe & { isFavourite?: boolean }) | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Sync local state when the album prop changes
@@ -56,7 +56,7 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
     // Assume the API *might not* provide all FrontendRecipe fields.
     // Map only fields known/likely to exist on the incoming `recipe` object.
     const initialRecipes = album.recipes.map(({ recipe }) => {
-      const partialFrontendRecipe: Partial<FrontendRecipe> & { id: string; title: string; isFavorite?: boolean } = {
+      const partialFrontendRecipe: Partial<FrontendRecipe> & { id: string; title: string; isFavourite?: boolean } = {
         // Fields very likely to exist
         id: recipe.id,
         title: recipe.title,
@@ -82,34 +82,34 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
         instructions: (recipe as any).instructions ?? [],
         createdAt: recipe.createdAt,
         updatedAt: recipe.updatedAt,
-        // Add favorite status (which the API route should now provide)
-        isFavorite: recipe.isFavorite ?? undefined,
+        // Add favourite status (which the API route should now provide)
+        isFavourite: recipe.isFavourite ?? undefined,
         // Omit fields that consistently cause type errors (calories, videoUrl, type, etc.)
       };
       // Cast to FrontendRecipe, acknowledging it might be partial
-      return partialFrontendRecipe as FrontendRecipe & { isFavorite?: boolean };
+      return partialFrontendRecipe as FrontendRecipe & { isFavourite?: boolean };
     });
     setRecipes(initialRecipes);
   }, [album]);
 
-  // --- Callback for Favorite Changes ---
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  // --- Callback for Favourite Changes ---
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
   // --- Modal Handlers ---
   const handleOpenModal = (recipe: FrontendRecipe) => {
     const currentRecipeData = recipes.find(r => r.id === recipe.id);
-    setSelectedRecipe(currentRecipeData || { ...recipe, isFavorite: undefined });
+    setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined });
     setIsModalOpen(true);
   };
 
@@ -146,7 +146,7 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
                 <RecipeCard
                   recipe={recipe} // Pass the full FrontendRecipe
                   onSelect={handleOpenModal}
-                  onFavoriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavouriteChange}
                   onAlbumUpdate={onAlbumUpdate}
                 />
               </div>
@@ -161,7 +161,7 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe} // Pass selected recipe (FrontendRecipe type)
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

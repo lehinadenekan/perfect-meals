@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { DietaryPreference } from '../types';
-import { getFilteredIngredientsByPreferences } from '../utils/preference-integration';
-import { type Ingredient } from '../utils/dietary-filters';
+import { DietaryPreference } from '@/lib/types';
+import { getFilteredIngredientsByPreferences } from '@/lib/utils/preference-integration';
+import { type Ingredient } from '@/lib/utils/dietary-filters';
 
 interface DietaryPreferenceSelectorProps {
   onGenerateMeals: (filteredIngredients: Ingredient[]) => void;

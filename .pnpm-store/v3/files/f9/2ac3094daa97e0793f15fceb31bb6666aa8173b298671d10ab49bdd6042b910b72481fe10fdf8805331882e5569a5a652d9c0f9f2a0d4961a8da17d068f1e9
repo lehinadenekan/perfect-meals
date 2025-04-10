@@ -401,22 +401,22 @@ import_util_endpoints.customEndpointFunctions.aws = awsEndpointFunctions;
 // src/resolveEndpoint.ts
 
 
-// src/types/EndpointError.ts
+// 'lib types'/EndpointError.ts
 
 
-// src/types/EndpointRuleObject.ts
+// 'lib types'/EndpointRuleObject.ts
 
 
-// src/types/ErrorRuleObject.ts
+// 'lib types'/ErrorRuleObject.ts
 
 
-// src/types/RuleSetObject.ts
+// 'lib types'/RuleSetObject.ts
 
 
-// src/types/TreeRuleObject.ts
+// 'lib types'/TreeRuleObject.ts
 
 
-// src/types/shared.ts
+// 'lib types'/shared.ts
 
 // Annotate the CommonJS export names for ESM import in node:
 

@@ -1,5 +1,5 @@
 // utils/recentlyViewed.ts
-import { Recipe } from '@/app/types/recipe'; // Import the main Recipe type
+import { Recipe } from '@/lib/types/recipe'; // Import the main Recipe type
 
 // Use the full Recipe type for storage
 // export interface RecentlyViewedRecipe { ... }

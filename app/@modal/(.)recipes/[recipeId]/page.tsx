@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-// REMOVE: import { getRecipeById } from '@/app/lib/data'; 
-import type { RecipeDetailData } from '@/app/lib/data'; 
+// REMOVE: import { getRecipeById } from '@/'lib/data/recipes''; 
+import type { RecipeDetailData } from '@/lib/data/recipes'; 
 import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal'; 
-import type { Recipe, Ingredient, Instruction } from '@/app/types/recipe'; 
+import type { Recipe, Ingredient, Instruction } from '@/lib/types/recipe'; 
 
 export default function RecipeModalPage({ params }: { params: { recipeId: string } }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -14,6 +14,15 @@ export default function RecipeModalPage({ params }: { params: { recipeId: string
   const router = useRouter();
 
   useEffect(() => {
+         // --- START: Add this check ---
+         if (params.recipeId === 'create') {
+          // If the route intercepted is '/recipes/create',
+          // don't treat 'create' as an ID. Close the modal immediately.
+          router.back(); 
+          return; // Stop executing this useEffect
+        }
+        // --- END: Add this check ---
+  
     const fetchRecipeFromApi = async () => {
       setIsLoading(true);
       setError(null);

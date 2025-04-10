@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var http_1 = require("http");
 var url_1 = require("url");
 var next_1 = __importDefault(require("next"));
-var socket_1 = require("./app/lib/socket");
+var socket_1 = require("./lib/socket");
 var PORT = 3000; // Force port 3000
 var dev = process.env.NODE_ENV !== 'production';
 var app = (0, next_1.default)({ dev: dev });

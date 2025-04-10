@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { seedRecipes } from './seed-data/recipes';
-import { FERMENTED_FOODS, FermentedIngredient } from '../app/utils/dietary-classification';
+import { FERMENTED_FOODS, FermentedIngredient } from '../lib/utils/dietary-classification';
 
 const prisma = new PrismaClient();
 

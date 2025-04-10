@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '../../src/test/utils/test-utils'
 import { createMockRecipe } from '../../src/test/utils/test-utils'
 import RecipeList from '../../app/components/recipe/RecipeList'
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 
 // Mock child components
 jest.mock('@/app/components/recipe/RecipeCard', () => {

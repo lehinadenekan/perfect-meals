@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 // Revert to using the frontend Recipe type
-import { Recipe } from '@/app/types/recipe'; 
+import { Recipe } from '@/lib/types/recipe'; 
 import RecipeCard from './RecipeCard'
 import RecipeDetailModal from './RecipeDetailModal'
 
 // Revert prop type
 interface RecipeListProps {
-  recipes: (Recipe & { isFavorite?: boolean })[]; 
+  recipes: (Recipe & { isFavourite?: boolean })[]; 
 }
 
 export default function RecipeList({ recipes: initialRecipes }: RecipeListProps) {
@@ -23,17 +23,17 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
     setRecipes(initialRecipes);
   }, [initialRecipes]);
 
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     if (selectedRecipe && selectedRecipe.id === recipeId) {
       // Ensure the update here matches the Recipe type
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
@@ -109,7 +109,7 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
               key={recipe.id}
               recipe={recipe} // Should now match RecipeCard's expected prop type
               onSelect={handleOpenModal} // Parameter type matches again
-              onFavoriteChange={handleFavoriteChange}
+              onFavouriteChange={handleFavouriteChange}
             />
           ))
         ) : (
@@ -122,7 +122,7 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe} // Should now match RecipeDetailModal's expected prop type
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

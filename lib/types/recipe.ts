@@ -38,6 +38,7 @@ export interface Author {
   updatedAt: Date;
   notes?: string[];
   nutritionFacts?: NutritionFacts;
+
 }
 
 export interface Recipe {
@@ -80,4 +81,5 @@ export interface Recipe {
   updatedAt: Date;
   notes?: string[];
   nutritionFacts?: NutritionFacts;
+  isFavourite?: boolean;
 } 

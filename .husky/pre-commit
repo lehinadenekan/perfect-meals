@@ -1,4 +1,5 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npx lint-staged
+#!/bin/sh
+# We need to unset GIT_DIR before running lint-staged 
+# See https://github.com/okonet/lint-staged/issues/825
+unset GIT_DIR
+npm exec --no -- lint-staged

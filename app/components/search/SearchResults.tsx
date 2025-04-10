@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import RecipeCard from '../recipe/RecipeCard';
@@ -98,7 +98,7 @@ export default function SearchResults({
                   key={recipe.id}
                   recipe={recipe}
                   onSelect={handleOpenModal}
-                  onFavoriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavoriteChange}
                   onAlbumUpdate={onAlbumUpdate}
                 />
               ))}
@@ -123,7 +123,7 @@ export default function SearchResults({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavoriteChange}
         />
       )}
     </>

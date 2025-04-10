@@ -48,7 +48,7 @@ var numberSelector = /* @__PURE__ */ __name((obj, key, type) => {
   return numberValue;
 }, "numberSelector");
 
-// src/types.ts
+// 'lib types'.ts
 var SelectorType = /* @__PURE__ */ ((SelectorType2) => {
   SelectorType2["ENV"] = "env";
   SelectorType2["CONFIG"] = "shared config entry";

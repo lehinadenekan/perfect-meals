@@ -5,12 +5,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar';
 import RecipeCard from '@/app/components/recipe/RecipeCard';
 import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 
 interface SearchResult extends Omit<Recipe, 'description' | 'imageUrl'> {
   description?: string;
   imageUrl?: string;
-  isFavorite?: boolean;
+  isFavourite?: boolean;
 }
 
 function SearchResults() {
@@ -47,16 +47,16 @@ function SearchResults() {
     fetchResults();
   }, [query]);
 
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setResults(currentResults =>
       currentResults.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
@@ -82,7 +82,7 @@ function SearchResults() {
               key={recipe.id}
               recipe={recipe}
               onSelect={handleOpenModal}
-              onFavoriteChange={handleFavoriteChange}
+              onFavouriteChange={handleFavouriteChange}
             />
           ))
         ) : (
@@ -95,7 +95,7 @@ function SearchResults() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

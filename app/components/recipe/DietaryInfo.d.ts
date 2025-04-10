@@ -1,5 +1,5 @@
-import { DietaryAnalysis } from '@/app/utils/dietary-classification';
-import { Recipe } from '@/app/types/recipe';
+import { DietaryAnalysis } from '@/lib/utils/dietary-classification';
+import { Recipe } from '@/lib/types/recipe';
 
 interface DietaryInfoProps {
   analysis: DietaryAnalysis;

@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 import renderer from 'react-test-renderer';
 import React, { useState } from 'react';
 import { DietType } from '@/types/diet';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({

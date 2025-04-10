@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import RecipeCard from './RecipeCard';
 import FlagSubmission from './FlagSubmission';
 import RecipeDetailModal from './RecipeDetailModal';
@@ -204,7 +204,7 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ title, recipes: initialReci
                 recipe={recipe}
                 onFlagClick={() => setFlaggedRecipe(recipe)}
                 onSelect={handleOpenModal}
-                onFavoriteChange={handleFavoriteChange}
+                onFavouriteChange={handleFavoriteChange}
               />
             </div>
           ))}
@@ -228,7 +228,7 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ title, recipes: initialReci
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavoriteChange}
           onGoToPrevious={goToPreviousRecipe}
           onGoToNext={goToNextRecipe}
           canGoPrevious={canGoPrevious}

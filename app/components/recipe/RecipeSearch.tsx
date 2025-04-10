@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import RecipeCard from './RecipeCard';
 import RecipeDetailModal from './RecipeDetailModal';
 import { Spinner } from '../ui/spinner';
@@ -238,7 +238,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
                 key={recipe.id}
                 recipe={recipe}
                 onSelect={handleOpenModal}
-                onFavoriteChange={handleFavoriteChange}
+                onFavouriteChange={handleFavoriteChange}
               />
             ))}
           </div>
@@ -250,7 +250,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavoriteChange}
         />
       )}
     </>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRecipeById, RecipeDetailData } from '@/app/lib/data'; // Adjust import path if needed
+import { getRecipeById, RecipeDetailData } from '@/lib/data/recipes'; // Adjust import path if needed
 
 export async function GET(
   request: Request, // Keep request parameter even if unused for now

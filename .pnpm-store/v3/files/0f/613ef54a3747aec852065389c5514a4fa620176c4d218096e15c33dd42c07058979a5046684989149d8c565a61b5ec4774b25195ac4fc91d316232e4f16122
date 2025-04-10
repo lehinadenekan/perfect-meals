@@ -200,7 +200,7 @@ var InstanceMetadataV1FallbackError = class _InstanceMetadataV1FallbackError ext
   }
 };
 
-// src/utils/getInstanceMetadataEndpoint.ts
+// 'lib/utils/getInstanceMetadataEndpoint.ts
 var import_node_config_provider = require("@smithy/node-config-provider");
 var import_url_parser = require("@smithy/url-parser");
 
@@ -236,7 +236,7 @@ var ENDPOINT_MODE_CONFIG_OPTIONS = {
   default: "IPv4" /* IPv4 */
 };
 
-// src/utils/getInstanceMetadataEndpoint.ts
+// 'lib/utils/getInstanceMetadataEndpoint.ts
 var getInstanceMetadataEndpoint = /* @__PURE__ */ __name(async () => (0, import_url_parser.parseUrl)(await getFromEndpointConfig() || await getFromEndpointModeConfig()), "getInstanceMetadataEndpoint");
 var getFromEndpointConfig = /* @__PURE__ */ __name(async () => (0, import_node_config_provider.loadConfig)(ENDPOINT_CONFIG_OPTIONS)(), "getFromEndpointConfig");
 var getFromEndpointModeConfig = /* @__PURE__ */ __name(async () => {
@@ -251,7 +251,7 @@ var getFromEndpointModeConfig = /* @__PURE__ */ __name(async () => {
   }
 }, "getFromEndpointModeConfig");
 
-// src/utils/getExtendedInstanceMetadataCredentials.ts
+// 'lib/utils/getExtendedInstanceMetadataCredentials.ts
 var STATIC_STABILITY_REFRESH_INTERVAL_SECONDS = 5 * 60;
 var STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS = 5 * 60;
 var STATIC_STABILITY_DOC_URL = "https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html";
@@ -270,7 +270,7 @@ For more information, please visit: ` + STATIC_STABILITY_DOC_URL
   };
 }, "getExtendedInstanceMetadataCredentials");
 
-// src/utils/staticStabilityProvider.ts
+// 'lib/utils/staticStabilityProvider.ts
 var staticStabilityProvider = /* @__PURE__ */ __name((provider, options = {}) => {
   const logger = options?.logger || console;
   let pastCredentials;

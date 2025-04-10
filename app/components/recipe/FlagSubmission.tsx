@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 
 interface FlagSubmissionProps {
   recipe: Recipe;

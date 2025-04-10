@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom'; // For extended matchers like .toBeInTheDocument()
 import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
-import { Recipe } from '@/app/types/recipe'; // Assuming this path is correct
+import { Recipe } from '@/lib/types/recipe'; // Assuming this path is correct
 
 // Mock data for a recipe - adjust as needed for tests
 const mockRecipe: Recipe = {
@@ -56,7 +56,7 @@ jest.mock('@/app/components/recipe/FlagSubmission', () => () => <div>Mock Flag S
 // Mock FavoriteButton if it causes issues (e.g., needs context)
 jest.mock('../shared/FavoriteButton', () => () => <button>Mock Favorite</button>);
 // Mock addRecentlyViewed utility function
-jest.mock('@/app/utils/recentlyViewed', () => ({
+jest.mock('@/lib/utils/recentlyViewed', () => ({
   addRecentlyViewed: jest.fn(),
 }));
 

@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import RecipeCard from '../recipe/RecipeCard';
 import RecipeDetailModal from '../recipe/RecipeDetailModal'; // Import modal
-import { getRecentlyViewed } from '@/app/utils/recentlyViewed';
+import { getRecentlyViewed } from '@/lib/utils/recentlyViewed';
 import LoadingSpinner from '../shared/LoadingSpinner'; // Assuming exists
-import { Recipe } from '@/app/types/recipe'; // Import the actual Recipe type RecipeCard uses
+import { Recipe } from '@/lib/types/recipe'; // Import the actual Recipe type RecipeCard uses
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Correct import for outline icon
 
 interface RecentlyViewedRecipesProps {
@@ -86,7 +86,7 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
                 <RecipeCard
                   recipe={recipeData}
                   onSelect={handleOpenModal}
-                  onFavoriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavoriteChange}
                   onAlbumUpdate={onAlbumUpdate}
                 />
               </div>
@@ -100,7 +100,7 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe as Recipe}
-          onFavoriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavoriteChange}
         />
       )}
     </>

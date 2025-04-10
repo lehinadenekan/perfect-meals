@@ -5,9 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from './Navbar'; // Assuming Navbar doesn't use searchParams directly
 import TypewriterHeader from './TypewriterHeader';
 import DietaryPreferenceSelector from './dietary/DietaryPreferenceSelector';
-import FavoriteRecipes from './favorites/FavoriteRecipes';
+import FavouriteRecipes from './favourites/FavouriteRecipes';
 import SearchResults from './search/SearchResults';
-import { Recipe } from '@/app/types/recipe';
+import { Recipe } from '@/lib/types/recipe';
 import { DietType } from '@/types/diet';
 import RecentlyViewedRecipes from './recently-viewed/RecentlyViewedRecipes';
 
@@ -118,7 +118,7 @@ export default function HomePageClient() {
         {currentView === 'default' && <TypewriterHeader />}
 
         {currentView === 'favorites' && (
-          <FavoriteRecipes
+          <FavouriteRecipes
             onBack={handleGoBackToDefault}
             onAlbumUpdate={triggerAlbumRefresh}
             albumRefreshTrigger={albumRefreshTrigger}
