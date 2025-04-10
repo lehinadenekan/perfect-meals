@@ -1,10 +1,14 @@
 // app/api/user/preferences/favourites/ids/route.ts
 import { NextResponse } from 'next/server';
-import { auth } from '../../../../../../auth'; // Corrected path to root
-import { prisma } from '../../../../../../lib/prisma'; // Corrected path to root
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+
+// Force dynamic execution for this route
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     // Not authenticated
