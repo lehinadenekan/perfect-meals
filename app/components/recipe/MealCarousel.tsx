@@ -9,7 +9,7 @@ import RecipeDetailModal from './RecipeDetailModal';
 
 interface MealCarouselProps {
   title: string;
-  recipes: (Recipe & { isFavorite?: boolean })[];
+  recipes: (Recipe & { isFavourite?: boolean })[];
   isLoading?: boolean;
 }
 
@@ -77,20 +77,20 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ title, recipes: initialReci
     }, 300);
   };
 
-  // --- Callback for Favorite Changes (updates local carousel state) ---
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  // --- Callback for Favourite Changes (updates local carousel state) ---
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     // Update selected recipe in modal if it's the one changed
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
-    console.log(`Carousel: Recipe ${recipeId} favorite status updated to: ${newIsFavorite}`);
+    console.log(`Carousel: Recipe ${recipeId} favourite status updated to: ${newIsFavourite}`);
   };
 
   // --- Modal Handlers ---
@@ -204,7 +204,7 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ title, recipes: initialReci
                 recipe={recipe}
                 onFlagClick={() => setFlaggedRecipe(recipe)}
                 onSelect={handleOpenModal}
-                onFavouriteChange={handleFavoriteChange}
+                onFavouriteChange={handleFavouriteChange}
               />
             </div>
           ))}
@@ -228,7 +228,7 @@ const MealCarousel: React.FC<MealCarouselProps> = ({ title, recipes: initialReci
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavouriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
           onGoToPrevious={goToPreviousRecipe}
           onGoToNext={goToNextRecipe}
           canGoPrevious={canGoPrevious}

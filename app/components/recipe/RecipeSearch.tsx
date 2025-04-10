@@ -22,7 +22,7 @@ interface DietaryOption {
   description: string;
 }
 
-type RecipeSearchResult = Recipe & { isFavorite?: boolean };
+type RecipeSearchResult = Recipe & { isFavourite?: boolean };
 
 // Define Props interface
 interface RecipeSearchProps {
@@ -142,16 +142,16 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
     );
   };
 
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
@@ -238,7 +238,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
                 key={recipe.id}
                 recipe={recipe}
                 onSelect={handleOpenModal}
-                onFavouriteChange={handleFavoriteChange}
+                onFavouriteChange={handleFavouriteChange}
               />
             ))}
           </div>
@@ -250,7 +250,7 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavouriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

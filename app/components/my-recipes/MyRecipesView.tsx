@@ -12,12 +12,12 @@ interface MyRecipesViewProps {
   onCreateClick: () => void;
 }
 
-// Define state type, including optional isFavorite
-type MyRecipe = Recipe & { isFavorite?: boolean };
+// Define state type, including optional isFavourite
+type MyRecipe = Recipe & { isFavourite?: boolean };
 
 export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
   const { data: session } = useSession();
-  // State to hold user's recipes, including their favorite status
+  // State to hold user's recipes, including their favourite status
   const [myRecipes, setMyRecipes] = useState<MyRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,15 +36,15 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
       setIsLoading(true);
       setError(null);
       try {
-        // *** IMPORTANT: Ensure this API returns `isFavorite` status ***
+        // *** IMPORTANT: Ensure this API returns `isFavourite` status ***
         const response = await fetch('/api/recipes/my-recipes');
         if (!response.ok) {
           throw new Error(`Failed to fetch recipes: ${response.statusText}`);
         }
         const data = await response.json();
-        // Ensure data is an array. Assume API doesn't return favorite status for user's own recipes here.
-        // The FavoriteButton will determine the actual status.
-        const recipesWithStatus = (Array.isArray(data) ? data : []).map((r: Recipe) => ({ ...r, isFavorite: undefined })); // Default to undefined
+        // Ensure data is an array. Assume API doesn't return favourite status for user's own recipes here.
+        // The FavouriteButton will determine the actual status.
+        const recipesWithStatus = (Array.isArray(data) ? data : []).map((r: Recipe) => ({ ...r, isFavourite: undefined })); // Default to undefined
         setMyRecipes(recipesWithStatus);
       } catch (err: unknown) {
         console.error("Error fetching user's recipes:", err);
@@ -58,18 +58,18 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
     fetchMyRecipes();
   }, [session]); // Re-fetch if session changes
 
-  // --- Callback for Favorite Changes ---
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  // --- Callback for Favourite Changes ---
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setMyRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     // Update selected recipe in modal if it's the one changed
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
@@ -127,7 +127,7 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
                 <RecipeCard
                   recipe={recipe}
                   onSelect={handleOpenModal}
-                  onFavouriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavouriteChange}
                 />
               </div>
             ))}
@@ -141,7 +141,7 @@ export default function MyRecipesView({ onCreateClick }: MyRecipesViewProps) {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavouriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

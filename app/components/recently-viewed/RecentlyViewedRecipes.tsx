@@ -13,11 +13,11 @@ interface RecentlyViewedRecipesProps {
   onAlbumUpdate: () => void; // Pass this down to RecipeCard
 }
 
-// Define state type, including optional isFavorite
-type RecentlyViewedRecipe = Recipe & { isFavorite?: boolean };
+// Define state type, including optional isFavourite
+type RecentlyViewedRecipe = Recipe & { isFavourite?: boolean };
 
 export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: RecentlyViewedRecipesProps) {
-  // Local state to manage recipes and their favorite status within this view
+  // Local state to manage recipes and their favourite status within this view
   const [recipes, setRecipes] = useState<RecentlyViewedRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,31 +28,31 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
   useEffect(() => {
     // Fetch from localStorage on mount
     const viewedRecipes: Recipe[] = getRecentlyViewed(); // Get base recipes
-    // Initialize state - isFavorite will be undefined initially
-    setRecipes(viewedRecipes.map(r => ({ ...r, isFavorite: undefined })));
+    // Initialize state - isFavourite will be undefined initially
+    setRecipes(viewedRecipes.map(r => ({ ...r, isFavourite: undefined })));
     setIsLoading(false);
   }, []);
 
-  // --- Callback for Favorite Changes ---
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  // --- Callback for Favourite Changes ---
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     // Update selected recipe in modal if it's the one changed
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
   // --- Modal Handlers ---
   const handleOpenModal = (recipe: Recipe) => { // Accept base Recipe type
-    // Find the latest version from local state to get current favorite status (if known)
+    // Find the latest version from local state to get current favourite status (if known)
     const currentRecipeData = recipes.find(r => r.id === recipe.id);
-    setSelectedRecipe(currentRecipeData || { ...recipe, isFavorite: undefined }); // Set selected, favorite status might be unknown initially
+    setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined }); // Set selected, favourite status might be unknown initially
     setIsModalOpen(true);
   };
 
@@ -86,7 +86,7 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
                 <RecipeCard
                   recipe={recipeData}
                   onSelect={handleOpenModal}
-                  onFavouriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavouriteChange}
                   onAlbumUpdate={onAlbumUpdate}
                 />
               </div>
@@ -100,7 +100,7 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe as Recipe}
-          onFavouriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

@@ -1,56 +1,97 @@
 // app/favourite-recipes/page.tsx
-'use client'; // This page needs client-side interactivity (state, router)
+'use client';
 
-import React, { useState, useCallback } from 'react';
+// Consolidated React import including lazy
+import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
-// Assuming Navbar is in app/components/Navbar.tsx
 import Navbar from '@/app/components/Navbar';
-// Import FavouriteRecipes from its new location
-import FavouriteRecipes from '@/app/components/favourites/FavouriteRecipes';
-// Import LoadingSpinner if needed for Suspense, though FavouriteRecipes might handle its own loading
-// import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
+import LoadingSpinner from '@/app/components/shared/LoadingSpinner'; // Assuming you have a spinner
+import { Button } from '@/components/ui/button'; // Using Shadcn Button
 
-export default function FavouriteRecipesPage() { // Changed function name for clarity
+// Define types for tab identifiers
+type ActiveTab = 'all' | 'albums' | 'my-recipes';
+
+// --- Lazy load tab content components ---
+// Using the correct path 'favourite-recipes'
+const AllFavouritesTab = lazy(() => import('@/app/components/favourite-recipes/FavouriteRecipes'));
+const AlbumsTab = lazy(() => import('@/app/components/favourite-recipes/AlbumsTab'));
+const MyRecipesTab = lazy(() => import('@/app/components/favourite-recipes/MyRecipesTab'));
+
+
+export default function FavouriteRecipesPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<ActiveTab>('all'); // Default to 'all'
 
-  // State needed for FavouriteRecipes' props
-  // (We keep this here as the page owns the context for refreshing albums)
+  // State for triggering album refresh (might be needed by AlbumsTab)
   const [albumRefreshTrigger, setAlbumRefreshTrigger] = useState(0);
   const triggerAlbumRefresh = useCallback(() => {
     console.log("FavouriteRecipesPage: Triggering album list refresh");
     setAlbumRefreshTrigger(prev => prev + 1);
   }, []);
 
-  // Handler for the 'onBack' prop of FavouriteRecipes component
-  // This determines where the back button *within* the favourites view goes
+  // Handler for Navbar search
+  const handleSearch = useCallback(async (term: string) => {
+    router.push(`/?q=${encodeURIComponent(term)}`);
+  }, [router]);
+
+  // Handler for the back button within the content area (if needed)
   const handleGoBackHome = useCallback(() => {
     router.push('/'); // Navigate to the home page
   }, [router]);
 
-  // Placeholder search handler for Navbar for this specific page
-  const handleSearch = useCallback(async (term: string) => {
-    // Redirect to home page (or search results page) with search query
-    router.push(`/?q=${encodeURIComponent(term)}`);
-  }, [router]);
+  // --- Render Tab Content ---
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'all':
+        return <AllFavouritesTab onBack={handleGoBackHome} onAlbumUpdate={triggerAlbumRefresh} albumRefreshTrigger={albumRefreshTrigger} />;
+      case 'albums':
+        return <AlbumsTab albumRefreshTrigger={albumRefreshTrigger} onAlbumUpdate={triggerAlbumRefresh} />;
+      case 'my-recipes':
+        return <MyRecipesTab />;
+      default:
+        return null;
+    }
+  };
 
   return (
-    // Add the main layout wrapper with background
     <main className="min-h-screen bg-[#ffc800]">
-      {/* Include the Navbar */}
       <Navbar
-        onHomeClick={() => router.push('/')} // Home button goes to '/'
+        onHomeClick={() => router.push('/')}
         onSearch={handleSearch}
-        // Add other props Navbar might need (e.g., session status if handled there)
       />
 
-      {/* Container for the main content */}
       <div className="container mx-auto p-4 md:p-8">
-        {/* Render the FavouriteRecipes component, passing necessary props */}
-        <FavouriteRecipes
-          onBack={handleGoBackHome} // Pass the handler for its internal back button
-          onAlbumUpdate={triggerAlbumRefresh} // Pass the callback
-          albumRefreshTrigger={albumRefreshTrigger} // Pass the state value
-        />
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">My Collection</h1>
+
+        <div className="flex space-x-2 border-b border-gray-300 mb-6">
+          <Button
+            variant={activeTab === 'all' ? 'secondary' : 'ghost'}
+            onClick={() => setActiveTab('all')}
+            className={`pb-2 rounded-none ${activeTab === 'all' ? 'border-b-2 border-black font-semibold' : 'font-normal'} hover:bg-yellow-100 text-gray-700 hover:text-black`}
+          >
+            All Favourites
+          </Button>
+          <Button
+             variant={activeTab === 'albums' ? 'secondary' : 'ghost'}
+             onClick={() => setActiveTab('albums')}
+             className={`pb-2 rounded-none ${activeTab === 'albums' ? 'border-b-2 border-black font-semibold' : 'font-normal'} hover:bg-yellow-100 text-gray-700 hover:text-black`}
+          >
+            Albums
+          </Button>
+          <Button
+             variant={activeTab === 'my-recipes' ? 'secondary' : 'ghost'}
+             onClick={() => setActiveTab('my-recipes')}
+             className={`pb-2 rounded-none ${activeTab === 'my-recipes' ? 'border-b-2 border-black font-semibold' : 'font-normal'} hover:bg-yellow-100 text-gray-700 hover:text-black`}
+          >
+            My Recipes
+          </Button>
+        </div>
+
+        <div>
+          <Suspense fallback={<LoadingSpinner />}>
+            {renderTabContent()}
+          </Suspense>
+        </div>
       </div>
     </main>
   );

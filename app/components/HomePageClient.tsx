@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from './Navbar'; // Assuming Navbar doesn't use searchParams directly
 import TypewriterHeader from './TypewriterHeader';
 import DietaryPreferenceSelector from './dietary/DietaryPreferenceSelector';
-import FavouriteRecipes from './favourites/FavouriteRecipes';
+import FavouriteRecipes from './favourite-recipes/FavouriteRecipes';
 import SearchResults from './search/SearchResults';
 import { Recipe } from '@/lib/types/recipe';
 import { DietType } from '@/types/diet';

@@ -7,7 +7,7 @@ import RecipeDetailModal from '../recipe/RecipeDetailModal';
 
 interface SearchResultsProps {
   searchTerm: string;
-  recipes: (Recipe & { isFavorite?: boolean })[];
+  recipes: (Recipe & { isFavourite?: boolean })[];
   isLoading: boolean;
   onBackToPreferences: () => void;
   onGenerateMore: () => void;
@@ -31,16 +31,16 @@ export default function SearchResults({
     setRecipes(initialRecipes);
   }, [initialRecipes]);
 
-  const handleFavoriteChange = (recipeId: string, newIsFavorite: boolean) => {
+  const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
         recipe.id === recipeId
-          ? { ...recipe, isFavorite: newIsFavorite }
+          ? { ...recipe, isFavourite: newIsFavourite }
           : recipe
       )
     );
     if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavorite: newIsFavorite } : null);
+      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
     }
   };
 
@@ -98,7 +98,7 @@ export default function SearchResults({
                   key={recipe.id}
                   recipe={recipe}
                   onSelect={handleOpenModal}
-                  onFavouriteChange={handleFavoriteChange}
+                  onFavouriteChange={handleFavouriteChange}
                   onAlbumUpdate={onAlbumUpdate}
                 />
               ))}
@@ -123,7 +123,7 @@ export default function SearchResults({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
-          onFavouriteChange={handleFavoriteChange}
+          onFavouriteChange={handleFavouriteChange}
         />
       )}
     </>

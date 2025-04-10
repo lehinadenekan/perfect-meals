@@ -4,7 +4,7 @@
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/app/components/Navbar'; // Assuming Navbar is reusable
-import FavoriteRecipes from '@/app/components/favourites/FavouriteRecipes';
+import FavoriteRecipes from '@/app/components/favourite-recipes/FavouriteRecipes';
 
 export default function FavoritesPage() {
   const router = useRouter();
