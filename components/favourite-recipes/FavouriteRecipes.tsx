@@ -7,14 +7,14 @@ import toast from 'react-hot-toast';
 import type { Album as PrismaAlbum, RecipeToAlbum, Recipe as PrismaRecipe } from '@prisma/client';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-import LoadingSpinner from '../shared/LoadingSpinner';
-import RecipeCard from '@/app/components/recipe/RecipeCard';
-import FlagSubmission from '../recipe/FlagSubmission';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import RecipeCard from '@/components/recipe/RecipeCard';
+import FlagSubmission from '@/components/recipe/FlagSubmission';
 import { Recipe } from '@/lib/types/recipe'; // Ensure this type uses 'isFavourite' if necessary
-import AlbumManager from '../albums/AlbumManager';
-import AlbumDetailsView from '../albums/AlbumDetailsView';
-import MyRecipesView from '../my-recipes/MyRecipesView';
-import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
+import AlbumManager from '@/components/albums/AlbumManager';
+import AlbumDetailsView from '@/components/albums/AlbumDetailsView';
+import MyRecipesView from '@/components/my-recipes/MyRecipesView';
+import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 
 // Define the type for the fetched favourite recipe, ensuring it includes isFavourite
 type FavouriteRecipe = Recipe & { isFavourite?: boolean }; // Allow optional for consistency
@@ -55,13 +55,17 @@ export default function FavouriteRecipes({ // Keeping original name
 
   // Fetch favourites when component mounts or session status changes
   useEffect(() => {
+    console.log("--- FavouriteRecipes useEffect triggered ---"); // Log effect start
     const fetchFavourites = async () => {
+      console.log(`fetchFavourites called. Session status: ${status}`); // Log status inside async function
       // Only fetch if authenticated
       if (status === 'authenticated') {
         setIsLoading(true);
+        console.log("Status is authenticated. Attempting fetch..."); // Log before fetch
         try {
           // Use the updated API path
           const response = await fetch('/api/recipes/favourites');
+          console.log(`Fetch response status: ${response.status}`); // Log response status
           if (!response.ok) {
             throw new Error('Failed to fetch favourite recipes');
           }
@@ -81,8 +85,11 @@ export default function FavouriteRecipes({ // Keeping original name
         }
       } else if (status === 'unauthenticated') {
         // Clear data if user logs out or is not logged in
+        console.log("Status is unauthenticated. Clearing data."); // Log unauthenticated case
         setIsLoading(false);
         setFavouriteRecipes([]);
+      } else {
+        console.log(`Status is ${status}. Waiting...`); // Log other statuses (e.g., loading)
       }
       // If status is 'loading', do nothing, wait for it to resolve
     };

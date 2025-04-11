@@ -7,7 +7,7 @@ import {
   Fish,
   Egg,
 } from 'lucide-react';
-import FermentedIcon from '../components/icons/FermentedIcon';
+import FermentedIcon from '../../components/icons/FermentedIcon';
 import { DietType } from '@/types/diet';
 
 type IconProps = {

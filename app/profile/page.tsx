@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import Dashboard from '../components/profile/Dashboard';
+import Dashboard from '../../components/profile/Dashboard';
 
 export default function ProfilePage() {
   const { data: session } = useSession();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom'; // For extended matchers like .toBeInTheDocument()
-import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
+import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 import { Recipe } from '@/lib/types/recipe'; // Assuming this path is correct
 
 // Mock data for a recipe - adjust as needed for tests

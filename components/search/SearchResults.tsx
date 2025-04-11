@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Recipe } from '@/lib/types/recipe';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import LoadingSpinner from '../shared/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import RecipeCard from '../recipe/RecipeCard';
 import RecipeDetailModal from '../recipe/RecipeDetailModal';
 

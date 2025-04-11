@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import HomePageClient from './components/HomePageClient'; // Import the new client component
+import HomePageClient from '../components/HomePageClient'; // Import the new client component
 
 // This page component now only sets up the Suspense boundary
 export default function Home() {

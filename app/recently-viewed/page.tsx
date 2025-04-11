@@ -4,8 +4,8 @@
 // Re-add useState and useCallback
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/app/components/Navbar'; // Assuming Navbar is reusable
-import RecentlyViewedRecipes from '@/app/components/recently-viewed/RecentlyViewedRecipes';
+// Navbar import removed
+import RecentlyViewedRecipes from '@/components/recently-viewed/RecentlyViewedRecipes'; // Adjusted import path based on previous context
 // LoadingSpinner might be needed if RecentlyViewedRecipes doesn't handle its own loading
 // import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
 
@@ -24,7 +24,7 @@ export default function RecentlyViewedPage() {
     router.push('/'); // Navigate to the home page
   }, [router]);
 
-  // Placeholder search handler for Navbar for this specific page
+  // Placeholder search handler for Navbar for this specific page - this is likely unused now but harmless to keep
   const handleSearch = useCallback(async (term: string) => {
     // Redirect to home page (or search results page) with search query
     router.push(`/?q=${encodeURIComponent(term)}`);
@@ -32,13 +32,10 @@ export default function RecentlyViewedPage() {
 
   return (
     // Use a consistent main layout structure
+    // The outer <main> tag might be redundant if the root layout already provides one,
+    // but keeping it for now based on original structure. Review if layout issues arise.
     <main className="min-h-screen bg-[#ffc800]">
-      {/* Include the Navbar */}
-      <Navbar
-        onHomeClick={() => router.push('/')}
-        onSearch={handleSearch}
-        // Add other props Navbar might need
-      />
+      {/* Navbar rendering removed */}
 
       {/* Container for the main content */}
       <div className="container mx-auto p-4 md:p-8">

@@ -3,7 +3,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import LoadingSpinner from '../shared/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 

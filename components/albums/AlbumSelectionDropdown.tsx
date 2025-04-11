@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Album } from '@prisma/client'; // Assuming Prisma client type resolves
-import LoadingSpinner from '../shared/LoadingSpinner'; // Assuming this exists
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 interface AlbumSelectionDropdownProps {
   recipeId: string;

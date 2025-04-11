@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 // REMOVE: import { getRecipeById } from '@/'lib/data/recipes''; 
 import type { RecipeDetailData } from '@/lib/data/recipes'; 
-import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal'; 
+import RecipeDetailModal from '@/components/recipe/RecipeDetailModal'; 
 import type { Recipe, Ingredient, Instruction } from '@/lib/types/recipe'; 
 
 export default function RecipeModalPage({ params }: { params: { recipeId: string } }) {

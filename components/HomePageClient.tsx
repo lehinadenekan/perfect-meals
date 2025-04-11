@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Navbar from './Navbar'; // Assuming Navbar doesn't use searchParams directly
 import TypewriterHeader from './TypewriterHeader';
 import DietaryPreferenceSelector from './dietary/DietaryPreferenceSelector';
-import FavouriteRecipes from './favourite-recipes/FavouriteRecipes';
+import FavouriteRecipes from '@/components/favourite-recipes/FavouriteRecipes';
 import SearchResults from './search/SearchResults';
 import { Recipe } from '@/lib/types/recipe';
 import { DietType } from '@/types/diet';
@@ -59,19 +58,12 @@ export default function HomePageClient() {
 
   useEffect(() => {
     const query = searchParams.get('q');
-    if (query && !searchTerm) { // Only perform search if query exists and isn't already the current term
+    if (query && !searchTerm) {
       performSearch(query);
     }
-    // Add logic here if you want clearing the 'q' param to reset the view
-    // else if (!query && currentView === 'searchResults') {
-    //  setCurrentView('default');
-    //  setSearchTerm('');
-    //  setRecipes([]);
-    // }
-  }, [searchParams, performSearch, searchTerm, currentView]);
+  }, [searchParams, performSearch, searchTerm]);
 
   useEffect(() => {
-    // Only run on the client where window is defined
     if (typeof window !== 'undefined') {
       const handleShowFavorites = () => {
         setCurrentView('favorites');
@@ -86,7 +78,6 @@ export default function HomePageClient() {
       window.addEventListener('showFavoriteRecipes', handleShowFavorites);
       window.addEventListener('showRecentlyViewed', handleShowRecentlyViewed);
 
-      // Return cleanup function within the client-side block
       return () => {
         window.removeEventListener('showFavoriteRecipes', handleShowFavorites);
         window.removeEventListener('showRecentlyViewed', handleShowRecentlyViewed);
@@ -95,17 +86,9 @@ export default function HomePageClient() {
   }, []);
 
   const handleMoreSearchResults = useCallback(async () => {
-    // TODO: Implement actual fetch logic for more results if needed
     if (!searchTerm) return;
     console.log("Fetching more results for:", searchTerm);
   }, [searchTerm]);
-
-  const handleHomeClick = useCallback(() => {
-    setCurrentView('default');
-    setSearchTerm('');
-    setRecipes([]);
-    // If using URL state, also clear query params: router.push('/')
-  }, []);
 
   const handleGoBackToDefault = useCallback(() => {
     setCurrentView('default');
@@ -113,7 +96,6 @@ export default function HomePageClient() {
 
   return (
     <> {/* Use Fragment as we don't need the outer main/navbar here */}
-      <Navbar onHomeClick={handleHomeClick} onSearch={performSearch} />
       <div className="container mx-auto p-4 md:p-8 flex flex-col items-center justify-center space-y-6 md:space-y-12">
         {currentView === 'default' && <TypewriterHeader />}
 

@@ -1,8 +1,8 @@
 'use client';
 
-import CreateRecipeForm from '@/app/components/recipe/CreateRecipeForm';
+import CreateRecipeForm from '@/components/recipe/CreateRecipeForm';
 import { Suspense } from 'react';
-import LoadingSpinner from '@/app/components/shared/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 

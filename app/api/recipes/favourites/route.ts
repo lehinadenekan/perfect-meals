@@ -3,15 +3,20 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth'; // Assuming this is correct now
 import { prisma } from '@/lib/prisma'; // Assuming this is correct now
 
+export const dynamic = 'force-dynamic';
 // Get user's favourite recipes
 export async function GET() {
+  console.log("--- GET /api/recipes/favourites request received ---"); // Add log start
   try {
     const session = await getServerSession(authOptions);
 
     // Check for auth
     if (!session?.user?.email) {
+      console.log("User not authenticated or email missing."); // Add log for no auth
       return NextResponse.json([], { status: 200 }); // Return empty array instead of error for unauthenticated users
     }
+
+    console.log(`Authenticated user email: ${session.user.email}`); // Add log for user email
 
     // Find the user and their saved recipes
     const user = await prisma.user.findUnique({
@@ -37,6 +42,15 @@ export async function GET() {
         }
       },
     });
+
+    // Add log for raw saved recipes data
+    console.log("Raw user data from Prisma (including savedRecipes):", JSON.stringify(user, null, 2));
+    if (user?.savedRecipes) {
+        console.log(`Found ${user.savedRecipes.length} saved recipes for user.`);
+        console.log("Raw saved recipe IDs:", JSON.stringify(user.savedRecipes.map(r => r.id)));
+    } else {
+        console.log("User found but no saved recipes array present, or user not found.");
+    }
 
     // Transform the recipes based on fetched data
     const transformedRecipes = (user?.savedRecipes || []).map(recipe => {
@@ -106,12 +120,13 @@ export async function GET() {
       };
     });
 
+    console.log(`Returning ${transformedRecipes.length} transformed recipes.`); // Add log for return count
     // Return empty array if user not found or no saved recipes
     return NextResponse.json(transformedRecipes);
   } catch (error) {
     console.error('Error fetching favourite recipes:', error);
     // Return empty array instead of error for better UI experience
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json([], { status: 200 }); // Ensure status 200 on error for consistency
   }
 }
 

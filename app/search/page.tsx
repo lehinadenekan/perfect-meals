@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Navbar from '@/app/components/Navbar';
-import RecipeCard from '@/app/components/recipe/RecipeCard';
-import RecipeDetailModal from '@/app/components/recipe/RecipeDetailModal';
+import Navbar from '@/components/Navbar';
+import RecipeCard from '@/components/recipe/RecipeCard';
+import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 import { Recipe } from '@/lib/types/recipe';
 
 interface SearchResult extends Omit<Recipe, 'description' | 'imageUrl'> {

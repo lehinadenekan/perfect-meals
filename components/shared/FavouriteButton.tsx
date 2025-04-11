@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
-import { useFavourites } from '../../context/FavouritesContext'; // <-- Import useFavourites
+import { useFavourites } from '../../app/context/FavouritesContext'; // <-- Import useFavourites
 
 interface FavouriteButtonProps {
   recipeId: string;

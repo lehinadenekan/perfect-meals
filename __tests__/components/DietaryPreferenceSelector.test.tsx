@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
-import DietaryPreferenceSelector, { DietaryPreferenceSelectorProps } from '@/app/components/dietary/DietaryPreferenceSelector';
+import DietaryPreferenceSelector, { DietaryPreferenceSelectorProps } from '@/components/dietary/DietaryPreferenceSelector';
 import { server } from '@/src/mocks/server';
 import { rest } from 'msw';
 import { Recipe } from '@/lib/types/recipe';

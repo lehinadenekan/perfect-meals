@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { ChartBarIcon, ClockIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/outline';
 
 interface DashboardData {

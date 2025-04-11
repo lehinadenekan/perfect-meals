@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import RecipeCard from '../recipe/RecipeCard';
 import RecipeDetailModal from '../recipe/RecipeDetailModal'; // Import modal
 import { getRecentlyViewed } from '@/lib/utils/recentlyViewed';
-import LoadingSpinner from '../shared/LoadingSpinner'; // Assuming exists
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { Recipe } from '@/lib/types/recipe'; // Import the actual Recipe type RecipeCard uses
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Correct import for outline icon
 
