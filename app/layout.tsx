@@ -1,16 +1,17 @@
 // app/layout.tsx
-'use client'; // --- Make Layout a Client Component ---
+'use client'; // Layout is already a Client Component
 
-import React from 'react';
+import React, { useCallback } from 'react'; // Import useCallback
 import './globals.css';
-import { Providers } from './providers'; // Assuming this includes SessionProvider
+import { Providers } from './providers';
 import { Toaster } from 'react-hot-toast';
 import { FavouritesProvider } from './context/FavouritesContext';
-import Navbar from '@/components/Navbar'; // --- Import Navbar ---
+import Navbar from '@/components/Navbar';
+// --- Import useRouter ---
+import { useRouter } from 'next/navigation';
 
-// Placeholder function for Navbar props - Replace with actual implementation if needed
-const placeholderOnHomeClick = () => { console.log("Home clicked - Placeholder"); };
-const placeholderOnSearch = async (term: string) => { console.log(`Search triggered for: ${term} - Placeholder`); };
+// --- Remove Placeholder Search Handler if unused, keep if needed ---
+// const placeholderOnSearch = async (term: string) => { console.log(`Search triggered for: ${term} - Placeholder`); };
 
 
 export default function RootLayout({
@@ -20,6 +21,22 @@ export default function RootLayout({
   children: React.ReactNode;
   modal: React.ReactNode;
 }) {
+  // --- Get router instance ---
+  const router = useRouter();
+
+  // --- Define actual navigation function ---
+  const handleHomeClick = useCallback(() => {
+    router.push('/'); // Navigate to the homepage
+  }, [router]); // Dependency on router
+
+  // --- Placeholder search handler (replace if implementing search) ---
+  const handleSearch = useCallback(async (term: string) => {
+    console.log(`Search triggered for: ${term} - Placeholder`);
+    // Example: Redirect to search page
+    // router.push(`/search?query=${encodeURIComponent(term)}`);
+  }, [router]); // Add router dependency if used
+
+
   return (
     <html lang="en">
       <head>
@@ -27,25 +44,19 @@ export default function RootLayout({
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1744468975179679"
           crossOrigin="anonymous"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Recipe App</title> {/* Add a default title */}
+        <title>Recipe App</title>
       </head>
-      {/* --- Added yellow background class to body --- */}
       <body className="bg-[#ffc800]">
-        {/* Providers likely contains SessionProvider, ThemeProvider etc. */}
         <Providers>
-           {/* --- Render Navbar --- */}
-           {/* Now okay to pass functions as Layout is also a Client Component */}
-           <Navbar onHomeClick={placeholderOnHomeClick} onSearch={placeholderOnSearch} />
+           {/* --- Pass the actual handleHomeClick function --- */}
+           <Navbar onHomeClick={handleHomeClick} onSearch={handleSearch} />
 
-           {/* Wrap the main content area with FavouritesProvider */}
-           {/* It needs to be inside Providers to access session state */}
            <FavouritesProvider>
-             {/* --- Wrap children/modal in a main tag for semantics --- */}
              <main className="flex-grow">
                 {children}
                 {modal}
              </main>
-             <Toaster /> {/* Toaster for notifications */}
+             <Toaster />
            </FavouritesProvider>
         </Providers>
       </body>
