@@ -6,7 +6,7 @@ import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client
 import Image from 'next/image';
 
 // Define the type for the fetched album data, including the nested recipe relation
-type FetchedAlbum = PrismaAlbum & {
+export type FetchedAlbum = PrismaAlbum & {
   recipes: (RecipeToAlbum & {
     recipe: Recipe;
   })[];
