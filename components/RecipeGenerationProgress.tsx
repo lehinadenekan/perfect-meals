@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 // import { Progress } from '@/components/ui/progress'; // <-- Import commented out
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Assuming this still exists
+// import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // <-- Import commented out
 
 interface GenerationProgress {
   status: string;
@@ -27,58 +27,62 @@ const RecipeGenerationProgress: React.FC<RecipeGenerationProgressProps> = ({
   );
 
   useEffect(() => {
-    // Connect to the WebSocket server
-    // Make sure the URL points to your server correctly, especially in production
     const socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001');
-
     console.log(`RecipeGenerationProgress: Connecting to WebSocket for job ${jobId}`);
-
     socket.on('connect', () => {
       console.log('WebSocket connected');
-      // Join the room for this specific job
       socket.emit('joinJobRoom', jobId);
       console.log(`Joined room for job ${jobId}`);
     });
-
     socket.on('progressUpdate', (data: GenerationProgress) => {
       console.log('Progress update received:', data);
       setProgress(data);
       if (data.status === 'Completed' || data.status === 'Failed') {
-         onComplete?.(); // Trigger callback if provided
-         socket.disconnect(); // Disconnect after completion/failure
+         onComplete?.();
+         socket.disconnect();
       }
     });
-
     socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
     });
-
     socket.on('connect_error', (err) => {
       console.error('WebSocket connection error:', err);
       setProgress(prev => ({ ...prev, status: 'Error', error: 'Connection failed' }));
     });
-
-    // Cleanup on component unmount
     return () => {
       console.log(`RecipeGenerationProgress: Disconnecting WebSocket for job ${jobId}`);
       socket.disconnect();
     };
-  }, [jobId, onComplete]); // Add onComplete to dependency array
+  }, [jobId, onComplete]);
 
   const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
 
   return (
     <div className="w-full max-w-md p-4 space-y-4">
       {progress.status === 'Failed' || progress.error ? (
+         // --- Alert component usage replaced with simple divs ---
+         <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            <h4 className="font-bold">Generation Failed</h4>
+            <p>{progress.error || 'An unknown error occurred during recipe generation.'}</p>
+         </div>
+         /* --- Original Alert component usage commented out ---
          <Alert variant="destructive">
             <AlertTitle>Generation Failed</AlertTitle>
             <AlertDescription>{progress.error || 'An unknown error occurred during recipe generation.'}</AlertDescription>
          </Alert>
+         */
       ) : progress.status === 'Completed' ? (
-         <Alert variant="default"> {/* Use default variant for success */}
+         // --- Alert component usage replaced with simple divs ---
+         <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+             <h4 className="font-bold">Generation Complete!</h4>
+             <p>{progress.total} recipes generated successfully.</p>
+         </div>
+         /* --- Original Alert component usage commented out ---
+         <Alert variant="default"> // Use default variant for success
             <AlertTitle>Generation Complete!</AlertTitle>
             <AlertDescription>{progress.total} recipes generated successfully.</AlertDescription>
          </Alert>
+         */
       ) : (
          <>
             <div className="text-center">
@@ -90,8 +94,7 @@ const RecipeGenerationProgress: React.FC<RecipeGenerationProgressProps> = ({
             {/* --- Progress component usage commented out ---
             <Progress value={percentage} className="w-full" />
             */}
-            {/* You could add a simple text placeholder here if needed */}
-             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
                     className="h-full bg-blue-500 transition-all duration-300 ease-in-out"
                     style={{ width: `${percentage}%` }}
