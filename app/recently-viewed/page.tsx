@@ -25,10 +25,12 @@ export default function RecentlyViewedPage() {
   }, [router]);
 
   // Placeholder search handler for Navbar for this specific page - this is likely unused now but harmless to keep
+  /*
   const handleSearch = useCallback(async (term: string) => {
     // Redirect to home page (or search results page) with search query
     router.push(`/?q=${encodeURIComponent(term)}`);
   }, [router]);
+  */
 
   return (
     // Use a consistent main layout structure
