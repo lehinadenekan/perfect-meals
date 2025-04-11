@@ -1,76 +1,106 @@
+// components/RecipeGenerationProgress.tsx
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+// import { Progress } from '@/components/ui/progress'; // <-- Import commented out
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // Assuming this still exists
 
 interface GenerationProgress {
   status: string;
   completed: number;
-  failed: number;
   total: number;
   error?: string;
 }
 
-interface Props {
+interface RecipeGenerationProgressProps {
   jobId: string;
-  onComplete?: () => void;
+  initialProgress?: GenerationProgress;
+  onComplete?: () => void; // Optional callback when generation finishes
 }
 
-export function RecipeGenerationProgress({ jobId, onComplete }: Props) {
-  const [progress, setProgress] = useState<GenerationProgress>({
-    status: 'PENDING',
-    completed: 0,
-    failed: 0,
-    total: 50
-  });
+const RecipeGenerationProgress: React.FC<RecipeGenerationProgressProps> = ({
+  jobId,
+  initialProgress,
+  onComplete
+}) => {
+  const [progress, setProgress] = useState<GenerationProgress>(
+    initialProgress || { status: 'Initializing', completed: 0, total: 0 }
+  );
 
   useEffect(() => {
-    const socket = io();
+    // Connect to the WebSocket server
+    // Make sure the URL points to your server correctly, especially in production
+    const socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001');
 
-    socket.on(`recipeGeneration:${jobId}`, (data: GenerationProgress) => {
+    console.log(`RecipeGenerationProgress: Connecting to WebSocket for job ${jobId}`);
+
+    socket.on('connect', () => {
+      console.log('WebSocket connected');
+      // Join the room for this specific job
+      socket.emit('joinJobRoom', jobId);
+      console.log(`Joined room for job ${jobId}`);
+    });
+
+    socket.on('progressUpdate', (data: GenerationProgress) => {
+      console.log('Progress update received:', data);
       setProgress(data);
-      if (data.status === 'COMPLETED' && onComplete) {
-        onComplete();
+      if (data.status === 'Completed' || data.status === 'Failed') {
+         onComplete?.(); // Trigger callback if provided
+         socket.disconnect(); // Disconnect after completion/failure
       }
     });
 
+    socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('WebSocket connection error:', err);
+      setProgress(prev => ({ ...prev, status: 'Error', error: 'Connection failed' }));
+    });
+
+    // Cleanup on component unmount
     return () => {
-      socket.off(`recipeGeneration:${jobId}`);
+      console.log(`RecipeGenerationProgress: Disconnecting WebSocket for job ${jobId}`);
       socket.disconnect();
     };
-  }, [jobId, onComplete]);
+  }, [jobId, onComplete]); // Add onComplete to dependency array
 
-  const percentComplete = Math.round((progress.completed / progress.total) * 100);
+  const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 p-4 bg-white rounded-lg shadow">
-      <h2 className="text-lg font-semibold text-center">Generating Recipes...</h2>
-      <Progress value={percentComplete} className="w-full" />
-      <div className="text-sm text-gray-600 text-center">
-        {progress.completed}/{progress.total} recipes generated
-      </div>
-      {progress.failed > 0 && (
-        <Alert variant="destructive">
-          <AlertTitle>Generation Issues</AlertTitle>
-          <AlertDescription>
-            {progress.failed} recipes failed to generate. Don&apos;t worry - we&apos;ll keep trying!
-          </AlertDescription>
-        </Alert>
-      )}
-      {progress.status === 'COMPLETED' && (
-        <Alert>
-          <AlertTitle>Generation Complete!</AlertTitle>
-          <AlertDescription>
-            Successfully generated {progress.completed} new recipes for you to explore.
-          </AlertDescription>
-        </Alert>
-      )}
-      {progress.error && (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{progress.error}</AlertDescription>
-        </Alert>
+    <div className="w-full max-w-md p-4 space-y-4">
+      {progress.status === 'Failed' || progress.error ? (
+         <Alert variant="destructive">
+            <AlertTitle>Generation Failed</AlertTitle>
+            <AlertDescription>{progress.error || 'An unknown error occurred during recipe generation.'}</AlertDescription>
+         </Alert>
+      ) : progress.status === 'Completed' ? (
+         <Alert variant="default"> {/* Use default variant for success */}
+            <AlertTitle>Generation Complete!</AlertTitle>
+            <AlertDescription>{progress.total} recipes generated successfully.</AlertDescription>
+         </Alert>
+      ) : (
+         <>
+            <div className="text-center">
+               <p className="text-sm font-medium text-gray-700">{progress.status}...</p>
+               <p className="text-xs text-gray-500">
+               {progress.completed} of {progress.total} recipes generated
+               </p>
+            </div>
+            {/* --- Progress component usage commented out ---
+            <Progress value={percentage} className="w-full" />
+            */}
+            {/* You could add a simple text placeholder here if needed */}
+             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                    className="h-full bg-blue-500 transition-all duration-300 ease-in-out"
+                    style={{ width: `${percentage}%` }}
+                ></div>
+            </div>
+         </>
       )}
     </div>
   );
-} 
+};
+
+export default RecipeGenerationProgress;
