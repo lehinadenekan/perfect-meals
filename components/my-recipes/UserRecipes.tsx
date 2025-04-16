@@ -1,32 +1,187 @@
 // components/my-recipes/UserRecipes.tsx
-import React from 'react';
+'use client';
 
-// 1. Define the props interface
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import { PlusIcon } from '@heroicons/react/24/outline';
+
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import RecipeCard from '@/components/recipe/RecipeCard'; // Assuming this is the correct RecipeCard component
+import { Recipe } from '@/lib/types/recipe'; // Adjust path if needed
+import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
+
+// Define props
 interface UserRecipesProps {
-  onCreateClick: () => void;
+  onCreateClick: () => void; // Handler for the "Create New Recipe" button
 }
 
-// 2. Update component signature to accept props
-const UserRecipes = ({ onCreateClick }: UserRecipesProps) => {
+// Define type for fetched user recipe (includes isFavourite status from API)
+type UserRecipe = Recipe & { isFavourite: boolean };
 
-  // Add logic here later to fetch and display user's created recipes
+const UserRecipes: React.FC<UserRecipesProps> = ({ onCreateClick }) => {
+  const { status } = useSession();
+  const [userRecipes, setUserRecipes] = useState<UserRecipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // --- State for Modal Control ---
+  const [selectedRecipe, setSelectedRecipe] = useState<UserRecipe | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // --- Fetch User Recipes Logic ---
+  const fetchUserRecipes = useCallback(async () => {
+    if (status === 'authenticated') {
+      setIsLoading(true);
+      setError(null); // Clear previous errors on fetch
+      console.log("UserRecipes: Status is authenticated. Attempting fetch...");
+      try {
+        // Fetch from the endpoint that returns all recipes authored by the user
+        const response = await fetch('/api/recipes/my-recipes');
+        console.log(`UserRecipes: Fetch response status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user recipes: ${response.status}`);
+        }
+        const data: UserRecipe[] = await response.json(); // Expecting array including isFavourite
+
+        // Update state with the fetched recipes
+        setUserRecipes(data);
+      } catch (err) {
+        console.error('UserRecipes: Error fetching user recipes:', err);
+        toast.error("Could not load your created/imported recipes.");
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setUserRecipes([]); // Clear on error
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setUserRecipes([]); // Clear data if not authenticated
+      setIsLoading(status === 'loading'); // Show loading only if session is loading
+      setError(null);
+    }
+  }, [status]);
+
+  // Fetch recipes when component mounts or session status changes
+  useEffect(() => {
+    console.log("--- UserRecipes useEffect triggered ---");
+    fetchUserRecipes();
+  }, [fetchUserRecipes]);
+
+
+  // --- Callback for Favourite Changes (from RecipeCard or Modal) ---
+  // Updates the favourite status locally for immediate UI feedback
+  const handleFavouriteChange = useCallback((recipeId: string, newIsFavourite: boolean) => {
+      // Optimistic update: update local state first
+      setUserRecipes((prevRecipes) =>
+          prevRecipes.map((recipe) =>
+              recipe.id === recipeId ? { ...recipe, isFavourite: newIsFavourite } : recipe
+          )
+      );
+      // Also update the selected recipe if it's the one being changed in the modal
+       if (selectedRecipe && selectedRecipe.id === recipeId) {
+            setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
+       }
+      // Show toast notification
+      toast.success(`Recipe ${newIsFavourite ? 'added to' : 'removed from'} favourites.`);
+
+  }, [selectedRecipe]); // Dependency on selectedRecipe
+
+
+  // --- Modal Handlers ---
+  const handleOpenModal = useCallback((recipe: Recipe) => {
+    // Find the recipe in the current state which includes the isFavourite status
+    const recipeFromState = userRecipes.find(r => r.id === recipe.id);
+    const index = recipeFromState ? userRecipes.indexOf(recipeFromState) : -1;
+
+    setSelectedRecipe(recipeFromState || { ...recipe, isFavourite: false }); // Use state version or fallback (assume false if not found)
+    setCurrentIndex(index !== -1 ? index : null);
+    setIsModalOpen(true);
+  }, [userRecipes]);
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
+    setCurrentIndex(null);
+  };
+
+  // --- Modal Navigation Handlers ---
+  const goToPreviousRecipe = () => {
+    if (currentIndex !== null && currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      setSelectedRecipe(userRecipes[newIndex]);
+      setCurrentIndex(newIndex);
+    }
+  };
+
+  const goToNextRecipe = () => {
+    if (currentIndex !== null && currentIndex < userRecipes.length - 1) {
+      const newIndex = currentIndex + 1;
+      setSelectedRecipe(userRecipes[newIndex]);
+      setCurrentIndex(newIndex);
+    }
+  };
+
+  const canGoPrevious = currentIndex !== null && currentIndex > 0;
+  const canGoNext = currentIndex !== null && currentIndex < userRecipes.length - 1;
+
+
+  // --- Render loading state ---
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // --- Render error state ---
+  if (error) {
+     return <div className="text-red-600 p-4 text-center">Error loading recipes: {error}</div>;
+  }
+
+  // --- Render content ---
   return (
-    <div className="p-4 md:p-6 bg-white rounded-lg shadow"> {/* Card styling */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl md:text-2xl font-semibold">My Created Recipes</h2>
-        {/* 3. Add a button that uses the passed function */}
-        <button
-          onClick={onCreateClick}
-          className="px-3 py-2 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 transition-colors text-sm font-medium shadow-sm"
-        >
-          + Create New Recipe
-        </button>
+    <div className="p-4 bg-white rounded-lg shadow space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">My Created & Imported Recipes</h2>
+        <Button onClick={onCreateClick}>
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Create New Recipe
+        </Button>
       </div>
-      <div className="text-center text-gray-500 py-8">
-         <p>Your created recipes will appear here.</p>
-         {/* Placeholder for recipe list or empty state */}
-      </div>
+
+      {userRecipes.length === 0 ? (
+        <div className="p-4 border rounded bg-gray-50 text-center text-gray-500">
+            <p>Your created and imported recipes will appear here.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-items-center">
+          {userRecipes.map(recipe => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe} // Pass the full recipe object including isFavourite
+              onSelect={handleOpenModal}
+              onFavouriteChange={handleFavouriteChange}
+            />
+          ))}
+        </div>
+      )}
+
+       {/* Recipe Detail Modal */}
+       {selectedRecipe && isModalOpen && (
+        <RecipeDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          recipe={selectedRecipe} // Pass selected recipe with its favourite status
+          onFavouriteChange={handleFavouriteChange} // Pass correct handler
+          onGoToPrevious={goToPreviousRecipe}
+          onGoToNext={goToNextRecipe}
+          canGoPrevious={canGoPrevious}
+          canGoNext={canGoNext}
+        />
+      )}
     </div>
   );
 };

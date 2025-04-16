@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "Recipe" ADD COLUMN     "isAlkaline" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isHalal" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isKeto" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isKosher" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "isPaleo" BOOLEAN NOT NULL DEFAULT false;

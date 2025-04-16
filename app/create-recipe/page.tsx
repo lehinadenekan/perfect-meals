@@ -14,7 +14,7 @@ export default function CreateRecipePage() {
 
       {/* Back Button */}
       <button
-        onClick={() => router.push('/favourite-recipes')} // <-- Update this line
+        onClick={() => router.push('/my-recipes')} // <-- Update this line
         className="absolute left-0 top-2 sm:left-2 sm:top-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center group"
         aria-label="Go back to favorites" // Update aria-label (optional)
       >
@@ -33,6 +33,7 @@ export default function CreateRecipePage() {
       <Suspense fallback={<div className="flex justify-center items-center"><LoadingSpinner /></div>}>
          <CreateRecipeForm />
       </Suspense>
+
     </div>
   );
 }

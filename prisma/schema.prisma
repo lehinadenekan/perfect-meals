@@ -40,6 +40,7 @@ model User {
   image              String?
   emailVerified      DateTime?               @map("email_verified")
   accounts           Account[]
+  albums             Album[]
   recipes            Recipe[]                @relation("AuthoredRecipes")
   sessions           Session[]
   allergies          UserAllergy[]
@@ -47,7 +48,6 @@ model User {
   preferences        UserPreference?
   recipeHistory      UserRecipeHistory[]
   savedRecipes       Recipe[]                @relation("SavedRecipes")
-  albums             Album[]
 
   @@map("users")
 }
@@ -74,16 +74,18 @@ model Recipe {
   isPescatarian      Boolean?                 @default(false)
   needsDietaryReview Boolean                  @default(false)
   imageUrl           String?
+  totalTime          String?
   regionOfOrigin     String?
+  search_vector      Unsupported("tsvector")?
   calories           Int?
   notes              String[]
-  search_vector      Unsupported("tsvector")?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]
   instructions       Instruction[]
   nutritionFacts     NutritionFacts?
   author             User                     @relation("AuthoredRecipes", fields: [authorId], references: [id])
   generationJob      RecipeGenerationJob?     @relation("JobRecipes", fields: [jobId], references: [id])
+  albums             RecipeToAlbum[]
   reviews            Review[]
   recipeHistory      UserRecipeHistory[]
   categories         Category[]               @relation("CategoryToRecipe")
@@ -91,7 +93,6 @@ model Recipe {
   fusionCuisines     Cuisine[]                @relation("RecipeFusionCuisines")
   tags               Tag[]                    @relation("RecipeToTag")
   savedBy            User[]                   @relation("SavedRecipes")
-  albums             RecipeToAlbum[]
 
   @@index([authorId])
   @@index([jobId])
@@ -270,28 +271,27 @@ model DietaryFeedback {
 }
 
 model Album {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
   coverImage  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic    Boolean         @default(false)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipes     RecipeToAlbum[]
-  isPublic    Boolean  @default(false)
 
   @@index([userId])
 }
 
 model RecipeToAlbum {
-  id        String   @id @default(cuid())
-  albumId   String
-  recipeId  String
-  addedAt   DateTime @default(now())
-
-  album     Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  albumId  String
+  recipeId String
+  addedAt  DateTime @default(now())
+  album    Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@unique([albumId, recipeId])
   @@index([albumId])

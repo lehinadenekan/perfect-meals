@@ -100,12 +100,18 @@ export default function RecipeCard({
       className="bg-white rounded-lg shadow-md overflow-hidden w-[240px] h-[555px] transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer"
       onClick={() => onSelect(recipe)}
     >
-      <div className="relative h-[140px] w-full">
+      <div className="relative w-full aspect-[4/3] overflow-hidden">
         <Image
           src={recipe.imageUrl || '/images/default-recipe.jpg'}
           alt={recipe.title}
-          fill
-          className="object-cover"
+          layout="fill"
+          objectFit="cover"
+          className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
+          onError={(e) => {
+            const t = e.target as HTMLImageElement;
+            t.onerror = null;
+            t.src = '/images/default-recipe.jpg';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
       </div>
@@ -144,7 +150,7 @@ export default function RecipeCard({
         <div className="mb-4">
           <div className="flex items-center space-x-2 whitespace-nowrap">
             <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'Global'}</span>
+            <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'N/A'}</span>
           </div>
         </div>
 

@@ -1,11 +1,57 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, Instruction, NutritionFacts } from '@prisma/client'; // Ensure NutritionFacts is imported
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import type { Session } from 'next-auth';
 import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
 const prisma = new PrismaClient();
+
+// Define the structure of the transformed recipe object
+type TransformedRecipe = {
+  id: string;
+  title: string;
+  description?: string;
+  cookingTime?: number;
+  servings?: number;
+  difficulty?: string;
+  cuisineType?: string;
+  regionOfOrigin?: string; // This is the field we expect on the frontend
+  imageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  authorId?: string | null;
+  author?: {
+    id: string;
+    name?: string;
+    email?: string;
+    image?: string;
+  };
+  ingredients: {
+    id: string;
+    name: string;
+    amount: number;
+    unit: string;
+    notes?: string | null;
+    recipeId: string;
+    isFermented: boolean;
+  }[];
+  instructions: Instruction[]; // Use the imported Instruction type
+  type?: string;
+  cuisineId?: string;
+  tags: string[];
+  isVegetarian: boolean;
+  isVegan: boolean;
+  isGlutenFree: boolean;
+  isNutFree: boolean;
+  isLowFodmap: boolean;
+  isLactoseFree: boolean;
+  isPescatarian: boolean;
+  isFermented: boolean;
+  calories?: number;
+  nutritionFacts?: NutritionFacts | null; // Use the imported NutritionFacts type
+};
+
 
 type RecipeParams = {
   dietTypes: string[];
@@ -15,11 +61,25 @@ type RecipeParams = {
   searchInput?: string;
 };
 
+// Define DbRecipe type directly using the validator structure
+type DbRecipe = Prisma.RecipeGetPayload<{
+    include: {
+        ingredients: true;
+        instructions: true;
+        nutritionFacts: true;
+        categories: true;
+        cuisines: true; // Still include cuisines if needed for cuisineType
+        tags: true;
+        author: true;
+    };
+}>;
+
+
 // This function will get recipes from our local database
 async function getRandomRecipesFromDB(
   params: RecipeParams,
   userId?: string,
-): Promise<Prisma.RecipeGetPayload<{ include: { ingredients: true, instructions: true, nutritionFacts: true, categories: true, cuisines: true, tags: true } }>[]> {
+): Promise<TransformedRecipe[]> {
   console.log('Starting recipe generation with params:', {
     dietTypes: params.dietTypes?.length || 0,
     selectedRegions: params.selectedRegions?.length || 0,
@@ -109,9 +169,15 @@ async function getRandomRecipesFromDB(
       regions: params.selectedRegions,
       timestamp: new Date().toISOString()
     });
+    // Filter by related Cuisine region instead of direct field
     conditions.push({
-      cuisineType: {
-        in: params.selectedRegions
+      cuisines: {          // Target the relation
+        some: {             // Check if at least one related cuisine matches
+          region: {         // Check the region field of the related cuisine
+            in: params.selectedRegions, // Must be one of the selected regions
+            mode: 'insensitive' // Optional: Add case-insensitivity if needed
+          }
+        }
       }
     });
   }
@@ -124,18 +190,25 @@ async function getRandomRecipesFromDB(
   try {
     // Step 2: Get initial set of recipes (limited to 100 for performance)
     console.log('Fetching initial recipe set with base filters');
-    let dbRecipes = await prisma.recipe.findMany({
+
+    let dbRecipes: DbRecipe[] = await prisma.recipe.findMany({
       where: baseWhereClause,
-      include: {
+      include: { // Ensure relations needed for transformation are included
         ingredients: true,
         instructions: true,
         nutritionFacts: true,
         categories: true,
-        cuisines: true,
+        cuisines: true, // Keep if needed for cuisineType
         tags: true,
+        author: true
       },
       take: 100, // Limit initial fetch for performance
     });
+
+    // --- Log after initial fetch ---
+    console.log(`[LOG] Initial fetch count: ${dbRecipes.length}`);
+    console.log(`[LOG] Base where clause used: ${JSON.stringify(baseWhereClause)}`);
+    // --- End Log ---
 
     console.log('Initial recipe fetch metrics:', {
       fetchedCount: dbRecipes.length,
@@ -191,7 +264,7 @@ async function getRandomRecipesFromDB(
       // Sort results by relevance
       dbRecipes = dbRecipes.sort((a, b) => {
         // Calculate relevance score for each recipe
-        const getScore = (recipe: Prisma.RecipeGetPayload<{ include: { ingredients: true, instructions: true, nutritionFacts: true, categories: true, cuisines: true, tags: true } }>): number => {
+        const getScore = (recipe: DbRecipe): number => {
           let score = 0;
 
           // Title match (highest priority)
@@ -265,6 +338,10 @@ async function getRandomRecipesFromDB(
         return !hasExcludedFood;
       });
 
+      // --- Log after exclusion filter ---
+      console.log(`[LOG] Recipe count after exclusion filter: ${dbRecipes.length}`);
+      // --- End Log ---
+
       console.log('Post-exclusion filtering metrics:', {
         remainingRecipes: dbRecipes.length,
         excludedFoods: params.excludedFoods,
@@ -293,9 +370,76 @@ async function getRandomRecipesFromDB(
       timestamp: new Date().toISOString()
     });
 
-    // Return the data directly as fetched by Prisma
-    console.log(`Returning ${randomSelection.length} recipes to user. Recipe IDs:`, randomSelection.map(r => r.id));
-    return randomSelection; // Return Prisma's inferred type
+    // =====================================================================
+    // Map the final filtered recipes to the expected frontend structure
+    // =====================================================================
+    const transformedRecipes: TransformedRecipe[] = randomSelection.map(recipe => {
+
+      // --- START OF CHANGE ---
+      // Prioritize the direct regionOfOrigin field from the Recipe model
+      // This assumes 'regionOfOrigin' exists as a field in your Recipe schema
+      // If the field doesn't exist or is null/undefined, region will be undefined.
+      const region = recipe.regionOfOrigin || undefined;
+
+      // You might still want to derive cuisineType from the first associated cuisine
+      // or use a direct field from Recipe if that exists too.
+      const relevantCuisine = recipe.cuisines?.find(c => c.name); // Find first named cuisine
+      const cuisineType = relevantCuisine?.name || recipe.cuisines?.[0]?.name || undefined;
+      const cuisineId = relevantCuisine?.id || recipe.cuisines?.[0]?.id || undefined;
+      // --- END OF CHANGE ---
+
+
+      const author = recipe.author ? {
+        id: recipe.author.id,
+        name: recipe.author.name || undefined,
+        email: recipe.author.email || undefined,
+        image: recipe.author.image || undefined,
+      } : undefined;
+
+      const calories = recipe.nutritionFacts ?
+        Math.round(
+          (recipe.nutritionFacts.protein || 0) * 4 +
+          (recipe.nutritionFacts.carbs || 0) * 4 +
+          (recipe.nutritionFacts.fat || 0) * 9
+        ) : undefined;
+
+      // Return the transformed object matching frontend expectations
+      return {
+        id: recipe.id,
+        title: recipe.title,
+        description: recipe.description || undefined,
+        cookingTime: recipe.cookingTime || undefined,
+        servings: recipe.servings || undefined,
+        difficulty: recipe.difficulty || undefined,
+        cuisineType: cuisineType,   // Using derived value
+        regionOfOrigin: region,     // *** USING DIRECT VALUE FROM RECIPE ***
+        imageUrl: recipe.imageUrl || undefined,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt,
+        authorId: recipe.authorId,
+        author: author,
+        ingredients: recipe.ingredients.map(i => ({ ...i, notes: i.notes || null })),
+        instructions: recipe.instructions,
+        type: recipe.categories?.[0]?.name || undefined,
+        cuisineId: cuisineId,       // Using derived value
+        tags: recipe.tags?.map(t => t.name) || [],
+        isVegetarian: recipe.isVegetarian ?? false,
+        isVegan: recipe.isVegan ?? false,
+        isGlutenFree: recipe.isGlutenFree ?? false,
+        isNutFree: recipe.isNutFree ?? false,
+        isLowFodmap: recipe.isLowFodmap ?? false,
+        isLactoseFree: recipe.isLactoseFree ?? false,
+        isPescatarian: recipe.isPescatarian ?? false,
+        isFermented: recipe.isFermented ?? false,
+        calories: calories,
+        nutritionFacts: recipe.nutritionFacts || null,
+      };
+    });
+    // =====================================================================
+
+    console.log("--- [API GENERATE] Returning transformed recipes from getRandomRecipesFromDB ---");
+    return transformedRecipes;
+
   } catch (error: unknown) {
     console.error('Recipe generation error context:', {
       error: error instanceof Error ? error.message : String(error),
@@ -344,23 +488,36 @@ export async function POST(request: Request) {
       if (reqBody.dietTypes?.length > 0) {
         for (const diet of reqBody.dietTypes) {
           const normalizedDiet = diet.toLowerCase();
-          const dietField = normalizedDiet === 'fermented' ? 'isFermented' :
-            normalizedDiet === 'gluten-free' ? 'isGlutenFree' :
-              normalizedDiet === 'lactose-free' ? 'isLactoseFree' :
-                normalizedDiet === 'low-fodmap' ? 'isLowFodmap' :
-                  normalizedDiet === 'nut-free' ? 'isNutFree' :
-                    normalizedDiet === 'pescatarian' ? 'isPescatarian' :
-                      `is${diet.charAt(0).toUpperCase() + diet.slice(1)}`;
+          // Simplified field mapping (adjust if specific fields differ drastically)
+          const dietField = `is${diet.charAt(0).toUpperCase() + diet.slice(1).replace('-', '')}`;
 
           console.log(`Checking count for ${diet} using field ${dietField}`);
-          const count = await prisma.recipe.count({
-            where: {
-              [dietField]: true
-            }
-          });
-          console.log(`Total recipes for ${diet}: ${count}`);
+
+          try {
+             const count = await prisma.recipe.count({
+                where: { [dietField]: true } as Prisma.RecipeWhereInput
+              });
+              console.log(`Total recipes for ${diet}: ${count}`);
+          } catch (fieldError) {
+             console.error(`Could not query count for diet field ${dietField}:`, fieldError);
+             // Fallback or alternative logic if needed
+             if (normalizedDiet === 'gluten-free') {
+                 const count = await prisma.recipe.count({ where: { isGlutenFree: true } });
+                 console.log(`Total recipes for ${diet} (fallback query): ${count}`);
+             } else if (normalizedDiet === 'lactose-free') {
+                  const count = await prisma.recipe.count({ where: { isLactoseFree: true } });
+                 console.log(`Total recipes for ${diet} (fallback query): ${count}`);
+             } else if (normalizedDiet === 'nut-free') {
+                  const count = await prisma.recipe.count({ where: { isNutFree: true } });
+                 console.log(`Total recipes for ${diet} (fallback query): ${count}`);
+             } else if (normalizedDiet === 'low-fodmap') {
+                  const count = await prisma.recipe.count({ where: { isLowFodmap: true } });
+                 console.log(`Total recipes for ${diet} (fallback query): ${count}`);
+             } // Add other specific fallbacks if necessary
+          }
         }
       }
+
 
       return NextResponse.json(
         {
@@ -387,4 +544,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

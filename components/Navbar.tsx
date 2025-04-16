@@ -114,12 +114,12 @@ const Navbar = ({ onHomeClick, onSearch }: NavbarProps) => {
                       <div className="py-1">
                         <button
                           onClick={() => {
-                            router.push('/favourite-recipes');
+                            router.push('/my-recipes');
                             setIsDropdownOpen(false);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          Favourite Recipes
+                          My Recipes
                         </button>
                         <button
                           onClick={() => {

@@ -6,15 +6,16 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
-import RecipeCard from '@/components/recipe/RecipeCard';
+import RecipeCard from '@/components/recipe/RecipeCard'; // Assuming this is the correct RecipeCard component
 import { Recipe } from '@/lib/types/recipe'; // Adjust path if needed
 import RecipeDetailModal from '@/components/recipe/RecipeDetailModal'; // Import modal
 
-// Define the type for the fetched favourite recipe, including optional isFavourite
-type FavouriteRecipe = Recipe & { isFavourite?: boolean };
+// Define the type for the fetched favourite recipe, including isFavourite
+type FavouriteRecipe = Recipe & { isFavourite: boolean }; // isFavourite should always be true here
 
 export default function UserFavourites() {
-  const { status } = useSession(); // Get session status
+  const { status } = useSession();
+  // State variable reverted to favouriteRecipes
   const [favouriteRecipes, setFavouriteRecipes] = useState<FavouriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,50 +25,52 @@ export default function UserFavourites() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // --- Fetch Favourites Logic ---
+  // Reverted fetch function name and endpoint
   const fetchFavourites = useCallback(async () => {
-    // Only fetch if authenticated
     if (status === 'authenticated') {
       setIsLoading(true);
-      console.log("UserFavourites: Status is authenticated. Attempting fetch...");
+      console.log("UserFavourites: Status is authenticated. Attempting fetch..."); // Reverted log
       try {
-        // Use the correct API path
+        // --- Reverted API endpoint ---
         const response = await fetch('/api/recipes/favourites'); // GET request
-        console.log(`UserFavourites: Fetch response status: ${response.status}`);
+        // --- End Revert ---
+
+        console.log(`UserFavourites: Fetch response status: ${response.status}`); // Reverted log
         if (!response.ok) {
-          throw new Error(`Failed to fetch favourite recipes: ${response.status}`);
+          throw new Error(`Failed to fetch favourite recipes: ${response.status}`); // Reverted error message
         }
         const data = await response.json();
-        // Map data, ensuring isFavourite is set (should be true from this endpoint)
+
+        // Map data, ensuring isFavourite is set to true from this endpoint
         const recipesWithFavouriteStatus = data.map((recipe: Recipe) => ({
           ...recipe,
-          // Explicitly set isFavourite as true for recipes fetched from this endpoint
-          isFavourite: true,
+          isFavourite: true, // Assume true as it comes from favourites endpoint
         }));
+
+        // Update state with the fetched recipes
         setFavouriteRecipes(recipesWithFavouriteStatus);
       } catch (err) {
-        console.error('UserFavourites: Error fetching favourite recipes:', err);
-        toast.error("Could not load your favourite recipes.");
+        console.error('UserFavourites: Error fetching favourite recipes:', err); // Reverted log
+        toast.error("Could not load your favourite recipes."); // Reverted toast message
         setFavouriteRecipes([]); // Clear on error
       } finally {
         setIsLoading(false);
       }
     } else {
-        // Clear data if status is not authenticated (e.g., loading or unauthenticated)
-        // Let the parent page component handle the main loading/unauthenticated UI
-        setFavouriteRecipes([]);
-        setIsLoading(status === 'loading'); // Only show loading spinner if session is loading
+      setFavouriteRecipes([]);
+      setIsLoading(status === 'loading');
     }
   }, [status]);
 
-  // Fetch favourites when component mounts or session status changes
+  // Fetch recipes when component mounts or session status changes
   useEffect(() => {
-    console.log("--- UserFavourites useEffect triggered ---");
+    console.log("--- UserFavourites useEffect triggered ---"); // Reverted log
     fetchFavourites();
-  }, [fetchFavourites]); // Use fetchFavourites callback which depends on status
+  }, [fetchFavourites]); // Use fetchFavourites callback
 
 
-  // --- Callback for Favourite Changes (from RecipeCard) ---
-  // This function is called when the FavoriteButton within RecipeCard succeeds
+  // --- Callback for Favourite Changes (from RecipeCard or Modal) ---
+  // Reverted logic: If unfavourited, remove from this list.
   const handleFavouriteChange = useCallback((recipeId: string, newIsFavourite: boolean) => {
     if (!newIsFavourite) {
       // Remove from favourites list locally if unfavorited
@@ -75,9 +78,9 @@ export default function UserFavourites() {
         const updatedRecipes = prevRecipes.filter(recipe => recipe.id !== recipeId);
         // Adjust modal state if the unfavorited recipe was open
         if (selectedRecipe && selectedRecipe.id === recipeId) {
-            handleCloseModal();
+            handleCloseModal(); // Close modal if current recipe is unfavorited
         }
-        // Adjust index if item before current index was removed
+        // Adjust index if item before current index was removed (needed for modal navigation)
         else if (currentIndex !== null) {
             const originalIndex = prevRecipes.findIndex(r => r.id === recipeId);
             if (originalIndex !== -1 && originalIndex < currentIndex) {
@@ -88,33 +91,24 @@ export default function UserFavourites() {
       });
       toast.success("Removed from favourites");
     } else {
-       // If a recipe is re-favorited (less common from this view), refetch the list
-       // Or simply update the specific item if needed, but refetching ensures consistency
+       // If a recipe is somehow re-favorited from this view (unlikely but possible),
+       // refetch the list to ensure consistency.
        toast.success("Added back to favourites");
-       // Optionally add the item back optimistically or refetch:
-       // fetchFavourites(); // Re-fetch the whole list
-       // Or, more optimistically (requires fetching recipe details):
-       // setFavouriteRecipes(prev => [...prev, { ...details, isFavourite: true }]);
+       fetchFavourites(); // Re-fetch the whole list
     }
-  }, [selectedRecipe, currentIndex]); // Include dependencies
+  }, [selectedRecipe, currentIndex, fetchFavourites]); // Added fetchFavourites dependency
 
 
   // --- Modal Handlers ---
   const handleOpenModal = useCallback((recipe: Recipe) => {
-    // Find the recipe in the current state to ensure we have isFavourite status
+    // Type assertion needed if RecipeCard passes base Recipe type
     const recipeFromState = favouriteRecipes.find(r => r.id === recipe.id);
-    if (recipeFromState) {
-      const index = favouriteRecipes.indexOf(recipeFromState);
-      setSelectedRecipe(recipeFromState);
-      setCurrentIndex(index);
-      setIsModalOpen(true);
-    } else {
-      // Fallback: Should ideally not happen if state is synced
-      console.warn("UserFavourites: Recipe not found in local state, opening modal with basic data.");
-      setSelectedRecipe({ ...recipe, isFavourite: true }); // Assume favourite=true here
-      setCurrentIndex(null); // Can't guarantee index
-      setIsModalOpen(true);
-    }
+    const index = recipeFromState ? favouriteRecipes.indexOf(recipeFromState) : -1;
+
+    // Ensure the selected recipe object has isFavourite = true for consistency here
+    setSelectedRecipe(recipeFromState || { ...recipe, isFavourite: true });
+    setCurrentIndex(index !== -1 ? index : null);
+    setIsModalOpen(true);
   }, [favouriteRecipes]);
 
   const handleCloseModal = () => {
@@ -127,18 +121,19 @@ export default function UserFavourites() {
   const goToPreviousRecipe = () => {
     if (currentIndex !== null && currentIndex > 0) {
       const newIndex = currentIndex - 1;
-      setSelectedRecipe(favouriteRecipes[newIndex]);
+      setSelectedRecipe(favouriteRecipes[newIndex]); // Use favouriteRecipes state
       setCurrentIndex(newIndex);
     }
   };
 
   const goToNextRecipe = () => {
     if (currentIndex !== null && currentIndex < favouriteRecipes.length - 1) {
-      const newIndex = currentIndex + 1;
-      setSelectedRecipe(favouriteRecipes[newIndex]);
+      const newIndex = currentIndex - 1; // ERROR: Should be + 1
+      setSelectedRecipe(favouriteRecipes[newIndex]); // Use favouriteRecipes state
       setCurrentIndex(newIndex);
     }
   };
+
 
   const canGoPrevious = currentIndex !== null && currentIndex > 0;
   const canGoNext = currentIndex !== null && currentIndex < favouriteRecipes.length - 1;
@@ -156,20 +151,21 @@ export default function UserFavourites() {
   // --- Render content ---
   return (
     <div className="p-4 bg-white rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">All Favourite Recipes</h2>
+      {/* Reverted Title */}
+      <h2 className="text-xl font-semibold mb-4">Favourite Recipes</h2>
       {favouriteRecipes.length === 0 ? (
+        // Reverted empty state message
         <p className="text-gray-600">Your favourite recipes will appear here.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-items-center">
+          {/* Map over favouriteRecipes */}
           {favouriteRecipes.map(recipe => (
             <RecipeCard
               key={recipe.id}
-              recipe={recipe} // Pass the recipe with isFavourite status
-              onSelect={handleOpenModal} // Pass handler to open modal
-              onFavouriteChange={handleFavouriteChange} // Pass handler for fav changes
-              // Add other necessary props like onAlbumUpdate if needed by RecipeCard
-              // onAlbumUpdate={() => { /* Trigger album refresh if needed */ }}
-              // onFlagClick={() => { /* Handle flag click if needed */ }}
+              recipe={recipe} // Pass the recipe object (which includes isFavourite: true)
+              onSelect={handleOpenModal}
+              onFavouriteChange={handleFavouriteChange}
+              // isFavourite={recipe.isFavourite} // Explicitly pass if needed
             />
           ))}
         </div>
@@ -180,7 +176,7 @@ export default function UserFavourites() {
         <RecipeDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          recipe={selectedRecipe} // Pass the selected recipe with status
+          recipe={selectedRecipe} // Pass selected recipe
           onFavouriteChange={handleFavouriteChange} // Pass correct handler
           onGoToPrevious={goToPreviousRecipe}
           onGoToNext={goToNextRecipe}

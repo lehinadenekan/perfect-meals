@@ -13,6 +13,7 @@ import UserAlbums from '@/components/favourite-recipes/UserAlbums'; // Keep for 
 import UserRecipes from '@/components/my-recipes/UserRecipes';
 import AlbumDetailsView from '@/components/albums/AlbumDetailsView'; // Adjust path if needed
 import type { FetchedAlbum } from '@/components/albums/AlbumManager'; // Adjust path/source if needed
+import RecipeImporter from '@/components/my-recipes/RecipeImporter';
 
 // 1. Update the ActiveTab type
 type ActiveTab = 'favourites' | 'albums' | 'myRecipes' | 'importRecipes'; // Add 'importRecipes'
@@ -75,12 +76,11 @@ export default function FavouriteRecipesPage() { // Consider renaming this funct
         if (selectedAlbum) setSelectedAlbum(null); // Clear album selection
         return <UserRecipes onCreateClick={handleCreateRecipeClick} />;
 
-      // --- ADD THIS CASE ---
+      // --- USE THE NEW COMPONENT HERE ---
       case 'importRecipes':
-        if (selectedAlbum) setSelectedAlbum(null); // Clear album selection
-        // Replace this with your actual import component later
-        return <div className="text-center mt-4 p-4 border rounded bg-gray-50">Import Recipes functionality coming soon...</div>;
-      // --- END ADD CASE ---
+        if (selectedAlbum) setSelectedAlbum(null);
+        return <RecipeImporter />;
+      // --- END CHANGE ---
 
       default:
         // Fallback to the first tab's content
@@ -146,16 +146,14 @@ export default function FavouriteRecipesPage() { // Consider renaming this funct
                      isActive={activeTab === 'myRecipes'}
                      onClick={() => { setActiveTab('myRecipes'); setSelectedAlbum(null); }}
                  >
-                    Create
+                    My Recipes
                  </TabButton>
-                 {/* --- ADDED THIS BUTTON --- */}
                  <TabButton
                      isActive={activeTab === 'importRecipes'}
                      onClick={() => { setActiveTab('importRecipes'); setSelectedAlbum(null); }}
                  >
                     Import
                  </TabButton>
-                 {/* --- END ADDED BUTTON --- */}
              </div>
          )}
 

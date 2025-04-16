@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
 // Define local Difficulty type
 type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
@@ -664,22 +665,21 @@ export default function CreateRecipeForm() {
         <div className="flex justify-end items-center space-x-4">
            {error && <p className="text-sm text-red-600">{error}</p>}
            {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
-          <button
-            type="button"
-             onClick={() => router.back()} // Go back button
-            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-            disabled={isLoading || isUploading} // Also disable if uploading image
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="ml-3 inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50"
-            disabled={isLoading || isUploading || status !== 'authenticated'} // Also disable if uploading image
-          >
-             {isLoading && <LoadingSpinner />}
-            {isLoading ? 'Creating Recipe...' : 'Create Recipe'}
-          </button>
+          <Button type="button" variant="ghost" onClick={() => router.back()}> 
+                Cancel
+            </Button>
+            {/* Save Draft Button (New) */}
+            <Button 
+                type="button" // Prevent form submission 
+                variant="secondary" // Use secondary style
+                onClick={() => console.log('TODO: Implement Save Draft')} 
+                disabled={isLoading} // Disable if main submit is in progress
+            >
+                Save Draft
+            </Button>
+            <Button type="submit" disabled={isLoading || isUploading || status !== 'authenticated'}>
+                 {isLoading ? <LoadingSpinner /> : 'Create Recipe'}
+            </Button>
         </div>
       </div>
     </form>

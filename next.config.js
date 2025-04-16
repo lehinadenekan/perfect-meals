@@ -17,8 +17,21 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/**',
+      },
+      // --- ADDED THIS BLOCK ---
+      {
+        protocol: 'https',
+        hostname: 'ichef.bbci.co.uk',
+        pathname: '/**', // Allow any path on this hostname
+      },
+      // --- END ADDED BLOCK ---
     ],
-    // domains: ['localhost'],
+    // domains: ['localhost'], // Keep commented unless needed for older configs
     // unoptimized: true
   },
   experimental: {
@@ -27,7 +40,7 @@ const nextConfig = {
     },
   },
   // Disable webpack caching in development
-  webpack: (config, { dev }) => {
+  webpack: (config, { _dev }) => {
     config.externals = [...config.externals, 'pg-native'];
 
     // if (dev) {
@@ -45,4 +58,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;
