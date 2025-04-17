@@ -31,7 +31,6 @@ export async function GET() {
         description: true,
         imageUrl: true,
         servings: true,
-        totalTime: true,
         cookingTime: true,
         difficulty: true,
         cuisineType: true,

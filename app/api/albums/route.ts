@@ -22,10 +22,29 @@ export async function GET() {
       where: {
         userId: session.user.id
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        coverImage: true,
+        createdAt: true,
+        updatedAt: true,
+        isPublic: true,
+        userId: true,
+        _count: {
+          select: { recipes: true },
+        },
         recipes: {
-          include: {
-            recipe: true
+          orderBy: { addedAt: 'desc' },
+          take: 3,
+          select: {
+            recipe: {
+              select: {
+                id: true,
+                title: true,
+                imageUrl: true,
+              }
+            }
           }
         }
       },
@@ -34,7 +53,13 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json(albums);
+    const formattedAlbums = albums.map(album => ({
+      ...album,
+      recipeCount: album._count.recipes,
+      recipePreviews: album.recipes.map(r => r.recipe)
+    }));
+
+    return NextResponse.json(formattedAlbums);
   } catch (error) {
     console.error("Error fetching albums:", error);
     return NextResponse.json({ error: 'Failed to fetch albums' }, { status: 500 });

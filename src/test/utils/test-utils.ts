@@ -12,7 +12,6 @@ export const createMockRecipe = (overrides: Partial<Recipe> = {}): Recipe => {
     title: 'Mock Recipe Title',
     description: 'Mock description here.',
     cookingTime: 30,
-    totalTime: "45 min",
     servings: 4,
     difficulty: 'Medium',
     cuisineType: 'Mock Cuisine',

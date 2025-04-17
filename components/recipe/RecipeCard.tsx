@@ -27,9 +27,11 @@ export default function RecipeCard({
   onFavouriteChange
 }: RecipeCardProps) {
   const { data: session } = useSession();
-  console.log(`RecipeCard rendering with recipe:`, recipe);
+  // Log the recipe data being used by this card instance
+  // console.log(`RecipeCard rendering. ID: ${recipe.id}, Title: ${recipe.title}, ImageURL: ${recipe.imageUrl}`);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // --- Analyze Dietary (No changes needed here) ---
   const dietaryAnalysis = (recipe.ingredients && Array.isArray(recipe.ingredients))
     ? analyzeDietary(recipe)
     : {
@@ -47,6 +49,7 @@ export default function RecipeCard({
       isPescatarian: false,
     };
 
+  // --- Album Handlers (No changes needed here) ---
   const handleAddToAlbum = async (albumId: string) => {
     console.log(`RecipeCard: Adding recipe ${recipe.id} to album ${albumId}`);
     try {
@@ -63,7 +66,8 @@ export default function RecipeCard({
       onAlbumUpdate?.();
     } catch (error) {
       console.error("Error adding recipe to album:", error);
-      throw error;
+      // Re-throw or handle as needed, maybe toast.error
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Could not add to album'}`);
     }
   };
 
@@ -81,9 +85,10 @@ export default function RecipeCard({
       }
       console.log("Successfully created album and added recipe");
       onAlbumUpdate?.();
+      toast.success(`Album "${albumName}" created and recipe added.`);
     } catch (error) {
       console.error("Error creating album:", error);
-      throw error;
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Could not create album'}`);
     }
   };
 
@@ -95,81 +100,103 @@ export default function RecipeCard({
     }
   };
 
+  // --- Prepare image source, adding logging ---
+  const imageSrc = recipe.imageUrl || '/images/default-recipe.jpg';
+  // console.log(`RecipeCard [${recipe.title}]: Using image src: ${imageSrc}`); // Log the final src
+
   return (
     <div
       className="bg-white rounded-lg shadow-md overflow-hidden w-[240px] h-[555px] transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer"
       onClick={() => onSelect(recipe)}
     >
-      <div className="relative w-full aspect-[4/3] overflow-hidden">
+      {/* --- Simplified Image Component for Testing --- */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200"> {/* Added bg color */}
         <Image
-          src={recipe.imageUrl || '/images/default-recipe.jpg'}
+          key={imageSrc} // Add key to help React differentiate if src changes rapidly
+          src={imageSrc}
           alt={recipe.title}
-          layout="fill"
-          objectFit="cover"
-          className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
+          width={240} // Fixed width (adjust as needed)
+          height={180} // Fixed height (maintain aspect ratio, adjust as needed)
+          style={{ objectFit: 'cover' }} // Use style for objectFit with fixed dimensions
+          priority={false} // Usually false for list items, true only for LCP
+          // Removed className and onError for simplification
+          // Add a basic onError fallback if needed after testing
           onError={(e) => {
-            const t = e.target as HTMLImageElement;
-            t.onerror = null;
-            t.src = '/images/default-recipe.jpg';
-          }}
+             console.error(`Failed to load image for ${recipe.title}: ${imageSrc}`, e);
+             // Attempt to set fallback directly (might not work reliably with Next/Image)
+             // const target = e.target as HTMLImageElement;
+             // target.src = '/images/default-recipe.jpg';
+             // Consider managing a state to show a placeholder div instead
+           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+        {/* Gradient overlay can remain if desired */}
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div> */}
       </div>
 
-      <div className="p-4 flex flex-col h-[415px]">
-        <div className="h-[144px] mb-4 flex flex-col justify-between">
-          <h3 className="font-semibold text-lg break-words">
-            {recipe.title}
-          </h3>
-          <p className="text-sm text-gray-600 line-clamp-2 break-words mt-auto" title={recipe.description}>
-            {recipe.description}
-          </p>
-        </div>
+      {/* --- Rest of the card content (No changes) --- */}
+      <div className="p-4 flex flex-col h-[calc(555px-180px)]"> {/* Adjust height calculation */}
+        <div className="flex-grow flex flex-col justify-between"> {/* Adjust structure slightly */}
+          {/* Title and Description */}
+          <div className="mb-2"> {/* Reduced bottom margin */}
+            <h3 className="font-semibold text-lg break-words line-clamp-2 mb-1"> {/* Allow title to wrap */}
+              {recipe.title}
+            </h3>
+            <p className="text-sm text-gray-600 line-clamp-2 break-words" title={recipe.description}>
+              {recipe.description}
+            </p>
+          </div>
 
-        <div className="h-[80px] mb-4">
-          <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
-        </div>
+          {/* Dietary Info */}
+          <div className="mb-2"> {/* Reduced bottom margin */}
+            <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
+          </div>
 
-        <div className="h-[72px] mb-4">
-          <div className="flex flex-col space-y-2 text-sm text-gray-600">
-            <div className="flex items-center space-x-2 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              <span>Carbs: {recipe.nutritionFacts?.carbs != null ? `${recipe.nutritionFacts.carbs}g` : 'N/A'}</span>
+          {/* Nutrition */}
+          <div className="mb-2"> {/* Reduced bottom margin */}
+            <div className="flex flex-col space-y-1 text-sm text-gray-600"> {/* Reduced spacing */}
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+                <span>Carbs: {recipe.nutritionFacts?.carbs != null ? `${recipe.nutritionFacts.carbs}g` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></span>
+                <span>Protein: {recipe.nutritionFacts?.protein != null ? `${recipe.nutritionFacts.protein}g` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0"></span>
+                <span>Fat: {recipe.nutritionFacts?.fat != null ? `${recipe.nutritionFacts.fat}g` : 'N/A'}</span>
+              </div>
             </div>
+          </div>
+
+          {/* Region */}
+          <div className="mb-2"> {/* Reduced bottom margin */}
             <div className="flex items-center space-x-2 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <span>Protein: {recipe.nutritionFacts?.protein != null ? `${recipe.nutritionFacts.protein}g` : 'N/A'}</span>
-            </div>
-            <div className="flex items-center space-x-2 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-              <span>Fat: {recipe.nutritionFacts?.fat != null ? `${recipe.nutritionFacts.fat}g` : 'N/A'}</span>
+              <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+              <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'N/A'}</span>
             </div>
           </div>
         </div>
 
-        <div className="mb-4">
-          <div className="flex items-center space-x-2 whitespace-nowrap">
-            <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'N/A'}</span>
-          </div>
-        </div>
-
+        {/* Actions Footer */}
         <div
-          className="flex items-center justify-between w-full h-[24px] mt-auto pt-2 border-t border-gray-100"
-          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-between w-full h-[32px] mt-auto pt-2 border-t border-gray-100" // Adjusted height/padding
+          onClick={(e) => e.stopPropagation()} // Prevent card click when clicking actions
         >
           <div className="flex items-center whitespace-nowrap">
             <DietaryFeedback onFlagClick={onFlagClick} />
           </div>
-          <div className="flex items-center space-x-2 relative">
+          <div className="flex items-center space-x-1 relative"> {/* Reduced spacing */}
             <FavoriteButton
               recipeId={recipe.id}
               initialIsFavourite={recipe.isFavourite}
               onSuccess={onFavouriteChange}
+              // Consider adding size prop if available in FavoriteButton
             />
             <AddToAlbumButton
               onClick={handleAddToAlbumButtonClick}
               title={!session ? "Log In to manage albums" : "Add to album"}
+               // Consider adding size prop if available
             />
             {session && isDropdownOpen && (
               <AlbumSelectionDropdown

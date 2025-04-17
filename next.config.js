@@ -30,6 +30,27 @@ const nextConfig = {
         pathname: '/**', // Allow any path on this hostname
       },
       // --- END ADDED BLOCK ---
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.clerk.dev',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'oaidalleapiprodscus.blob.core.windows.net',
+        port: '',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sisijemimah.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // domains: ['localhost'], // Keep commented unless needed for older configs
     // unoptimized: true

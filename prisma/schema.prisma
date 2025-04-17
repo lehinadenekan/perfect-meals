@@ -74,7 +74,6 @@ model Recipe {
   isPescatarian      Boolean?                 @default(false)
   needsDietaryReview Boolean                  @default(false)
   imageUrl           String?
-  totalTime          String?
   regionOfOrigin     String?
   search_vector      Unsupported("tsvector")?
   calories           Int?
@@ -296,4 +295,28 @@ model RecipeToAlbum {
   @@unique([albumId, recipeId])
   @@index([albumId])
   @@index([recipeId])
+}
+
+model IngredientMapping {
+  id                 String   @id @default(cuid())
+  // The text query from recipe ingredients (e.g., "large onion", "onion", "flour")
+  // We might have multiple mappings for similar queries. Index for faster lookups.
+  ingredientQuery    String
+  // The optimized search term for Amazon Fresh (e.g., "fresh yellow onions")
+  amazonSearchTerm   String
+  // Optional: Specific Amazon Standard Identification Number (ASIN) if known
+  amazonAsin         String?
+  // How confident are we in this mapping? (Optional, e.g., for prioritizing)
+  confidenceScore    Float?
+  // When was this mapping last checked/updated? (Optional)
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Optional: Could link back to a standardized ingredient if you have that model
+  // standardIngredientId String?
+  // standardIngredient   StandardIngredient? @relation(fields: [standardIngredientId], references: [id])
+
+  @@index([amazonSearchTerm]) // Index for potential reverse lookups
+  @@index([ingredientQuery])  // Index for faster query lookups
 }

@@ -127,7 +127,6 @@ export async function POST(req: NextRequest) {
                 description: recipeData.description, // Already handles null/undefined from Zod
                 imageUrl: recipeData.imageUrl || null, // Ensure empty string becomes null
                 servings: servingsInt, // Parsed integer or undefined
-                totalTime: recipeData.totalTime, // Add this line - Pass string/null/undefined directly
                 authorId: userIdentifier,
             },
         });
