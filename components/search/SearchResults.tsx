@@ -20,7 +20,7 @@ export default function SearchResults({
   isLoading,
   onBackToPreferences,
   onGenerateMore,
-  onAlbumUpdate,
+  onAlbumUpdate: _onAlbumUpdate,
 }: SearchResultsProps) {
   const [recipes, setRecipes] = useState(initialRecipes);
 
@@ -99,7 +99,6 @@ export default function SearchResults({
                   recipe={recipe}
                   onSelect={handleOpenModal}
                   onFavouriteChange={handleFavouriteChange}
-                  onAlbumUpdate={onAlbumUpdate}
                 />
               ))}
             </div>

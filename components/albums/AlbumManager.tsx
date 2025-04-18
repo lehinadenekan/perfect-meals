@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import type { Album as PrismaAlbum, RecipeToAlbum, Recipe } from '@prisma/client';
 import Image from 'next/image';
-import AlbumCoverModal from './AlbumCoverModal'; // Import the modal component
+import AlbumCoverModal from './AlbumCoverModal';
+import EditDescriptionModal from './EditDescriptionModal';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 // Define the type for the fetched album data
 export type FetchedAlbum = PrismaAlbum & {
@@ -21,7 +23,7 @@ interface AlbumManagerProps {
   onViewAlbum?: (album: FetchedAlbum) => void;
 }
 
-export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbum }: AlbumManagerProps) {
+export default function AlbumManager({ onAlbumSelect: _onAlbumSelect, refreshTrigger, onViewAlbum }: AlbumManagerProps) {
   const [albums, setAlbums] = useState<FetchedAlbum[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
@@ -32,6 +34,11 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
   // State for Cover Modal
   const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
   const [selectedAlbumIdForCover, setSelectedAlbumIdForCover] = useState<string | null>(null);
+
+  // --- START: State for Description Modal ---
+  const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
+  const [albumForDescriptionEdit, setAlbumForDescriptionEdit] = useState<FetchedAlbum | null>(null);
+  // --- END: State for Description Modal ---
 
   useEffect(() => {
     console.log("AlbumManager: Fetching albums due to mount or refresh trigger.");
@@ -98,9 +105,32 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
     fetchAlbums(); // Refresh album list
    };
 
+   // --- START: Description Modal Handlers ---
+   const handleOpenDescriptionEditor = () => {
+     if (!selectedAlbumIdForCover) return; // Should have an album selected if cover modal was open
+     setAlbumForDescriptionEdit(albums.find(a => a.id === selectedAlbumIdForCover) || null);
+     setIsCoverModalOpen(false); // Close cover modal first
+     // Use a timeout to allow cover modal to close before opening description modal
+     setTimeout(() => {
+       setIsDescriptionModalOpen(true);
+     }, 150); // Adjust delay as needed
+   };
+
+   const handleCloseDescriptionEditor = () => {
+     setIsDescriptionModalOpen(false);
+     // Delay resetting album selection slightly
+     setTimeout(() => setSelectedAlbumIdForCover(null), 300);
+   };
+
+   const handleDescriptionUpdateSuccess = () => {
+     fetchAlbums(); // Refresh album list
+     // Optionally refetch the specific album details if needed elsewhere
+   };
+   // --- END: Description Modal Handlers ---
+
   // Conditional loading check - MUST be before the main return
   if (isLoading && albums.length === 0) { // Show initial loading only if no albums loaded yet
-    return <div className="text-center py-4">Loading albums...</div>;
+    return <div className="text-center py-4"><LoadingSpinner/></div>;
   }
 
   // Main return statement for the component JSX
@@ -190,52 +220,51 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
             {albums.map((album: FetchedAlbum, index) => (
               <div
                 key={album.id}
-                className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative flex flex-col"
               >
-                <div className="aspect-video bg-gray-200 relative">
+                <div className="aspect-video bg-gray-200 relative cursor-pointer" onClick={() => onViewAlbum?.(album)}>
                   {album.coverImage ? (
                     <Image
                       src={album.coverImage}
                       alt={album.name}
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}
+                      className="w-full h-full object-cover"
                       fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" // Adjusted sizes
-                      priority={index < 3} // Prioritize loading for first few images
-                      unoptimized={typeof album.coverImage === 'string' && album.coverImage.includes('blob.vercel-storage.com')} // Add if using Vercel blob and hitting free tier limits, ensure coverImage is string
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      priority={index < 3}
+                      unoptimized={typeof album.coverImage === 'string' && album.coverImage.includes('blob.vercel-storage.com')}
                     />
                   ) : (
                     <div
-                        className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100 cursor-pointer" // Slightly improved placeholder style
-                        onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}
+                        className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100"
                     >
                       <span className="text-sm">No cover image</span>
                     </div>
                   )}
-                  {/* --- Conditional Hover Element --- */}
-                  <div
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenCoverModal(album.id);
                     }}
-                    aria-label={"Edit album details"}
+                    aria-label={"Edit album cover or name"}
                     className="absolute top-2 right-2 z-10 p-1.5 bg-black bg-opacity-50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 cursor-pointer flex items-center justify-center"
                   >
-                    {/* Always show EDIT text */}
                     <span className="text-[10px] font-medium">EDIT</span>
-                  </div>
-                   {/* --- End Conditional Hover Element --- */}
+                  </button>
                 </div>
-                {/* Card Text Content */}
                 <div
-                    className="p-4 cursor-pointer"
-                    onClick={() => onViewAlbum ? onViewAlbum(album) : onAlbumSelect?.(album.id)}
+                    className="p-4 flex-grow flex flex-col justify-between"
+                    onClick={() => onViewAlbum?.(album)}
                 >
-                  <h3 className="font-semibold text-lg truncate" title={album.name}>{album.name}</h3>
-                  {album.description && (
-                    <p className="text-gray-600 text-sm mt-1 truncate" title={album.description}>{album.description}</p>
-                  )}
-                  <p className="text-gray-500 text-sm mt-2">
+                  <div>
+                    <h3 className="font-semibold text-lg truncate mb-1" title={album.name}>{album.name}</h3>
+                    <p
+                      className="text-gray-600 text-sm mt-1 line-clamp-2 h-[40px]"
+                      title={album.description || ''}
+                    >
+                      {album.description || <span className="italic text-gray-400">No description</span>}
+                    </p>
+                  </div>
+                  <p className="text-gray-500 text-sm mt-2 self-start">
                     {album.recipes.length} {album.recipes.length === 1 ? 'recipe' : 'recipes'}
                   </p>
                 </div>
@@ -246,7 +275,7 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
 
 
       {/* --- Render the Cover Modal --- */}
-      {isCoverModalOpen && ( // Conditionally render modal only when open
+      {isCoverModalOpen && selectedAlbumIdForCover && (
           <AlbumCoverModal
             albumId={selectedAlbumIdForCover}
             isOpen={isCoverModalOpen}
@@ -254,8 +283,22 @@ export default function AlbumManager({ onAlbumSelect, refreshTrigger, onViewAlbu
             onSuccess={handleCoverUpdateSuccess}
             currentCoverUrl={albums.find(a => a.id === selectedAlbumIdForCover)?.coverImage}
             currentAlbumName={albums.find(a => a.id === selectedAlbumIdForCover)?.name}
+            currentDescription={albums.find(a => a.id === selectedAlbumIdForCover)?.description}
+            onOpenDescriptionEditor={handleOpenDescriptionEditor}
           />
        )}
+
+       {/* --- START: Render Description Modal --- */}
+       {isDescriptionModalOpen && albumForDescriptionEdit && (
+          <EditDescriptionModal
+            isOpen={isDescriptionModalOpen}
+            onClose={handleCloseDescriptionEditor}
+            albumId={albumForDescriptionEdit.id}
+            currentDescription={albumForDescriptionEdit.description}
+            onSuccess={handleDescriptionUpdateSuccess}
+          />
+       )}
+       {/* --- END: Render Description Modal --- */}
     </div>
   );
 }

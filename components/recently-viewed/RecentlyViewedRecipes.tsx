@@ -8,15 +8,21 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { Recipe } from '@/lib/types/recipe'; // Import the actual Recipe type RecipeCard uses
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Correct import for outline icon
 
+// In components/recently-viewed/RecentlyViewedRecipes.tsx
 interface RecentlyViewedRecipesProps {
+  onRecipeSelect?: (recipe: Recipe) => void; // Make optional with ?
+  onAlbumUpdate: () => void;
   onBack: () => void;
-  onAlbumUpdate: () => void; // Pass this down to RecipeCard
 }
 
 // Define state type, including optional isFavourite
 type RecentlyViewedRecipe = Recipe & { isFavourite?: boolean };
 
-export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: RecentlyViewedRecipesProps) {
+export default function RecentlyViewedRecipes({
+  onRecipeSelect: _onRecipeSelect,
+  onAlbumUpdate: _onAlbumUpdate,
+  onBack
+}: RecentlyViewedRecipesProps) {
   // Local state to manage recipes and their favourite status within this view
   const [recipes, setRecipes] = useState<RecentlyViewedRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +72,7 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
       <div className="w-full max-w-6xl mx-auto">
         <div className="flex items-center mb-6">
           <button
-            onClick={onBack}
+            onClick={onBack} // Use the onBack prop for the button's click handler
             className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Back"
           >
@@ -87,7 +93,8 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
                   recipe={recipeData}
                   onSelect={handleOpenModal}
                   onFavouriteChange={handleFavouriteChange}
-                  onAlbumUpdate={onAlbumUpdate}
+                  // Note: onAlbumUpdate prop is not passed to RecipeCard here
+                  // as RecipeCard now handles the modal internally.
                 />
               </div>
             ))}
@@ -105,4 +112,4 @@ export default function RecentlyViewedRecipes({ onBack, onAlbumUpdate }: Recentl
       )}
     </>
   );
-} 
+}

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 // Added Check icon
-import { ImageUp, LibraryBig, Loader2, X, Check, Trash2, Pencil } from 'lucide-react';
+import { ImageUp, LibraryBig, Loader2, X, Check, Trash2, Pencil, FileText } from 'lucide-react';
 import Image from 'next/image';
 // Added missing server actions
 import { updateAlbumCoverWithUpload, getRecipeImagesForAlbum, updateAlbumCoverWithUrl, removeAlbumCover, renameAlbum } from '@/lib/actions/albumActions';
@@ -27,6 +27,8 @@ interface AlbumCoverModalProps {
     onSuccess: () => void; // To refresh album list/UI after successful update
     currentCoverUrl?: string | null; // Added prop for current cover
     currentAlbumName?: string; // Added prop for current name
+    currentDescription?: string | null;
+    onOpenDescriptionEditor: () => void;
 }
 
 export default function AlbumCoverModal({
@@ -36,6 +38,8 @@ export default function AlbumCoverModal({
     onSuccess,
     currentCoverUrl, // Destructure new prop
     currentAlbumName,
+    currentDescription,
+    onOpenDescriptionEditor,
 }: AlbumCoverModalProps) {
     const [view, setView] = useState<'initial' | 'upload' | 'select' | 'rename'>('initial');
     const [isLoading, setIsLoading] = useState(false); // General loading state for save actions
@@ -290,7 +294,7 @@ export default function AlbumCoverModal({
                          {view === 'rename' ? 'Rename Album' : 'Change Album Cover'}
                     </DialogTitle>
                     {/* Add/update descriptions */}
-                    {view === 'initial' && <DialogDescription>Manage cover image or rename this album.</DialogDescription>}
+                    {view === 'initial' && <DialogDescription>Manage cover image, description, or rename this album.</DialogDescription>}
                     {view === 'upload' && <DialogDescription>Upload a new image (JPEG, PNG, GIF, WebP, max 2MB).</DialogDescription>}
                     {view === 'select' && <DialogDescription>Select an image from recipes already in this album.</DialogDescription>}
                     {view === 'rename' && <DialogDescription>Enter the new name for the album &quot;{currentAlbumName}&quot;.</DialogDescription>}
@@ -339,6 +343,18 @@ export default function AlbumCoverModal({
                             <Pencil className="mr-2 h-4 w-4" />
                             Rename Recipe Album
                         </Button>
+                        {/* --- START: Add/Edit Description Button --- */}
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={onOpenDescriptionEditor} // Call the new prop
+                            disabled={isLoading}
+                        >
+                            <FileText className="mr-2 h-4 w-4" />
+                            {/* Dynamic text based on currentDescription */} 
+                            {currentDescription ? 'Edit Description' : 'Add Description'}
+                        </Button>
+                         {/* --- END: Add/Edit Description Button --- */}
                         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
                     </div>
                 )}

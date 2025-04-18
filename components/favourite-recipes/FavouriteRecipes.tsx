@@ -304,11 +304,10 @@ export default function FavouriteRecipes({ // Keeping original name
                 {favouriteRecipes.map(recipe => (
                   <div key={recipe.id}>
                     <RecipeCard
-                      recipe={recipe} // Pass the recipe with isFavourite status
+                      recipe={recipe}
                       onFlagClick={() => setFlaggedRecipe(recipe)}
-                      onAlbumUpdate={onAlbumUpdate}
                       onSelect={handleOpenModal}
-                      onFavouriteChange={handleFavouriteChange} // Pass the correct handler
+                      onFavouriteChange={handleFavouriteChange}
                     />
                   </div>
                 ))}

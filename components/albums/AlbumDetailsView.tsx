@@ -42,7 +42,11 @@ interface AlbumDetailsViewProps {
   onAlbumUpdate: () => void;
 }
 
-export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: AlbumDetailsViewProps) {
+export default function AlbumDetailsView({
+  album,
+  onBack,
+  onAlbumUpdate: _onAlbumUpdate,
+}: AlbumDetailsViewProps) {
   // Local state uses the frontend Recipe type, plus isFavourite
   const [recipes, setRecipes] = useState<(FrontendRecipe & { isFavourite?: boolean })[]>([]);
 
@@ -144,10 +148,9 @@ export default function AlbumDetailsView({ album, onBack, onAlbumUpdate }: Album
             {recipes.map((recipe) => (
               <div key={recipe.id} className="w-full flex justify-center">
                 <RecipeCard
-                  recipe={recipe} // Pass the full FrontendRecipe
+                  recipe={recipe}
                   onSelect={handleOpenModal}
                   onFavouriteChange={handleFavouriteChange}
-                  onAlbumUpdate={onAlbumUpdate}
                 />
               </div>
             ))}
