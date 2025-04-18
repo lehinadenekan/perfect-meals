@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
+import { useSearchParams } from 'next/navigation';
 import RecipeCard from '@/components/recipe/RecipeCard';
 import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 import { Recipe } from '@/lib/types/recipe';
@@ -75,6 +74,10 @@ function SearchResults() {
 
   return (
     <>
+      <h2 className="text-2xl font-semibold mb-6">
+        Search results for &quot;{query}&quot;
+      </h2>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {results.length > 0 ? (
           results.map((recipe) => (
@@ -103,24 +106,11 @@ function SearchResults() {
 }
 
 export default function SearchPage() {
-  const router = useRouter();
-
-  const handleHomeClick = () => {
-    router.push('/');
-  };
-
-  const handleSearch = async (term: string) => {
-    router.push(`/search?q=${encodeURIComponent(term)}`);
-  };
-
   return (
     <Suspense fallback={<div>Loading search...</div>}>
-      <div className="flex flex-col min-h-screen">
-        <Navbar onHomeClick={handleHomeClick} onSearch={handleSearch} />
-        <main className="flex-grow container mx-auto py-8">
-          <SearchResults />
-        </main>
-      </div>
+      <main className="flex-grow container mx-auto py-8">
+        <SearchResults />
+      </main>
     </Suspense>
   );
 } 

@@ -33,8 +33,8 @@ export default function RootLayout({
   const handleSearch = useCallback(async (term: string) => {
     console.log(`Search triggered for: ${term} - Placeholder`);
     // Example: Redirect to search page
-    // router.push(`/search?query=${encodeURIComponent(term)}`);
-  }, []); // <-- REMOVE 'router' from dependency array
+    router.push(`/search?query=${encodeURIComponent(term)}`);
+  }, [router]); // <-- ADD 'router' back to dependency array
 
 
   return (

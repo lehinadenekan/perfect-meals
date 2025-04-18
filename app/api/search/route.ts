@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q');
+  const query = searchParams.get('query');
 
   if (!query) {
     return NextResponse.json([]);
@@ -105,6 +105,6 @@ export async function GET(request: Request) {
     return getRelevanceScore(b) - getRelevanceScore(a);
   });
 
-  // Return top 20 results
-  return NextResponse.json(sortedRecipes.slice(0, 20));
+  // Return top 20 results, wrapped in a { recipes: ... } object
+  return NextResponse.json({ recipes: sortedRecipes.slice(0, 20) });
 } 
