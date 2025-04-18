@@ -1,7 +1,7 @@
 // components/recipe/RecipeDetailModal.tsx
 'use client';
 
-import { Fragment, useState, useEffect, useRef, useCallback } from 'react'; // Added useCallback
+import { Fragment, useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, Transition, Menu } from '@headlessui/react';
 import {
   XMarkIcon,
@@ -20,24 +20,23 @@ import {
   ChevronRightIcon,
   PencilSquareIcon,
   TrashIcon,
-  ShoppingCartIcon
+  ShoppingCartIcon,
+  ShoppingBagIcon // Ensure this is imported
 } from '@heroicons/react/24/outline';
 import { Recipe } from '@/lib/types/recipe';
-import { RecipeDetailData } from '@/lib/data/recipes'; // Remove Ingredient from here
+import { RecipeDetailData } from '@/lib/data/recipes';
 import FavoriteButton from '../shared/FavouriteButton';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import FlagSubmission from './FlagSubmission';
 import { addRecentlyViewed } from '@/lib/utils/recentlyViewed';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'react-hot-toast'; // Using react-hot-toast, replace if different
+import { toast } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
-import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner'; // Ensure this is imported
 import Image from 'next/image';
 
-// =============================================
 // Helper function to format minutes into hours/minutes string
-// =============================================
 const formatMinutes = (totalMinutes: number | null | undefined): string => {
   if (totalMinutes == null || totalMinutes <= 0) {
     return 'N/A';
@@ -52,7 +51,6 @@ const formatMinutes = (totalMinutes: number | null | undefined): string => {
   }
   return `${hours}h ${minutes}m`;
 };
-// =============================================
 
 // Combine base Recipe with isFavourite possibility for initial data
 type InitialRecipeData = Recipe & { isFavourite?: boolean };
@@ -91,16 +89,9 @@ export default function RecipeDetailModal({
   const [detailedRecipe, setDetailedRecipe] = useState<RecipeDetailData | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-
-  // --- State for selected ingredients (Using a unique identifier) ---
   const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
-  // --- State for Buy Button Loading ---
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-
-  const recipeToDisplay = detailedRecipe || initialRecipe;
-  const isAuthor = session?.user?.id === recipeToDisplay?.authorId;
-  const initialIsFavourite = initialRecipe?.isFavourite ?? false;
-
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false); // Amazon link state
+  const [isGeneratingInstacartLink, setIsGeneratingInstacartLink] = useState(false); // Instacart link state
   const [servingMultiplier, setServingMultiplier] = useState(1);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -110,6 +101,10 @@ export default function RecipeDetailModal({
   const [isPrinting, setIsPrinting] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
 
+  const recipeToDisplay = detailedRecipe || initialRecipe;
+  const isAuthor = session?.user?.id === recipeToDisplay?.authorId;
+  const initialIsFavourite = initialRecipe?.isFavourite ?? false;
+
   // Effect to fetch detailed recipe data
   useEffect(() => {
     if (isOpen && initialRecipe?.id) {
@@ -117,9 +112,9 @@ export default function RecipeDetailModal({
       setDetailError(null);
       setIsLoadingDetails(true);
       setSelectedIngredients(new Set());
-      setIsGeneratingLink(false); // Reset loading state
+      setIsGeneratingLink(false);
+      setIsGeneratingInstacartLink(false);
       console.log(`RecipeDetailModal: Fetching details for recipe ID: ${initialRecipe.id}`);
-
       const fetchDetails = async () => {
         try {
           const response = await fetch(`/api/recipes/${initialRecipe.id}`);
@@ -147,6 +142,7 @@ export default function RecipeDetailModal({
       setTimerStates({});
       setSelectedIngredients(new Set());
       setIsGeneratingLink(false);
+      setIsGeneratingInstacartLink(false);
     }
   }, [isOpen, initialRecipe?.id]);
 
@@ -179,83 +175,145 @@ export default function RecipeDetailModal({
       }
       return newSelected;
     });
-  }, []); // No dependencies needed as it only manipulates its own state
+  }, []);
 
-
-  // ===============================================
-  // --- Handler for the "Buy" button click (UPDATED) ---
-  // ===============================================
+  // Handler for the "Buy" button click (Amazon)
   const handleBuyOnAmazon = useCallback(async () => {
+    // Note: recipeToDisplay is derived from state/props, so it should be a dependency
     if (selectedIngredients.size === 0 || !recipeToDisplay?.ingredients) {
       toast.error("Please select at least one ingredient.");
       return;
     }
-
-    setIsGeneratingLink(true); // Start loading
-
-    // Map selected identifiers back to ingredient names
-    // Use the type of the ingredients array items for the map value
+    setIsGeneratingLink(true);
     const ingredientMap = new Map<string, typeof recipeToDisplay.ingredients[number]>();
     recipeToDisplay.ingredients.forEach((ing, index) => {
         const identifier = ing.id || `${ing.name}-${index}`;
         ingredientMap.set(identifier, ing);
     });
-
     const selectedIngredientNames = Array.from(selectedIngredients)
         .map(identifier => ingredientMap.get(identifier)?.name)
-        .filter((name): name is string => !!name); // Filter out any undefined names
-
+        .filter((name): name is string => !!name);
     if (selectedIngredientNames.length === 0) {
        console.error("Could not map selected items to ingredient names.");
        toast.error("Could not process selected ingredients.");
        setIsGeneratingLink(false);
        return;
     }
-
     try {
-      console.log("Sending ingredients to API:", selectedIngredientNames);
-
-      // Call the backend API endpoint
+      console.log("Sending ingredients to Amazon API:", selectedIngredientNames);
       const response = await fetch('/api/amazon/generate-link', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', },
         body: JSON.stringify({ ingredients: selectedIngredientNames }),
       });
-
-      // Check if the request was successful
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData?.error || `API Error: ${response.statusText} (${response.status})`;
-        console.error("Error response from API:", errorData);
-        throw new Error(errorMessage); // Throw error to be caught below
+        console.error("Error response from Amazon API:", errorData);
+        throw new Error(errorMessage);
       }
-
-      // Parse the successful response
       const data = await response.json();
       const amazonUrl = data?.url;
-
       if (amazonUrl && typeof amazonUrl === 'string') {
         console.log("Received Amazon URL:", amazonUrl);
-        // Open the Amazon link in a new tab
         window.open(amazonUrl, '_blank', 'noopener,noreferrer');
       } else {
-        console.error("API returned success but no valid URL:", data);
+        console.error("API returned success but no valid Amazon URL:", data);
         throw new Error("Failed to retrieve a valid Amazon link.");
       }
-
     } catch (error) {
       console.error('Error generating or opening Amazon link:', error);
       toast.error(error instanceof Error ? error.message : "An unexpected error occurred while generating the Amazon link.");
     } finally {
-      setIsGeneratingLink(false); // Stop loading indicator
+      setIsGeneratingLink(false);
     }
-  }, [selectedIngredients, recipeToDisplay?.ingredients]); // Dependencies: selectedIngredients and the source ingredients list
-  // ===============================================
-  // --- END UPDATED SECTION ---
-  // ===============================================
+  }, [selectedIngredients, recipeToDisplay]); // *** FIXED: Added recipeToDisplay dependency ***
 
+  // *** NEW: Handler for the "Shop with Instacart" button click ***
+  const handleShopWithInstacart = useCallback(async () => {
+    // Note: recipeToDisplay is derived from state/props, so it should be a dependency
+    if (selectedIngredients.size === 0 || !recipeToDisplay?.ingredients || !recipeToDisplay?.title) {
+      toast.error("Please select at least one ingredient.");
+      return;
+    }
+    setIsGeneratingInstacartLink(true);
+
+    const ingredientMap = new Map<string, typeof recipeToDisplay.ingredients[number]>();
+    recipeToDisplay.ingredients.forEach((ing, index) => {
+        const identifier = ing.id || `${ing.name}-${index}`;
+        ingredientMap.set(identifier, ing);
+    });
+
+    // Map selected identifiers to full ingredient description strings required by Instacart
+    const selectedIngredientDescriptions = Array.from(selectedIngredients)
+      .map(identifier => {
+        const ingredient = ingredientMap.get(identifier);
+        if (!ingredient) return null;
+        let desc = '';
+        // Calculate adjusted amount based on serving multiplier
+        const originalAmount = ingredient.amount;
+        const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
+        const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
+
+        if (displayAmount) desc += `${displayAmount} `;
+        if (ingredient.unit) desc += `${ingredient.unit} `;
+        desc += ingredient.name;
+        if (ingredient.notes) desc += ` (${ingredient.notes})`;
+        return desc.trim();
+      })
+      .filter((desc): desc is string => !!desc); // Filter out nulls
+
+    if (selectedIngredientDescriptions.length === 0) {
+       console.error("Could not map selected items to ingredient descriptions for Instacart.");
+       toast.error("Could not process selected ingredients for Instacart.");
+       setIsGeneratingInstacartLink(false);
+       return;
+    }
+
+    try {
+      console.log("Sending data to Instacart API:", {
+        title: recipeToDisplay.title,
+        ingredients: selectedIngredientDescriptions
+      });
+
+      // Call the backend API endpoint
+      const response = await fetch('/api/instacart/generate-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify({
+          recipe_title: recipeToDisplay.title,
+          ingredients: selectedIngredientDescriptions // Pass the array of formatted descriptions
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData?.error || `Instacart API Error: ${response.statusText} (${response.status})`;
+        console.error("Error response from Instacart API endpoint:", errorData);
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const instacartUrl = data?.instacartUrl; // Expecting this key from backend
+
+      if (instacartUrl && typeof instacartUrl === 'string') {
+        console.log("Received Instacart URL:", instacartUrl);
+        window.open(instacartUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        console.error("Backend API returned success but no valid Instacart URL:", data);
+        throw new Error("Failed to retrieve a valid Instacart link from the server.");
+      }
+    } catch (error) {
+      console.error('Error generating or opening Instacart link:', error);
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred while generating the Instacart link.");
+    } finally {
+      setIsGeneratingInstacartLink(false);
+    }
+  }, [
+      selectedIngredients,
+      recipeToDisplay, // *** FIXED: Added recipeToDisplay dependency ***
+      servingMultiplier
+  ]);
 
   // Button Handlers
   const handleInitiatePrint = () => setShowPrintOptions(true);
@@ -263,10 +321,12 @@ export default function RecipeDetailModal({
   const handleShare = async () => { if (!recipeToDisplay?.id) { toast.error('Cannot share recipe, ID is missing.'); return; } const url = `${window.location.origin}/recipes/${recipeToDisplay.id}`; try { await navigator.clipboard.writeText(url); toast.success('Recipe link copied!'); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (err) { console.error('Failed to copy URL: ', err); toast.error('Failed to copy link.'); } };
 
   // Timer Functions
+  // ... (playTimer, pauseTimer, rewindTimer, fastForwardTimer remain the same) ...
   const playTimer = (stepNumber: number) => { const description = recipeToDisplay?.instructions?.find(i => i.stepNumber === stepNumber)?.description || ''; const existingTimer = timerStates[stepNumber]; if (existingTimer?.isActive || (existingTimer && existingTimer.remainingTime <= 0)) return; if (existingTimer?.intervalId) clearInterval(existingTimer.intervalId); let durationToUse: number; let isNewTimer = false; if (existingTimer && existingTimer.remainingTime > 0 && existingTimer.initialDuration > 0) { durationToUse = existingTimer.remainingTime; } else { let initialDurationForStep: number | null | undefined = existingTimer?.initialDuration; if (!initialDurationForStep || initialDurationForStep <= 0) { initialDurationForStep = parseDuration(description); } if (!initialDurationForStep || initialDurationForStep <= 0) { setTimerStates(prev => ({ ...prev, [stepNumber]: { ...prev[stepNumber], isActive: false, intervalId: null } })); return; } durationToUse = initialDurationForStep; isNewTimer = true; } const intervalId = setInterval(() => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs || !cs.isActive || cs.intervalId !== intervalId) { if(intervalId) clearInterval(intervalId); return prev; } const nr = cs.remainingTime - 1; if (nr <= 0) { clearInterval(intervalId); return { ...prev, [stepNumber]: { ...cs, isActive: false, remainingTime: 0, intervalId: null } }; } return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); }, 1000); setTimerStates(prev => ({ ...prev, [stepNumber]: { ...(prev[stepNumber] || {}), isActive: true, remainingTime: durationToUse, intervalId: intervalId, ...(isNewTimer && { initialDuration: durationToUse }) } })); };
   const pauseTimer = (stepNumber: number) => { const timer = timerStates[stepNumber]; if (timer?.isActive && timer.intervalId) { clearInterval(timer.intervalId); setTimerStates(prev => ({ ...prev, [stepNumber]: { ...prev[stepNumber], isActive: false, intervalId: null } })); } };
   const rewindTimer = (stepNumber: number) => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs || cs.remainingTime <= 0) return prev; const nr = Math.max(0, cs.remainingTime - REWIND_AMOUNT); return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); };
   const fastForwardTimer = (stepNumber: number) => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs) return prev; const nr = cs.remainingTime + FAST_FORWARD_AMOUNT; return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); };
+
 
   // Cleanup timers on modal close
   useEffect(() => {
@@ -274,7 +334,8 @@ export default function RecipeDetailModal({
       Object.values(timerStates).forEach(timer => { if (timer.intervalId) clearInterval(timer.intervalId); });
       setTimerStates({});
     }
-  }, [isOpen]);
+    // *** FIXED: Added timerStates dependency ***
+  }, [isOpen, timerStates]);
 
   // Sort instructions
   const sortedInstructions = recipeToDisplay?.instructions?.sort((a, b) => a.stepNumber - b.stepNumber) || [];
@@ -370,8 +431,10 @@ export default function RecipeDetailModal({
                                 <div className="space-y-3">
                                   {recipeToDisplay.ingredients.map((ing, index) => {
                                     const originalAmount = ing.amount;
-                                    const adjustedAmount = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : ing.amount;
-                                    const displayAmount = typeof adjustedAmount === 'number' ? Number.isInteger(adjustedAmount) ? adjustedAmount : adjustedAmount.toFixed(1) : adjustedAmount;
+                                    // Calculate adjusted amount based on serving multiplier
+                                    const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
+                                    // Format the amount for display
+                                    const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
                                     const ingredientIdentifier = ing.id || `${ing.name}-${index}`;
                                     const checkboxId = `ingredient-checkbox-${ingredientIdentifier}`;
                                     return (
@@ -381,29 +444,52 @@ export default function RecipeDetailModal({
                                       </div>
                                     );
                                   })}
-                                  {/* Buy on Amazon Fresh Button (UPDATED) */}
+                                  {/* --- Shopping Buttons Section (MODIFIED) --- */}
                                   <div className="mt-6 border-t pt-4">
+                                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"> {/* Stack vertically on small screens, side-by-side otherwise */}
+                                      {/* Amazon Button */}
                                       <Button
                                         onClick={handleBuyOnAmazon}
-                                        disabled={selectedIngredients.size === 0 || isGeneratingLink} // Disable if no ingredients or loading
-                                        className="w-full flex items-center justify-center" // Ensure centering
+                                        disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                        className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
                                       >
                                         {isGeneratingLink ? (
                                             <>
-                                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Generating Link...
+                                                <LoadingSpinner className="h-5 w-5" />
+                                                Checking Amazon...
                                             </>
                                         ) : (
                                             <>
-                                                <ShoppingCartIcon className="h-5 w-5 mr-2"/>
-                                                Buy {selectedIngredients.size > 0 ? `(${selectedIngredients.size}) Selected` : ''} Ingredient{selectedIngredients.size !== 1 ? 's' : ''} on Amazon
+                                                <ShoppingCartIcon className="h-5 w-5"/>
+                                                Shop on Amazon
                                             </>
                                         )}
                                       </Button>
-                                      <p className="text-xs text-gray-500 mt-2 text-center px-4"> As an Amazon Associate, we earn from qualifying purchases. Clicking the button opens Amazon in a new tab. </p>
+
+                                      {/* Instacart Button (NEW) */}
+                                      <Button
+                                        variant="secondary" // Use a different style if desired
+                                        onClick={handleShopWithInstacart} // Use the new handler
+                                        disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                        className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
+                                      >
+                                        {isGeneratingInstacartLink ? (
+                                            <>
+                                                <LoadingSpinner className="h-5 w-5" />
+                                                Checking Instacart...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ShoppingBagIcon className="h-5 w-5"/> {/* Different icon */}
+                                                Shop via Instacart
+                                            </>
+                                        )}
+                                      </Button>
+                                    </div>
+                                    {/* --- Disclosure Text (UPDATED) --- */}
+                                    <p className="text-xs text-gray-500 mt-3 text-center px-4">
+                                        Shop ingredients via Amazon or Instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.
+                                    </p>
                                   </div>
                                 </div>
                               ) : (<p className="text-gray-500">No ingredients listed.</p>)}

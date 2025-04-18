@@ -75,7 +75,7 @@ Phase 3: Backend API (Optional but Recommended for Scalability/Mapping)
 
 [x] Task: Modify `/api/amazon/generate-link`: Implement fallback logic (e.g., basic keyword extraction) if no mapping exists in DB, instead of returning 404.
 
-[ ] Task: Add logging in `/api/amazon/generate-link` to record ingredient queries that lack a mapping in the DB (for later automated processing).
+[x] Task: Add logging in `/api/amazon/generate-link` to record ingredient queries that lack a mapping in the DB (for later automated processing).
 
 ========================================
 Phase 4: Testing & Refinement
@@ -126,6 +126,30 @@ Phase 5: Automated Mapping Enhancement (Using Firecrawl)
 [ ] Task: Implement DB logic in the mapping service to check for existing mappings and save/update new/better mappings in `IngredientMapping` table.
 
 [ ] Task: Implement the chosen trigger mechanism to run the mapping service.
+
+========================================
+Phase 6: Instacart Integration
+========================================
+
+[x] Task: Research Instacart Platform API/SDK options for third-party recipe/shopping list integration. Understand data requirements, authentication, and redirection flow.
+
+[x] Task: Sign up for Instacart Platform developer access if required and obtain necessary API keys/credentials.
+
+[x] Task: Securely store Instacart API keys/credentials (e.g., in `.env.local` without `NEXT_PUBLIC_` prefix if using a backend).
+
+[x] Task: Design UI changes in `RecipeDetailModal` to present both Amazon and Instacart shopping options (e.g., two buttons, selection dropdown).
+
+[x] Task: Implement data formatting logic to prepare the selected ingredient list according to Instacart API requirements (may require better parsing than just names).
+
+[ ] Task: (Optional) Create a new backend API endpoint (e.g., `/api/instacart/generate-link`) to handle communication with the Instacart API (recommended if keys or complex logic involved).
+
+[x] Task: Implement frontend logic for the "Shop via Instacart" button:
+    - Call the Instacart API (directly or via your backend endpoint).
+    - Handle the response (likely a URL).
+    - Redirect the user to the received Instacart URL.
+    - Implement loading and error states specific to the Instacart button.
+
+[ ] Task: Test the Instacart integration thoroughly.
 
 */
 

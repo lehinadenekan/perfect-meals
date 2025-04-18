@@ -1,12 +1,23 @@
-// components/shared/LoadingSpinner.tsx
+// components/shared/LoadingSpinner.tsx (Example)
 import React from 'react';
-import { Loader2 } from 'lucide-react'; // Make sure lucide-react is installed
 
-const LoadingSpinner = () => {
-  // Using fixed size classes (h-6 w-6). Adjust as needed (e.g., h-5 w-5).
-  // Added text color for visibility against different backgrounds.
+// Define props type to include className
+interface LoadingSpinnerProps {
+  className?: string; // Make className optional
+}
+
+const LoadingSpinner = ({ className = '' }: LoadingSpinnerProps) => {
+  // Example SVG spinner - replace with your actual spinner implementation
   return (
-    <Loader2 className="h-6 w-6 animate-spin text-gray-700" />
+    <svg
+      className={`animate-spin h-5 w-5 text-current ${className}`} // Apply the className here
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
   );
 };
 

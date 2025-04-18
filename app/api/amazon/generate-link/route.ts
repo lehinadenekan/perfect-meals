@@ -1,9 +1,37 @@
 // app/api/amazon/generate-link/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
+
+// Helper function to get Amazon domain based on country code
+const getAmazonDomain = (countryCode: string | undefined): string => {
+    const upperCaseCode = countryCode?.toUpperCase();
+    switch (upperCaseCode) {
+        case 'GB':
+        case 'UK': // Adding UK as common alternative
+            return 'amazon.co.uk';
+        case 'DE':
+            return 'amazon.de';
+        case 'FR':
+            return 'amazon.fr';
+        case 'ES':
+            return 'amazon.es';
+        case 'IT':
+            return 'amazon.it';
+        case 'JP':
+            return 'amazon.co.jp';
+        case 'CA':
+            return 'amazon.ca';
+        case 'AU':
+            return 'amazon.com.au';
+        // Add more countries as needed
+        case 'US':
+        default:
+            return 'amazon.com'; // Default to .com
+    }
+};
 
 // Define the expected shape of the request body using Zod for validation
 const RequestBodySchema = z.object({
@@ -15,7 +43,7 @@ interface RequestBody {
   ingredients: string[];
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   console.log("Received request for Amazon link generation");
 
   let requestBody: RequestBody;
@@ -40,6 +68,20 @@ export async function POST(request: Request) {
   }
 
   try {
+    // --- Get Geolocation or Development Default ---
+    let amazonDomain: string;
+    if (process.env.NODE_ENV === 'development') {
+        // Force UK domain during local development
+        amazonDomain = 'amazon.co.uk';
+        console.log(`Running in development, forcing domain: ${amazonDomain}`);
+    } else {
+        // Use Vercel's geo IP in production/other environments
+        const countryCode = request.geo?.country;
+        amazonDomain = getAmazonDomain(countryCode);
+        console.log(`Determined country: ${countryCode || 'N/A'}, Using domain: ${amazonDomain}`);
+    }
+    // --- End Geolocation/Default Logic ---
+
     console.log("Looking up ingredient mappings for:", ingredients);
     // Query the database to find mappings for the provided ingredients
     // We look for mappings where 'ingredientQuery' is similar to the input ingredient names
@@ -93,11 +135,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to process ingredients for search.' }, { status: 500 });
     }
 
-    // Construct the Amazon Fresh search URL using the combined terms
+    // Construct the Amazon Fresh search URL using the determined domain
     const encodedSearchQuery = finalSearchTerms.map(term => encodeURIComponent(term)).join('+');
-    const amazonUrl = `https://www.amazon.com/s?k=${encodedSearchQuery}&i=amazonfresh&tag=${amazonAssociateTag}`;
+    // Use the dynamic amazonDomain here
+    const amazonUrl = `https://${amazonDomain}/s?k=${encodedSearchQuery}&i=amazonfresh&tag=${amazonAssociateTag}`;
     // Alternatively, for a general grocery search:
-    // const amazonUrl = `https://www.amazon.com/s?k=${encodedSearchQuery}&i=grocery&tag=${amazonAssociateTag}`;
+    // const amazonUrl = `https://${amazonDomain}/s?k=${encodedSearchQuery}&i=grocery&tag=${amazonAssociateTag}`;
 
     console.log("Generated Amazon URL:", amazonUrl);
 
