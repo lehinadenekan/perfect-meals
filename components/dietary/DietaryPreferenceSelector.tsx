@@ -54,7 +54,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
     setSelectedDiets([]);
     setExcludedFoods([]);
     setSelectedRegions([]);
-  }, []); // Empty dependency array means this runs once on mount
+  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -75,7 +75,7 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
         }
       }
     }
-  }, []); // Now depends only on initialization, so setters are not needed in deps
+  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Existing handlers

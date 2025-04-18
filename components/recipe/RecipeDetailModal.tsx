@@ -35,7 +35,8 @@ import { toast } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/components/shared/LoadingSpinner'; // Ensure this is imported
 import Image from 'next/image';
-import html2canvas from 'html2canvas'; // <-- ADD THIS IMPORT
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import html2canvas from 'html2canvas'; // <-- ADD ESLint Disable Comment
 import clsx from 'clsx';
 
 // Helper function to format minutes into hours/minutes string

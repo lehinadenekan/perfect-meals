@@ -34,7 +34,7 @@ export default function RootLayout({
     console.log(`Search triggered for: ${term} - Placeholder`);
     // Example: Redirect to search page
     // router.push(`/search?query=${encodeURIComponent(term)}`);
-  }, [router]); // Add router dependency if used
+  }, []); // <-- REMOVE 'router' from dependency array
 
 
   return (
