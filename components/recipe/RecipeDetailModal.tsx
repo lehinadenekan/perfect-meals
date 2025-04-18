@@ -35,6 +35,8 @@ import { toast } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/components/shared/LoadingSpinner'; // Ensure this is imported
 import Image from 'next/image';
+import html2canvas from 'html2canvas'; // <-- ADD THIS IMPORT
+import clsx from 'clsx';
 
 // Helper function to format minutes into hours/minutes string
 const formatMinutes = (totalMinutes: number | null | undefined): string => {
@@ -100,6 +102,13 @@ export default function RecipeDetailModal({
   const [printOptions, setPrintOptions] = useState<PrintOptions>({ includeImage: true, includeNotes: true });
   const [isPrinting, setIsPrinting] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // --- Calculate dynamic classes for printing ---
+  const printRootClasses = clsx({
+    'printing-active': isPrinting,
+    'print-hide-image': isPrinting && !printOptions.includeImage,
+    'print-hide-notes': isPrinting && !printOptions.includeNotes,
+  });
 
   const recipeToDisplay = detailedRecipe || initialRecipe;
   const isAuthor = session?.user?.id === recipeToDisplay?.authorId;
@@ -356,8 +365,14 @@ export default function RecipeDetailModal({
       {/* Flag Submission Modal */}
       {showFlagModal && initialRecipe && ( <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center"> <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4"> <FlagSubmission recipe={initialRecipe} onBack={() => setShowFlagModal(false)} /> </div> </div> )}
 
-      <Transition.Root show={isOpen}>
-        <Dialog ref={modalContentRef} as="div" className={`${isPrinting ? 'printing-active' : ''} ${printOptions.includeImage ? '' : 'print-hide-image'} ${printOptions.includeNotes ? '' : 'print-hide-notes'} relative z-50`} onClose={onClose}>
+      <Transition.Root
+        show={isOpen}
+        as={Fragment}
+        // --- Apply dynamic print classes here ---
+        className={printRootClasses}
+      >
+        <Dialog as="div" className="relative z-10" initialFocus={modalContentRef} onClose={onClose}>
+          {/* Backdrop */}
           <Transition.Child
             enter="ease-out duration-300"
             enterFrom="opacity-0"
@@ -416,7 +431,15 @@ export default function RecipeDetailModal({
                                     leave="transition ease-in duration-75"
                                     leaveFrom="transform opacity-100 scale-100"
                                     leaveTo="transform opacity-0 scale-95"
-                                  > <Menu.Items className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10"><div className="px-1 py-1"> <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item> <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item> <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item> </div></Menu.Items> </Transition> </Menu>
+                                  >
+                                    <Menu.Items as="div" className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                      <div className="px-1 py-1">
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item>
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item>
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item>
+                                      </div>
+                                    </Menu.Items>
+                                  </Transition> </Menu>
                               <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share Recipe"><ShareIcon className="h-5 w-5" />{copied && <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">Copied!</span>}</button>
                               <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
                               {isAuthor && (<> <button onClick={() => { /* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit Recipe"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => { /* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete Recipe"><TrashIcon className="h-5 w-5" /></button> </>)}
@@ -504,7 +527,35 @@ export default function RecipeDetailModal({
                                     const hasInitialDuration = timerState?.initialDuration && timerState.initialDuration > 0;
                                     const canEverHaveTimer = !!(hasInitialDuration || parseDuration(instruction.description) !== null);
                                     const isFinished = Boolean(hasInitialDuration && timerState?.remainingTime <= 0);
-                                    return ( <li key={instruction.id} className="text-gray-700 group"> <div className="flex items-start"> <span className="mr-2 font-medium text-gray-500">{instruction.stepNumber}.</span> <div className="flex-1"> <span>{instruction.description}</span> {canEverHaveTimer && ( <div className="flex items-center gap-1 mt-1 ml-4 text-sm text-gray-500"> <button onClick={() => rewindTimer(instruction.stepNumber)} disabled={!timerState || timerState.remainingTime <= 0} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Rewind"><BackwardIcon className="h-4 w-4" /></button> {timerState?.isActive ? ( <button onClick={() => pauseTimer(instruction.stepNumber)} className="p-0.5 rounded-full text-blue-600 hover:bg-blue-100" aria-label="Pause"><PauseIcon className="h-4 w-4" /></button> ) : ( <button onClick={() => playTimer(instruction.stepNumber)} disabled={!canEverHaveTimer || isFinished} className="p-0.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50" aria-label="Play"><PlayIcon className="h-4 w-4" /></button> )} <button onClick={() => fastForwardTimer(instruction.stepNumber)} disabled={!timerState} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Fast forward"><ForwardIcon className="h-4 w-4" /></button> <div className="font-mono min-w-[55px] text-xs text-center tabular-nums"> {isFinished ? ( <span className="text-red-500 font-medium">Done!</span> ) : timerState ? ( <span className={timerState.isActive ? 'text-blue-600 font-medium' : 'text-gray-600'}>{formatTime(timerState.remainingTime)}</span> ) : ( <span className="text-gray-400">--:--</span> )} </div> </div> )} </div> </div> </li> );
+                                    return (
+                                      <li key={instruction.id} className="text-gray-700 group">
+                                        <div className="flex items-start">
+                                          <div className="flex-1">
+                                            <span>{instruction.description}</span>
+                                            {canEverHaveTimer && (
+                                              <div className="flex items-center gap-1 mt-1 ml-4 text-sm text-gray-500">
+                                                <button onClick={() => rewindTimer(instruction.stepNumber)} disabled={!timerState || timerState.remainingTime <= 0} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Rewind"><BackwardIcon className="h-4 w-4" /></button>
+                                                {timerState?.isActive ? (
+                                                  <button onClick={() => pauseTimer(instruction.stepNumber)} className="p-0.5 rounded-full text-blue-600 hover:bg-blue-100" aria-label="Pause"><PauseIcon className="h-4 w-4" /></button>
+                                                ) : (
+                                                  <button onClick={() => playTimer(instruction.stepNumber)} disabled={!canEverHaveTimer || isFinished} className="p-0.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50" aria-label="Play"><PlayIcon className="h-4 w-4" /></button>
+                                                )}
+                                                <button onClick={() => fastForwardTimer(instruction.stepNumber)} disabled={!timerState} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Fast forward"><ForwardIcon className="h-4 w-4" /></button>
+                                                <div className="font-mono min-w-[55px] text-xs text-center tabular-nums">
+                                                  {isFinished ? (
+                                                    <span className="text-red-500 font-medium">Done!</span>
+                                                  ) : timerState ? (
+                                                    <span className={timerState.isActive ? 'text-blue-600 font-medium' : 'text-gray-600'}>{formatTime(timerState.remainingTime)}</span>
+                                                  ) : (
+                                                    <span className="text-gray-400">--:--</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </li>
+                                    );
                                   })}
                                 </ol>
                               ) : (<p className="text-gray-500">No instructions provided.</p>)}
@@ -528,7 +579,15 @@ export default function RecipeDetailModal({
                                   leave="transition ease-in duration-75"
                                   leaveFrom="transform opacity-100 scale-100"
                                   leaveTo="transform opacity-0 scale-95"
-                                > <Menu.Items className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10"><div className="px-1 py-1"> <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item> <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item> <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item> </div></Menu.Items> </Transition> </Menu>
+                                >
+                                  <Menu.Items as="div" className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                    <div className="px-1 py-1">
+                                      <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item>
+                                      <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item>
+                                      <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item>
+                                    </div>
+                                  </Menu.Items>
+                                </Transition> </Menu>
                             <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share"><ShareIcon className="h-5 w-5"/></button>
                             <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5"/></button>
                             {isAuthor && (<> <button onClick={() => {/* Edit */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit"><PencilSquareIcon className="h-5 w-5"/></button> <button onClick={() => {/* Delete */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete"><TrashIcon className="h-5 w-5"/></button> </>)}

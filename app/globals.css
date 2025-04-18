@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Keep existing :root, .dark, base layer styles --- */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -69,7 +70,7 @@
   }
 }
 
-/* Custom recipe card animations and styling */
+/* --- Keep existing animations, scrollbar styles --- */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -86,7 +87,6 @@
   animation: fadeIn 0.5s ease-out;
 }
 
-/* Thin scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
@@ -110,120 +110,146 @@
   background-color: rgba(156, 163, 175, 0.8);
 }
 
-/* Print specific styles */
+
+/* --- Print specific styles (Attempt 4 - Focusing on Overflow/Height/Position) --- */
 @media print {
-
-  /* Hide elements specifically marked for no-print */
-  .recipe-modal-print-hide {
-    display: none !important;
-    /* Important to override inline styles or utility classes */
-  }
-
-  /* Conditionally hide image/notes based on parent class set by state */
-  .print-hide-image .recipe-image-print-container {
-    display: none !important;
-  }
-
-  .print-hide-notes .recipe-notes-print-container {
-    display: none !important;
-  }
-
-  /* General page reset for printing */
-  body {
-    margin: 1in !important;
-    /* Add standard margins */
-    font-size: 12pt !important;
-    /* Ensure readable base font size */
-    color: #000 !important;
-    /* Ensure black text */
-    background-color: #fff !important;
-    /* Ensure white background */
-  }
-
-  /* Reset modal-specific styles for cleaner printing */
-  .printing-active dialog,
-  .printing-active [role="dialog"],
-  .printing-active [role="dialog"]>* {
-    /* Target dialog and its direct children */
+  /* Force reset on root elements */
+  html,
+  body,
+  body > div /* Target potential Next.js root div */
+   {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     position: static !important;
-    display: block !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Force the modal root (.printing-active) and its direct children to be visible */
+  /* and reset their styles to allow flow */
+  .printing-active,
+  .printing-active > div /* Target potential wrappers added by libraries like HeadlessUI */
+  {
+    visibility: visible !important;
+    position: static !important;
     width: auto !important;
     height: auto !important;
-    max-width: none !important;
     max-height: none !important;
+    overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
-    background: none !important;
     box-shadow: none !important;
+    background: none !important;
+  }
+
+  /* Show only the specific recipe modal panel (#recipe-modal-content) and its contents */
+  #recipe-modal-content,
+  #recipe-modal-content * {
+    visibility: visible !important; /* Ensure these are visible over the body * rule */
+  }
+
+  /* Style the recipe panel itself for printing */
+  #recipe-modal-content {
+    position: static !important; /* Change from absolute to static */
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important; /* Use full page width */
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
-  }
-
-  /* Specifically reset the modal panel/content area */
-  .printing-active [class*="DialogPanel"],
-  /* Headless UI Panel */
-  .printing-active [class*="DialogContent"] {
-    /* Radix/Shadcn Content */
-    padding: 0 !important;
-    border: none !important;
     box-shadow: none !important;
-    background: none !important;
+    border: none !important;
+    margin: 0 !important; /* Remove margins from the content panel itself */
+    padding: 0.75in !important; /* Apply print margins here */
+    border-radius: 0 !important;
+    background-color: white !important;
+    color: black !important;
+    font-size: 11pt !important;
   }
 
-  /* Reset backdrop */
-  .printing-active [class*="DialogOverlay"],
-  .printing-active [class*="DialogBackdrop"] {
+  /* --- Keep the rest of the print styles for hiding internal elements, --- */
+  /* --- image/notes options, and pagination improvements as they were. --- */
+
+  /* Hide specific UI elements within the modal that shouldn't print */
+  #recipe-modal-content .recipe-modal-print-hide,
+  #recipe-modal-content .pdf-hide,
+  #recipe-modal-content .absolute.right-0.top-0 > button, /* Close button */
+  #recipe-modal-content button[aria-label="Previous recipe"],
+  #recipe-modal-content button[aria-label="Next recipe"] {
     display: none !important;
   }
 
-  /* Improve readability of text inside the printed modal */
-  .printing-active dialog h1,
-  .printing-active dialog h2,
-  .printing-active dialog h3,
-  .printing-active dialog h4,
-  .printing-active dialog p,
-  .printing-active dialog span,
-  .printing-active dialog li {
-    color: #000 !important;
-    background: none !important;
+  /* Style the image container for print */
+  #recipe-modal-image-container {
+    width: 100%;
+    max-width: 6in; /* Limit image width */
+    height: auto;
+    aspect-ratio: auto;
+    margin-bottom: 0.5in;
+    border-radius: 0 !important; /* Remove rounding for print */
+    page-break-after: avoid; /* Try to keep image with content below */
   }
 
-  /* Add a simple header/footer */
+  /* Handle print options */
+  .printing-active.print-hide-image #recipe-modal-image-container {
+    display: none !important;
+  }
+
+  .printing-active.print-hide-notes .recipe-modal-notes {
+    display: none !important;
+  }
+
+  /* Improve readability and pagination */
+  #recipe-modal-content h1,
+  #recipe-modal-content h2,
+  #recipe-modal-content h3 {
+    page-break-after: avoid; /* Keep headers with content below */
+    margin-top: 0.3in;
+  }
+
+  #recipe-modal-content ul,
+  #recipe-modal-content ol,
+  #recipe-modal-content li,
+  #recipe-modal-content .space-y-3 > div, /* Ingredient item containers */
+  #recipe-modal-content .space-y-4 > li /* Instruction item containers */
+   {
+    page-break-inside: avoid; /* Avoid breaking lists/items across pages */
+  }
+
+  #recipe-modal-content a {
+    color: #555 !important; /* Make links less prominent */
+    text-decoration: none;
+  }
+
+  /* Optionally show URL for links in print */
+  #recipe-modal-content a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #555;
+  }
+
+  /* Ensure background/text colors are forced for readability */
+  #recipe-modal-content,
+  #recipe-modal-content * {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Add @page rule for margins */
   @page {
-    margin-top: 1.5in;
-    /* Space for header */
-    margin-bottom: 1.5in;
-    /* Space for footer */
-
-    @top-center {
-      content: "Recipe from PerfectMeals";
-      /* Replace with your actual site name */
-      font-size: 10pt;
-      color: #666;
-      padding-bottom: 0.5in;
-    }
-
-    @bottom-center {
-      content: "Page " counter(page);
-      font-size: 10pt;
-      color: #666;
-      padding-top: 0.5in;
-    }
-  }
-
-  /* Prevent page breaks inside critical sections if possible */
-  .printing-active h3,
-  .printing-active h4 {
-    page-break-after: avoid;
-  }
-
-  .printing-active ul,
-  .printing-active ol {
-    page-break-inside: avoid;
+    margin: 0.75in; /* Define overall page margins */
   }
 }
 
-/* PDF Export Styling */
-.pdf-exporting .pdf-hide {
-  display: none !important;
-}
+/* (Keep non-print styles below) */
