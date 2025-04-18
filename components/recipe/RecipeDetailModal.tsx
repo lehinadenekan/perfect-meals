@@ -366,65 +366,213 @@ export default function RecipeDetailModal({
       {/* Flag Submission Modal */}
       {showFlagModal && initialRecipe && ( <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center"> <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4"> <FlagSubmission recipe={initialRecipe} onBack={() => setShowFlagModal(false)} /> </div> </div> )}
 
-      <Transition.Root
-        show={isOpen}
-        as={Fragment}
-        // --- Apply dynamic print classes here ---
-        className={printRootClasses}
-      >
-        <Dialog as="div" className="relative z-10" initialFocus={modalContentRef} onClose={onClose}>
-          {/* Backdrop */}
-          <Transition.Child
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-          </Transition.Child>
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
-              {/* Navigation Buttons */}
-              {canGoPrevious && onGoToPrevious && (<button onClick={onGoToPrevious} className="fixed left-2 sm:left-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/70 p-2 text-gray-700 hover:bg-white shadow-md transition disabled:opacity-30" aria-label="Previous recipe" disabled={!canGoPrevious}><ChevronLeftIcon className="h-6 w-6 sm:h-8 sm:w-8" /></button>)}
-              {canGoNext && onGoToNext && (<button onClick={onGoToNext} className="fixed right-2 sm:right-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/70 p-2 text-gray-700 hover:bg-white shadow-md transition disabled:opacity-30" aria-label="Next recipe" disabled={!canGoNext}><ChevronRightIcon className="h-6 w-6 sm:h-8 sm:w-8" /></button>)}
+      {/* Wrap Transition.Root in a div to hold print classes */}
+      <div className={printRootClasses}>
+        <Transition.Root
+          show={isOpen}
+          as={Fragment} // Keep as Fragment if needed, or remove if wrapper div is enough
+        >
+          <Dialog as="div" className="relative z-10" initialFocus={modalContentRef} onClose={onClose}>
+            {/* Backdrop */}
+            <Transition.Child
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </Transition.Child>
+            <div className="fixed inset-0 z-10 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4">
+                {/* Navigation Buttons */}
+                {canGoPrevious && onGoToPrevious && (<button onClick={onGoToPrevious} className="fixed left-2 sm:left-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/70 p-2 text-gray-700 hover:bg-white shadow-md transition disabled:opacity-30" aria-label="Previous recipe" disabled={!canGoPrevious}><ChevronLeftIcon className="h-6 w-6 sm:h-8 sm:w-8" /></button>)}
+                {canGoNext && onGoToNext && (<button onClick={onGoToNext} className="fixed right-2 sm:right-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/70 p-2 text-gray-700 hover:bg-white shadow-md transition disabled:opacity-30" aria-label="Next recipe" disabled={!canGoNext}><ChevronRightIcon className="h-6 w-6 sm:h-8 sm:w-8" /></button>)}
 
-              <Transition.Child
-                as="div"
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              >
-                <Dialog.Panel id="recipe-modal-content" className="relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
-                  <div className="absolute right-0 top-0 pr-4 pt-4 z-10"><button type="button" className="rounded-md bg-white text-gray-400 hover:text-gray-500" onClick={onClose}><XMarkIcon className="h-6 w-6" aria-hidden="true" /></button></div>
+                <Transition.Child
+                  as="div"
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                  enterTo="opacity-100 translate-y-0 sm:scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                  leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                >
+                  <Dialog.Panel id="recipe-modal-content" className="relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+                    <div className="absolute right-0 top-0 pr-4 pt-4 z-10"><button type="button" className="rounded-md bg-white text-gray-400 hover:text-gray-500" onClick={onClose}><XMarkIcon className="h-6 w-6" aria-hidden="true" /></button></div>
 
-                   {/* Image Section */}
-                   <div id="recipe-modal-image-container" className="relative w-full aspect-video min-h-[200px] print-image-container overflow-hidden rounded-t-lg bg-gray-200">
-                    {(recipeToDisplay?.imageUrl) ? ( <Image key={recipeToDisplay.id || recipeToDisplay.imageUrl} src={recipeToDisplay.imageUrl} alt={recipeToDisplay.title ?? 'Recipe Image'} fill style={{ objectFit: 'cover' }} priority onError={(e) => { console.error(`Image Error: Failed loading image for "${recipeToDisplay.title}". Src: ${recipeToDisplay.imageUrl}`, e); const target = e.target as HTMLImageElement; target.style.opacity = '0'; target.style.pointerEvents = 'none'; }}/> ) : ( <div className="absolute inset-0 bg-gray-300 flex items-center justify-center rounded-t-lg"><span className="text-gray-500">No Image</span></div> )}
-                    {recipeToDisplay?.imageUrl && ( <h2 className="absolute bottom-4 left-4 text-2xl font-bold text-white drop-shadow-md pointer-events-none">{recipeToDisplay.title ?? 'Loading...'}</h2> )}
-                  </div>
+                     {/* Image Section */}
+                     <div id="recipe-modal-image-container" className="relative w-full aspect-video min-h-[200px] print-image-container overflow-hidden rounded-t-lg bg-gray-200">
+                      {(recipeToDisplay?.imageUrl) ? ( <Image key={recipeToDisplay.id || recipeToDisplay.imageUrl} src={recipeToDisplay.imageUrl} alt={recipeToDisplay.title ?? 'Recipe Image'} fill style={{ objectFit: 'cover' }} priority onError={(e) => { console.error(`Image Error: Failed loading image for "${recipeToDisplay.title}". Src: ${recipeToDisplay.imageUrl}`, e); const target = e.target as HTMLImageElement; target.style.opacity = '0'; target.style.pointerEvents = 'none'; }}/> ) : ( <div className="absolute inset-0 bg-gray-300 flex items-center justify-center rounded-t-lg"><span className="text-gray-500">No Image</span></div> )}
+                      {recipeToDisplay?.imageUrl && ( <h2 className="absolute bottom-4 left-4 text-2xl font-bold text-white drop-shadow-md pointer-events-none">{recipeToDisplay.title ?? 'Loading...'}</h2> )}
+                    </div>
 
-                  {/* Content Wrapper */}
-                  <div id="recipe-modal-text-content">
-                    {isLoadingDetails && ( <div className="p-6 text-center"><LoadingSpinner /><p className="mt-2 text-gray-500">Loading details...</p></div> )}
-                    {detailError && !isLoadingDetails && ( <div className="p-6 text-center text-red-600 bg-red-50 rounded-b-lg"> Error loading details: {detailError}</div> )}
+                    {/* Content Wrapper */}
+                    <div id="recipe-modal-text-content">
+                      {isLoadingDetails && ( <div className="p-6 text-center"><LoadingSpinner /><p className="mt-2 text-gray-500">Loading details...</p></div> )}
+                      {detailError && !isLoadingDetails && ( <div className="p-6 text-center text-red-600 bg-red-50 rounded-b-lg"> Error loading details: {detailError}</div> )}
 
-                    {!isLoadingDetails && !detailError && recipeToDisplay && (
-                        <div className="p-6">
-                          {/* Meta Info and Actions */}
-                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <div className="flex items-center"><ClockIcon className="h-5 w-5 mr-1.5"/><span>{formatMinutes(recipeToDisplay.cookingTime)}</span></div>
-                              <div className="flex items-center"> <button onClick={() => setServingMultiplier(prev => Math.max(0.1, prev - (1 / (recipeToDisplay.servings || 1))))} disabled={!recipeToDisplay.servings || (recipeToDisplay.servings * servingMultiplier <= 1)} className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 pdf-hide" aria-label="Decrease servings"><span className="text-xs">-</span></button> <UserIcon className="h-5 w-5 mx-1"/><span >{recipeToDisplay.servings ? Math.round(recipeToDisplay.servings * servingMultiplier) : 'N/A'} servings</span> <button onClick={() => setServingMultiplier(prev => prev + (1 / (recipeToDisplay.servings || 1)))} disabled={!recipeToDisplay.servings} className="p-1 rounded-full hover:bg-gray-100 pdf-hide" aria-label="Increase servings"><span className="text-xs">+</span></button> </div>
-                              <div className="flex items-center"><BeakerIcon className="h-5 w-5 mr-1.5"/><span>{recipeToDisplay.difficulty ?? 'N/A'}</span></div>
+                      {!isLoadingDetails && !detailError && recipeToDisplay && (
+                          <div className="p-6">
+                            {/* Meta Info and Actions */}
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
+                              <div className="flex items-center space-x-4 text-sm text-gray-500">
+                                <div className="flex items-center"><ClockIcon className="h-5 w-5 mr-1.5"/><span>{formatMinutes(recipeToDisplay.cookingTime)}</span></div>
+                                <div className="flex items-center"> <button onClick={() => setServingMultiplier(prev => Math.max(0.1, prev - (1 / (recipeToDisplay.servings || 1))))} disabled={!recipeToDisplay.servings || (recipeToDisplay.servings * servingMultiplier <= 1)} className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 pdf-hide" aria-label="Decrease servings"><span className="text-xs">-</span></button> <UserIcon className="h-5 w-5 mx-1"/><span >{recipeToDisplay.servings ? Math.round(recipeToDisplay.servings * servingMultiplier) : 'N/A'} servings</span> <button onClick={() => setServingMultiplier(prev => prev + (1 / (recipeToDisplay.servings || 1)))} disabled={!recipeToDisplay.servings} className="p-1 rounded-full hover:bg-gray-100 pdf-hide" aria-label="Increase servings"><span className="text-xs">+</span></button> </div>
+                                <div className="flex items-center"><BeakerIcon className="h-5 w-5 mr-1.5"/><span>{recipeToDisplay.difficulty ?? 'N/A'}</span></div>
+                              </div>
+                              <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
+                                {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite} />}
+                                <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print Recipe"><PrinterIcon className="h-5 w-5" /></button>
+                                <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5"/></Menu.Button></div> <Transition
+                                      enter="transition ease-out duration-100"
+                                      enterFrom="transform opacity-0 scale-95"
+                                      enterTo="transform opacity-100 scale-100"
+                                      leave="transition ease-in duration-75"
+                                      leaveFrom="transform opacity-100 scale-100"
+                                      leaveTo="transform opacity-0 scale-95"
+                                    >
+                                      <Menu.Items as="div" className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                        <div className="px-1 py-1">
+                                          <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item>
+                                          <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item>
+                                          <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item>
+                                        </div>
+                                      </Menu.Items>
+                                    </Transition> </Menu>
+                                <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share Recipe"><ShareIcon className="h-5 w-5" />{copied && <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">Copied!</span>}</button>
+                                <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
+                                {isAuthor && (<> <button onClick={() => { /* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit Recipe"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => { /* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete Recipe"><TrashIcon className="h-5 w-5" /></button> </>)}
+                              </div>
                             </div>
-                            <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
-                              {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite} />}
-                              <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print Recipe"><PrinterIcon className="h-5 w-5" /></button>
+                            <p className="text-gray-600 mb-6">{recipeToDisplay.description ?? 'No description available.'}</p>
+                            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                              {/* Ingredients */}
+                              <div>
+                                <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
+                                {recipeToDisplay.ingredients && recipeToDisplay.ingredients.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {recipeToDisplay.ingredients.map((ing, index) => {
+                                      const originalAmount = ing.amount;
+                                      // Calculate adjusted amount based on serving multiplier
+                                      const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
+                                      // Format the amount for display
+                                      const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
+                                      const ingredientIdentifier = ing.id || `${ing.name}-${index}`;
+                                      const checkboxId = `ingredient-checkbox-${ingredientIdentifier}`;
+                                      return (
+                                        <div key={ingredientIdentifier} className="flex items-start space-x-3">
+                                          <Checkbox id={checkboxId} checked={selectedIngredients.has(ingredientIdentifier)} onCheckedChange={() => handleIngredientToggle(ingredientIdentifier)} className="mt-1" aria-labelledby={`${checkboxId}-label`} />
+                                          <label htmlFor={checkboxId} id={`${checkboxId}-label`} className="flex-1 text-gray-700 cursor-pointer"> <span className="font-medium">{displayAmount}</span> <span className="ml-1">{ing.unit || ''}</span> <span className="ml-2">{ing.name}</span> {ing.notes && <span className="text-gray-500 text-sm ml-1 italic">({ing.notes})</span>} </label>
+                                        </div>
+                                      );
+                                    })}
+                                    {/* --- Shopping Buttons Section (MODIFIED) --- */}
+                                    <div className="mt-6 border-t pt-4">
+                                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"> {/* Stack vertically on small screens, side-by-side otherwise */}
+                                        {/* Amazon Button */}
+                                        <Button
+                                          onClick={handleBuyOnAmazon}
+                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                          className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
+                                        >
+                                          {isGeneratingLink ? (
+                                              <>
+                                                  <LoadingSpinner className="h-5 w-5" />
+                                                  Checking Amazon...
+                                              </>
+                                          ) : (
+                                              <>
+                                                  <ShoppingCartIcon className="h-5 w-5"/>
+                                                  Shop on Amazon
+                                              </>
+                                          )}
+                                        </Button>
+
+                                        {/* Instacart Button (NEW) */}
+                                        <Button
+                                          variant="secondary" // Use a different style if desired
+                                          onClick={handleShopWithInstacart} // Use the new handler
+                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                          className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
+                                        >
+                                          {isGeneratingInstacartLink ? (
+                                              <>
+                                                  <LoadingSpinner className="h-5 w-5" />
+                                                  Checking Instacart...
+                                              </>
+                                          ) : (
+                                              <>
+                                                  <ShoppingBagIcon className="h-5 w-5"/> {/* Different icon */}
+                                                  Shop via Instacart
+                                              </>
+                                          )}
+                                        </Button>
+                                      </div>
+                                      {/* --- Disclosure Text (UPDATED) --- */}
+                                      <p className="text-xs text-gray-500 mt-3 text-center px-4">
+                                          Shop ingredients via Amazon or Instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : (<p className="text-gray-500">No ingredients listed.</p>)}
+                              </div>
+                              {/* Instructions */}
+                              <div>
+                                <h3 className="text-lg font-semibold mb-4">Instructions</h3>
+                                {sortedInstructions.length > 0 ? (
+                                  <ol className="space-y-4 list-decimal list-inside">
+                                    {sortedInstructions.map((instruction) => {
+                                      const timerState = timerStates[instruction.stepNumber];
+                                      const hasInitialDuration = timerState?.initialDuration && timerState.initialDuration > 0;
+                                      const canEverHaveTimer = !!(hasInitialDuration || parseDuration(instruction.description) !== null);
+                                      const isFinished = Boolean(hasInitialDuration && timerState?.remainingTime <= 0);
+                                      return (
+                                        <li key={instruction.id} className="text-gray-700 group">
+                                          <div className="flex items-start">
+                                            <div className="flex-1">
+                                              <span>{instruction.description}</span>
+                                              {canEverHaveTimer && (
+                                                <div className="flex items-center gap-1 mt-1 ml-4 text-sm text-gray-500">
+                                                  <button onClick={() => rewindTimer(instruction.stepNumber)} disabled={!timerState || timerState.remainingTime <= 0} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Rewind"><BackwardIcon className="h-4 w-4" /></button>
+                                                  {timerState?.isActive ? (
+                                                    <button onClick={() => pauseTimer(instruction.stepNumber)} className="p-0.5 rounded-full text-blue-600 hover:bg-blue-100" aria-label="Pause"><PauseIcon className="h-4 w-4" /></button>
+                                                  ) : (
+                                                    <button onClick={() => playTimer(instruction.stepNumber)} disabled={!canEverHaveTimer || isFinished} className="p-0.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50" aria-label="Play"><PlayIcon className="h-4 w-4" /></button>
+                                                  )}
+                                                  <button onClick={() => fastForwardTimer(instruction.stepNumber)} disabled={!timerState} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Fast forward"><ForwardIcon className="h-4 w-4" /></button>
+                                                  <div className="font-mono min-w-[55px] text-xs text-center tabular-nums">
+                                                    {isFinished ? (
+                                                      <span className="text-red-500 font-medium">Done!</span>
+                                                    ) : timerState ? (
+                                                      <span className={timerState.isActive ? 'text-blue-600 font-medium' : 'text-gray-600'}>{formatTime(timerState.remainingTime)}</span>
+                                                    ) : (
+                                                      <span className="text-gray-400">--:--</span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </li>
+                                      );
+                                    })}
+                                  </ol>
+                                ) : (<p className="text-gray-500">No instructions provided.</p>)}
+                              </div>
+                            </div>
+                            {/* Nutrition */}
+                            <div className="mt-8">
+                              <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4"> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Calories</div><div className="text-xl font-semibold">{recipeToDisplay.calories ?? 'N/A'}</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Protein</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.protein?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Carbs</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.carbs?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Fat</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.fat?.toFixed(1) ?? 'N/A'}g</div></div> </div>
+                            </div>
+                            {/* Notes */}
+                            {recipeToDisplay.notes && recipeToDisplay.notes.length > 0 && ( <div className="mt-8 recipe-modal-notes"> <h3 className="text-lg font-semibold mb-4">Notes</h3> <div className="bg-blue-50 p-4 rounded-lg"><ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">{recipeToDisplay.notes.map((note, index) => (<li key={index}>{note}</li>))}</ul></div> </div> )}
+                            {/* Mobile Action Buttons */}
+                            <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
+                               {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite}/>}
+                              <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print"><PrinterIcon className="h-5 w-5"/></button>
                               <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5"/></Menu.Button></div> <Transition
                                     enter="transition ease-out duration-100"
                                     enterFrom="transform opacity-0 scale-95"
@@ -433,175 +581,28 @@ export default function RecipeDetailModal({
                                     leaveFrom="transform opacity-100 scale-100"
                                     leaveTo="transform opacity-0 scale-95"
                                   >
-                                    <Menu.Items as="div" className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                    <Menu.Items as="div" className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                                       <div className="px-1 py-1">
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item>
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item>
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item>
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item>
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item>
+                                        <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item>
                                       </div>
                                     </Menu.Items>
                                   </Transition> </Menu>
-                              <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share Recipe"><ShareIcon className="h-5 w-5" />{copied && <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">Copied!</span>}</button>
-                              <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
-                              {isAuthor && (<> <button onClick={() => { /* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit Recipe"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => { /* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete Recipe"><TrashIcon className="h-5 w-5" /></button> </>)}
+                              <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share"><ShareIcon className="h-5 w-5"/></button>
+                              <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5"/></button>
+                              {isAuthor && (<> <button onClick={() => {/* Edit */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit"><PencilSquareIcon className="h-5 w-5"/></button> <button onClick={() => {/* Delete */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete"><TrashIcon className="h-5 w-5"/></button> </>)}
                             </div>
                           </div>
-                          <p className="text-gray-600 mb-6">{recipeToDisplay.description ?? 'No description available.'}</p>
-                          <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                            {/* Ingredients */}
-                            <div>
-                              <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
-                              {recipeToDisplay.ingredients && recipeToDisplay.ingredients.length > 0 ? (
-                                <div className="space-y-3">
-                                  {recipeToDisplay.ingredients.map((ing, index) => {
-                                    const originalAmount = ing.amount;
-                                    // Calculate adjusted amount based on serving multiplier
-                                    const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
-                                    // Format the amount for display
-                                    const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
-                                    const ingredientIdentifier = ing.id || `${ing.name}-${index}`;
-                                    const checkboxId = `ingredient-checkbox-${ingredientIdentifier}`;
-                                    return (
-                                      <div key={ingredientIdentifier} className="flex items-start space-x-3">
-                                        <Checkbox id={checkboxId} checked={selectedIngredients.has(ingredientIdentifier)} onCheckedChange={() => handleIngredientToggle(ingredientIdentifier)} className="mt-1" aria-labelledby={`${checkboxId}-label`} />
-                                        <label htmlFor={checkboxId} id={`${checkboxId}-label`} className="flex-1 text-gray-700 cursor-pointer"> <span className="font-medium">{displayAmount}</span> <span className="ml-1">{ing.unit || ''}</span> <span className="ml-2">{ing.name}</span> {ing.notes && <span className="text-gray-500 text-sm ml-1 italic">({ing.notes})</span>} </label>
-                                      </div>
-                                    );
-                                  })}
-                                  {/* --- Shopping Buttons Section (MODIFIED) --- */}
-                                  <div className="mt-6 border-t pt-4">
-                                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"> {/* Stack vertically on small screens, side-by-side otherwise */}
-                                      {/* Amazon Button */}
-                                      <Button
-                                        onClick={handleBuyOnAmazon}
-                                        disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
-                                        className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
-                                      >
-                                        {isGeneratingLink ? (
-                                            <>
-                                                <LoadingSpinner className="h-5 w-5" />
-                                                Checking Amazon...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ShoppingCartIcon className="h-5 w-5"/>
-                                                Shop on Amazon
-                                            </>
-                                        )}
-                                      </Button>
-
-                                      {/* Instacart Button (NEW) */}
-                                      <Button
-                                        variant="secondary" // Use a different style if desired
-                                        onClick={handleShopWithInstacart} // Use the new handler
-                                        disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
-                                        className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
-                                      >
-                                        {isGeneratingInstacartLink ? (
-                                            <>
-                                                <LoadingSpinner className="h-5 w-5" />
-                                                Checking Instacart...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ShoppingBagIcon className="h-5 w-5"/> {/* Different icon */}
-                                                Shop via Instacart
-                                            </>
-                                        )}
-                                      </Button>
-                                    </div>
-                                    {/* --- Disclosure Text (UPDATED) --- */}
-                                    <p className="text-xs text-gray-500 mt-3 text-center px-4">
-                                        Shop ingredients via Amazon or Instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.
-                                    </p>
-                                  </div>
-                                </div>
-                              ) : (<p className="text-gray-500">No ingredients listed.</p>)}
-                            </div>
-                            {/* Instructions */}
-                            <div>
-                              <h3 className="text-lg font-semibold mb-4">Instructions</h3>
-                              {sortedInstructions.length > 0 ? (
-                                <ol className="space-y-4 list-decimal list-inside">
-                                  {sortedInstructions.map((instruction) => {
-                                    const timerState = timerStates[instruction.stepNumber];
-                                    const hasInitialDuration = timerState?.initialDuration && timerState.initialDuration > 0;
-                                    const canEverHaveTimer = !!(hasInitialDuration || parseDuration(instruction.description) !== null);
-                                    const isFinished = Boolean(hasInitialDuration && timerState?.remainingTime <= 0);
-                                    return (
-                                      <li key={instruction.id} className="text-gray-700 group">
-                                        <div className="flex items-start">
-                                          <div className="flex-1">
-                                            <span>{instruction.description}</span>
-                                            {canEverHaveTimer && (
-                                              <div className="flex items-center gap-1 mt-1 ml-4 text-sm text-gray-500">
-                                                <button onClick={() => rewindTimer(instruction.stepNumber)} disabled={!timerState || timerState.remainingTime <= 0} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Rewind"><BackwardIcon className="h-4 w-4" /></button>
-                                                {timerState?.isActive ? (
-                                                  <button onClick={() => pauseTimer(instruction.stepNumber)} className="p-0.5 rounded-full text-blue-600 hover:bg-blue-100" aria-label="Pause"><PauseIcon className="h-4 w-4" /></button>
-                                                ) : (
-                                                  <button onClick={() => playTimer(instruction.stepNumber)} disabled={!canEverHaveTimer || isFinished} className="p-0.5 rounded-full text-green-600 hover:bg-green-100 disabled:opacity-50" aria-label="Play"><PlayIcon className="h-4 w-4" /></button>
-                                                )}
-                                                <button onClick={() => fastForwardTimer(instruction.stepNumber)} disabled={!timerState} className="p-0.5 rounded-full hover:bg-gray-100 disabled:opacity-50" aria-label="Fast forward"><ForwardIcon className="h-4 w-4" /></button>
-                                                <div className="font-mono min-w-[55px] text-xs text-center tabular-nums">
-                                                  {isFinished ? (
-                                                    <span className="text-red-500 font-medium">Done!</span>
-                                                  ) : timerState ? (
-                                                    <span className={timerState.isActive ? 'text-blue-600 font-medium' : 'text-gray-600'}>{formatTime(timerState.remainingTime)}</span>
-                                                  ) : (
-                                                    <span className="text-gray-400">--:--</span>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </li>
-                                    );
-                                  })}
-                                </ol>
-                              ) : (<p className="text-gray-500">No instructions provided.</p>)}
-                            </div>
-                          </div>
-                          {/* Nutrition */}
-                          <div className="mt-8">
-                            <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4"> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Calories</div><div className="text-xl font-semibold">{recipeToDisplay.calories ?? 'N/A'}</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Protein</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.protein?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Carbs</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.carbs?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Fat</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.fat?.toFixed(1) ?? 'N/A'}g</div></div> </div>
-                          </div>
-                          {/* Notes */}
-                          {recipeToDisplay.notes && recipeToDisplay.notes.length > 0 && ( <div className="mt-8 recipe-modal-notes"> <h3 className="text-lg font-semibold mb-4">Notes</h3> <div className="bg-blue-50 p-4 rounded-lg"><ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">{recipeToDisplay.notes.map((note, index) => (<li key={index}>{note}</li>))}</ul></div> </div> )}
-                          {/* Mobile Action Buttons */}
-                          <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
-                             {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite}/>}
-                            <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print"><PrinterIcon className="h-5 w-5"/></button>
-                            <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5"/></Menu.Button></div> <Transition
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transform opacity-0 scale-95"
-                                  enterTo="transform opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transform opacity-100 scale-100"
-                                  leaveTo="transform opacity-0 scale-95"
-                                >
-                                  <Menu.Items as="div" className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                    <div className="px-1 py-1">
-                                      <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item>
-                                      <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item>
-                                      <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item>
-                                    </div>
-                                  </Menu.Items>
-                                </Transition> </Menu>
-                            <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share"><ShareIcon className="h-5 w-5"/></button>
-                            <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5"/></button>
-                            {isAuthor && (<> <button onClick={() => {/* Edit */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit"><PencilSquareIcon className="h-5 w-5"/></button> <button onClick={() => {/* Delete */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete"><TrashIcon className="h-5 w-5"/></button> </>)}
-                          </div>
-                        </div>
-                    )}
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                      )}
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-          </div>
-        </Dialog>
-      </Transition.Root>
+          </Dialog>
+        </Transition.Root>
+      </div>
     </>
   );
 }
