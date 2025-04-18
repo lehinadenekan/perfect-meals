@@ -8,7 +8,7 @@ interface RequestBody {
   ingredients: string[]; // Array of ingredient description strings
 }
 
-// Define the structure expected by the Instacart API
+// Define the structure expected by the instacart API
 interface instacartIngredient {
   text: string;
 }
@@ -19,7 +19,7 @@ interface instacartRecipePayload {
   };
 }
 
-// Define the structure of the successful response from the Instacart API
+// Define the structure of the successful response from the instacart API
 interface instacartSuccessResponse {
     recipe_page_url: string;
     recipe_page_token: string; // We don't use this currently, but it's part of the response
@@ -30,8 +30,8 @@ export async function POST(request: Request) {
   console.log("instacart API route hit");
 
   // 1. Get Client ID and Secret from environment variables
-  const clientId = process.env.INSTACART_CLIENT_ID;
-  const clientSecret = process.env.INSTACART_CLIENT_SECRET;
+  const clientId = process.env.instacart_CLIENT_ID;
+  const clientSecret = process.env.instacart_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     console.error("instacart API credentials missing from environment variables.");
@@ -55,24 +55,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing recipe title or ingredients." }, { status: 400 });
   }
 
-  // 3. Format the payload for the Instacart API
+  // 3. Format the payload for the instacart API
   const instacartPayload: instacartRecipePayload = {
     recipe: {
       title: recipe_title,
-      // Map the array of strings to the array of objects Instacart expects
+      // Map the array of strings to the array of objects instacart expects
       ingredients: ingredients.map(desc => ({ text: desc })),
     },
   };
   console.log("Formatted payload for instacart:", JSON.stringify(instacartPayload, null, 2));
 
 
-  // 4. Prepare for the Instacart API call
+  // 4. Prepare for the instacart API call
   const instacartApiUrl = 'https://api.instacart.com/v1/products/recipe_page'; // Verify this URL if needed
 
   // Create Basic Auth credentials
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-  // 5. Make the API call to Instacart
+  // 5. Make the API call to instacart
   try {
     console.log(`Calling instacart API: ${instacartApiUrl}`);
     const response = await fetch(instacartApiUrl, {
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
     console.log(`instacart API response status: ${response.status}`);
 
-    // Check if the request was successful (Instacart uses 201 Created for this endpoint)
+    // Check if the request was successful (instacart uses 201 Created for this endpoint)
     if (response.status === 201) {
       const data: instacartSuccessResponse = await response.json();
       console.log("instacart API success response:", data);
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "instacart API returned an unexpected successful response." }, { status: 500 });
       }
     } else {
-      // Handle errors from the Instacart API
+      // Handle errors from the instacart API
       let errorBody = {};
       try {
         errorBody = await response.json(); // Try to parse error details
@@ -111,8 +111,8 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({
         error: `instacart API Error (${response.status})`,
-        details: errorBody // Include details from Instacart if available
-      }, { status: response.status }); // Forward Instacart's error status
+        details: errorBody // Include details from instacart if available
+      }, { status: response.status }); // Forward instacart's error status
     }
   } catch (error) {
     console.error("Network or other error calling instacart API:", error);
