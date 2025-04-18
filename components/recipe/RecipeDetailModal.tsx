@@ -94,7 +94,7 @@ export default function RecipeDetailModal({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
   const [isGeneratingLink, setIsGeneratingLink] = useState(false); // Amazon link state
-  const [isGeneratingInstacartLink, setIsGeneratingInstacartLink] = useState(false); // Instacart link state
+  const [isGeneratinginstacartLink, setIsGeneratinginstacartLink] = useState(false); // instacart link state
   const [servingMultiplier, setServingMultiplier] = useState(1);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -123,7 +123,7 @@ export default function RecipeDetailModal({
       setIsLoadingDetails(true);
       setSelectedIngredients(new Set());
       setIsGeneratingLink(false);
-      setIsGeneratingInstacartLink(false);
+      setIsGeneratinginstacartLink(false);
       console.log(`RecipeDetailModal: Fetching details for recipe ID: ${initialRecipe.id}`);
       const fetchDetails = async () => {
         try {
@@ -152,7 +152,7 @@ export default function RecipeDetailModal({
       setTimerStates({});
       setSelectedIngredients(new Set());
       setIsGeneratingLink(false);
-      setIsGeneratingInstacartLink(false);
+      setIsGeneratinginstacartLink(false);
     }
   }, [isOpen, initialRecipe?.id]);
 
@@ -239,14 +239,14 @@ export default function RecipeDetailModal({
     }
   }, [selectedIngredients, recipeToDisplay]); // *** FIXED: Added recipeToDisplay dependency ***
 
-  // *** NEW: Handler for the "Shop with Instacart" button click ***
-  const handleShopWithInstacart = useCallback(async () => {
+  // *** NEW: Handler for the "Shop with instacart" button click ***
+  const handleShopWithinstacart = useCallback(async () => {
     // Note: recipeToDisplay is derived from state/props, so it should be a dependency
     if (selectedIngredients.size === 0 || !recipeToDisplay?.ingredients || !recipeToDisplay?.title) {
       toast.error("Please select at least one ingredient.");
       return;
     }
-    setIsGeneratingInstacartLink(true);
+    setIsGeneratinginstacartLink(true);
 
     const ingredientMap = new Map<string, typeof recipeToDisplay.ingredients[number]>();
     recipeToDisplay.ingredients.forEach((ing, index) => {
@@ -254,7 +254,7 @@ export default function RecipeDetailModal({
         ingredientMap.set(identifier, ing);
     });
 
-    // Map selected identifiers to full ingredient description strings required by Instacart
+    // Map selected identifiers to full ingredient description strings required by instacart
     const selectedIngredientDescriptions = Array.from(selectedIngredients)
       .map(identifier => {
         const ingredient = ingredientMap.get(identifier);
@@ -274,14 +274,14 @@ export default function RecipeDetailModal({
       .filter((desc): desc is string => !!desc); // Filter out nulls
 
     if (selectedIngredientDescriptions.length === 0) {
-       console.error("Could not map selected items to ingredient descriptions for Instacart.");
-       toast.error("Could not process selected ingredients for Instacart.");
-       setIsGeneratingInstacartLink(false);
+       console.error("Could not map selected items to ingredient descriptions for instacart.");
+       toast.error("Could not process selected ingredients for instacart.");
+       setIsGeneratinginstacartLink(false);
        return;
     }
 
     try {
-      console.log("Sending data to Instacart API:", {
+      console.log("Sending data to instacart API:", {
         title: recipeToDisplay.title,
         ingredients: selectedIngredientDescriptions
       });
@@ -298,8 +298,8 @@ export default function RecipeDetailModal({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData?.error || `Instacart API Error: ${response.statusText} (${response.status})`;
-        console.error("Error response from Instacart API endpoint:", errorData);
+        const errorMessage = errorData?.error || `instacart API Error: ${response.statusText} (${response.status})`;
+        console.error("Error response from instacart API endpoint:", errorData);
         throw new Error(errorMessage);
       }
 
@@ -307,17 +307,17 @@ export default function RecipeDetailModal({
       const instacartUrl = data?.instacartUrl; // Expecting this key from backend
 
       if (instacartUrl && typeof instacartUrl === 'string') {
-        console.log("Received Instacart URL:", instacartUrl);
+        console.log("Received instacart URL:", instacartUrl);
         window.open(instacartUrl, '_blank', 'noopener,noreferrer');
       } else {
-        console.error("Backend API returned success but no valid Instacart URL:", data);
-        throw new Error("Failed to retrieve a valid Instacart link from the server.");
+        console.error("Backend API returned success but no valid instacart URL:", data);
+        throw new Error("Failed to retrieve a valid instacart link from the server.");
       }
     } catch (error) {
-      console.error('Error generating or opening Instacart link:', error);
-      toast.error(error instanceof Error ? error.message : "An unexpected error occurred while generating the Instacart link.");
+      console.error('Error generating or opening instacart link:', error);
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred while generating the instacart link.");
     } finally {
-      setIsGeneratingInstacartLink(false);
+      setIsGeneratinginstacartLink(false);
     }
   }, [
       selectedIngredients,
@@ -474,7 +474,7 @@ export default function RecipeDetailModal({
                                         {/* Amazon Button */}
                                         <Button
                                           onClick={handleBuyOnAmazon}
-                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} // Disable if either is loading
                                           className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
                                         >
                                           {isGeneratingLink ? (
@@ -490,29 +490,29 @@ export default function RecipeDetailModal({
                                           )}
                                         </Button>
 
-                                        {/* Instacart Button (NEW) */}
+                                        {/* instacart Button (NEW) */}
                                         <Button
                                           variant="secondary" // Use a different style if desired
-                                          onClick={handleShopWithInstacart} // Use the new handler
-                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratingInstacartLink} // Disable if either is loading
+                                          onClick={handleShopWithinstacart} // Use the new handler
+                                          disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} // Disable if either is loading
                                           className="flex-1 flex items-center justify-center gap-2" // Ensure icon and text are centered
                                         >
-                                          {isGeneratingInstacartLink ? (
+                                          {isGeneratinginstacartLink ? (
                                               <>
                                                   <LoadingSpinner className="h-5 w-5" />
-                                                  Checking Instacart...
+                                                  Checking instacart...
                                               </>
                                           ) : (
                                               <>
                                                   <ShoppingBagIcon className="h-5 w-5"/> {/* Different icon */}
-                                                  Shop via Instacart
+                                                  Shop via instacart
                                               </>
                                           )}
                                         </Button>
                                       </div>
                                       {/* --- Disclosure Text (UPDATED) --- */}
                                       <p className="text-xs text-gray-500 mt-3 text-center px-4">
-                                          Shop ingredients via Amazon or Instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.
+                                          Shop ingredients via Amazon or instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.
                                       </p>
                                     </div>
                                   </div>

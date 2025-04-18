@@ -9,33 +9,33 @@ interface RequestBody {
 }
 
 // Define the structure expected by the Instacart API
-interface InstacartIngredient {
+interface instacartIngredient {
   text: string;
 }
-interface InstacartRecipePayload {
+interface instacartRecipePayload {
   recipe: {
     title: string;
-    ingredients: InstacartIngredient[];
+    ingredients: instacartIngredient[];
   };
 }
 
 // Define the structure of the successful response from the Instacart API
-interface InstacartSuccessResponse {
+interface instacartSuccessResponse {
     recipe_page_url: string;
     recipe_page_token: string; // We don't use this currently, but it's part of the response
     // potentially other fields...
 }
 
 export async function POST(request: Request) {
-  console.log("Instacart API route hit");
+  console.log("instacart API route hit");
 
   // 1. Get Client ID and Secret from environment variables
   const clientId = process.env.INSTACART_CLIENT_ID;
   const clientSecret = process.env.INSTACART_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.error("Instacart API credentials missing from environment variables.");
-    return NextResponse.json({ error: "Server configuration error: Missing Instacart credentials." }, { status: 500 });
+    console.error("instacart API credentials missing from environment variables.");
+    return NextResponse.json({ error: "Server configuration error: Missing instacart credentials." }, { status: 500 });
   }
 
   // 2. Parse the request body from the frontend
@@ -56,14 +56,14 @@ export async function POST(request: Request) {
   }
 
   // 3. Format the payload for the Instacart API
-  const instacartPayload: InstacartRecipePayload = {
+  const instacartPayload: instacartRecipePayload = {
     recipe: {
       title: recipe_title,
       // Map the array of strings to the array of objects Instacart expects
       ingredients: ingredients.map(desc => ({ text: desc })),
     },
   };
-  console.log("Formatted payload for Instacart:", JSON.stringify(instacartPayload, null, 2));
+  console.log("Formatted payload for instacart:", JSON.stringify(instacartPayload, null, 2));
 
 
   // 4. Prepare for the Instacart API call
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
   // 5. Make the API call to Instacart
   try {
-    console.log(`Calling Instacart API: ${instacartApiUrl}`);
+    console.log(`Calling instacart API: ${instacartApiUrl}`);
     const response = await fetch(instacartApiUrl, {
       method: 'POST',
       headers: {
@@ -85,37 +85,37 @@ export async function POST(request: Request) {
       body: JSON.stringify(instacartPayload),
     });
 
-    console.log(`Instacart API response status: ${response.status}`);
+    console.log(`instacart API response status: ${response.status}`);
 
     // Check if the request was successful (Instacart uses 201 Created for this endpoint)
     if (response.status === 201) {
-      const data: InstacartSuccessResponse = await response.json();
-      console.log("Instacart API success response:", data);
+      const data: instacartSuccessResponse = await response.json();
+      console.log("instacart API success response:", data);
 
       if (data.recipe_page_url) {
         // Return the URL to the frontend
         return NextResponse.json({ instacartUrl: data.recipe_page_url });
       } else {
-        console.error("Instacart API success response missing 'recipe_page_url'.");
-        return NextResponse.json({ error: "Instacart API returned an unexpected successful response." }, { status: 500 });
+        console.error("instacart API success response missing 'recipe_page_url'.");
+        return NextResponse.json({ error: "instacart API returned an unexpected successful response." }, { status: 500 });
       }
     } else {
       // Handle errors from the Instacart API
       let errorBody = {};
       try {
         errorBody = await response.json(); // Try to parse error details
-        console.error("Instacart API error response body:", errorBody);
+        console.error("instacart API error response body:", errorBody);
       } catch (_e) {
-        console.error("Could not parse Instacart API error response body.");
+        console.error("Could not parse instacart API error response body.");
          errorBody = { detail: await response.text() }; // Fallback to raw text
       }
       return NextResponse.json({
-        error: `Instacart API Error (${response.status})`,
+        error: `instacart API Error (${response.status})`,
         details: errorBody // Include details from Instacart if available
       }, { status: response.status }); // Forward Instacart's error status
     }
   } catch (error) {
-    console.error("Network or other error calling Instacart API:", error);
-    return NextResponse.json({ error: "Failed to communicate with Instacart API.", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    console.error("Network or other error calling instacart API:", error);
+    return NextResponse.json({ error: "Failed to communicate with instacart API.", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
