@@ -179,14 +179,14 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       { "name": "Water", "amount": 948, "unit": "g", "notes": "approx 4 cups, filtered, for dashi" }
     ],
     "instructions": [
-      { "stepNumber": 1, "description": "To make dashi: Wipe the kombu piece with a damp cloth (do not wash). Place kombu and dried shiitake in 948 grams cold water in a medium saucepan. Let steep for 30 minutes." },
-      { "stepNumber": 2, "description": "Place the saucepan over medium heat. Remove the kombu just before the water comes to a boil (this prevents bitterness). Let shiitake simmer for 5 minutes, then remove. This is your dashi stock." },
-      { "stepNumber": 3, "description": "While making dashi, place wakame in a small bowl with cold water. Soak for 5-10 minutes until rehydrated. Drain and set aside." },
-      { "stepNumber": 4, "description": "Reduce heat to low. Place miso paste in a small bowl. Add about 119 grams of the warm dashi and whisk until the miso is completely dissolved with no lumps." },
-      { "stepNumber": 5, "description": "Add the dissolved miso back to the pot with the remaining dashi. Keep the soup below a simmer to preserve the probiotics in the miso." },
-      { "stepNumber": 6, "description": "Gently add the cubed tofu and rehydrated wakame. If using fresh shiitake, add them now. Heat until the tofu is warmed through, about 2-3 minutes." },
-      { "stepNumber": 7, "description": "Taste and adjust the miso seasoning if needed. Different types of miso have varying levels of saltiness." },
-      { "stepNumber": 8, "description": "Divide into serving bowls and garnish with chopped green onions. Serve immediately while hot." }
+      { "stepNumber": 1, "description": "To make dashi: Wipe the kombu piece with a damp cloth (do not wash). Place kombu and dried shiitake in 948 grams cold water in a medium saucepan. Let steep for 30 minutes.", "imageUrl": "/recipe_step_images/Misoshiru/1.png" },
+      { "stepNumber": 2, "description": "Place the saucepan over medium heat. Remove the kombu just before the water comes to a boil (this prevents bitterness). Let shiitake simmer for 5 minutes, then remove. This is your dashi stock.", "imageUrl": "/recipe_step_images/Misoshiru/2.png" },
+      { "stepNumber": 3, "description": "While making dashi, place wakame in a small bowl with cold water. Soak for 5-10 minutes until rehydrated. Drain and set aside.", "imageUrl": "/recipe_step_images/Misoshiru/3.png" },
+      { "stepNumber": 4, "description": "Reduce heat to low. Place miso paste in a small bowl. Add about 119 grams of the warm dashi and whisk until the miso is completely dissolved with no lumps.", "imageUrl": "/recipe_step_images/Misoshiru/4.png" },
+      { "stepNumber": 5, "description": "Add the dissolved miso back to the pot with the remaining dashi. Keep the soup below a simmer to preserve the probiotics in the miso.", "imageUrl": "/recipe_step_images/Misoshiru/5.png" },
+      { "stepNumber": 6, "description": "Gently add the cubed tofu and rehydrated wakame. If using fresh shiitake, add them now. Heat until the tofu is warmed through, about 2-3 minutes.", "imageUrl": "/recipe_step_images/Misoshiru/6.png" },
+      { "stepNumber": 7, "description": "Taste and adjust the miso seasoning if needed. Different types of miso have varying levels of saltiness.", "imageUrl": "/recipe_step_images/Misoshiru/7.png" },
+      { "stepNumber": 8, "description": "Divide into serving bowls and garnish with chopped green onions. Serve immediately while hot.", "imageUrl": "/recipe_step_images/Misoshiru/8.png" }
     ],
     "notes": [
       "For non-vegan version, use bonito-based dashi instead of kombu-shiitake dashi.",
@@ -194,12 +194,15 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       "Store any leftover dashi stock in the refrigerator for up to 3 days.",
       "You can add other vegetables like spinach or daikon radish.",
       "The type of miso used will affect the flavor - white miso is milder, while darker miso is stronger.",
-      "To save time, you can use instant dashi, though homemade has better flavor.",
-      "Fermented Ingredients: Contains **Miso Paste**, a traditional Japanese seasoning produced by fermenting soybeans with salt and kōji (a fungus, Aspergillus oryzae) and sometimes rice, barley, or other ingredients.",
-      "FODMAP Information: High-FODMAP ingredients include Shiitake Mushrooms (mannitol) and Soft/Silken Tofu (fructans/GOS). Low-FODMAP ingredients include Kombu, Wakame, Green Onions (green parts only), and Dashi (check instant versions for additives like onion/garlic powder). Miso paste is low FODMAP in servings up to 2 tablespoons.",
-      "Low-FODMAP Modification Tips: Use firm or extra-firm tofu instead of soft/silken. Use only the green parts of the green onions. Omit shiitake mushrooms or limit intake to a very small amount (e.g., 1-2 slices per serving). Ensure dashi is homemade or certified low FODMAP.",
-      "Vitamins & Minerals: Miso paste offers manganese, vitamin K, copper, and zinc. Tofu is a good source of calcium, manganese, selenium, protein, and iron. Wakame seaweed provides iodine, manganese, folate (B9), and magnesium. Kombu is rich in iodine and calcium. Shiitake mushrooms contain selenium, copper, zinc, and vitamin B5 (pantothenic acid). Green onions contribute vitamin K and vitamin C."
+      "To save time, you can use instant dashi, though homemade has better flavor."
     ],
+    "dietaryNotes": {
+      "fermentationInfo": "Contains Miso Paste, a traditional Japanese seasoning produced by fermenting soybeans with salt and kōji (a fungus, Aspergillus oryzae) and sometimes rice, barley, or other ingredients.",
+      "fodmapInfo": "High-FODMAP ingredients include Shiitake Mushrooms (mannitol) and Soft/Silken Tofu (fructans/GOS). Low-FODMAP ingredients include Kombu, Wakame, Green Onions (green parts only), and Dashi (check instant versions for additives like onion/garlic powder). Miso paste is low FODMAP in servings up to 2 tablespoons.",
+      "fodmapModificationTips": "Use firm or extra-firm tofu instead of soft/silken. Use only the green parts of the green onions. Omit shiitake mushrooms or limit intake to a very small amount (e.g., 1-2 slices per serving). Ensure dashi is homemade or certified low FODMAP.",
+      "keyNutrients": "Miso paste offers manganese, vitamin K, copper, and zinc. Tofu is a good source of calcium, manganese, selenium, protein, and iron. Wakame seaweed provides iodine, manganese, folate (B9), and magnesium. Kombu is rich in iodine and calcium. Shiitake mushrooms contain selenium, copper, zinc, and vitamin B5 (pantothenic acid). Green onions contribute vitamin K and vitamin C.",
+      "antiInflammatory": "Several ingredients possess anti-inflammatory potential. Miso paste (fermented, isoflavones) and the probiotics it may contain support gut health. Seaweeds like Wakame and Kombu provide unique antioxidants (e.g., fucoxanthin). Shiitake mushrooms offer immune-modulating polysaccharides and antioxidants like selenium. Tofu adds isoflavones, and Green Onions contribute antioxidants like quercetin and vitamin C. The combination of these ingredients provides minerals and compounds that support overall immune function and antioxidant systems."
+    },
     "nutritionFacts": {
       "protein": 8,
       "carbs": 12,
@@ -209,75 +212,77 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       "sodium": 800
     }
   },
-  {
-    "title": "Kimchi Sundubu Jjigae (Soft Tofu Stew with Kimchi)",
-    "description": "A rich and spicy Korean stew featuring soft silken tofu (sundubu) and fermented kimchi, often cooked with pork belly for extra flavor, and finished with a fresh egg cracked directly into the bubbling pot.",
-    "cookingTime": 25,
-    "servings": 2,
-    "difficulty": "MEDIUM",
-    "cuisineType": "Asia",
-    "regionOfOrigin": "South Korea",
-    "imageUrl": "/images/recipes/Kimchi Sundubu Jjigae.webp",
-    "calories": 450,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
-      { "name": "Neutral Oil", "amount": 14, "unit": "g", "notes": "e.g., vegetable, canola (approx 1 tbsp)" },
-      { "name": "Onion", "amount": 40, "unit": "g", "notes": "finely chopped (approx 1/4 cup)" },
-      { "name": "Garlic", "amount": 1, "unit": "clove", "notes": "minced" },
-      { "name": "Pork Belly", "amount": 70, "unit": "g", "notes": "thinly sliced (optional)" },
-      { "name": "Kimchi", "amount": 165, "unit": "g", "notes": "chopped, preferably aged/sour (approx 1 cup)" },
-      { "name": "Gochugaru", "amount": 9, "unit": "g", "notes": "Korean chili flakes, adjust to taste (approx 1 tbsp)" },
-      { "name": "Fish Sauce", "amount": 15, "unit": "g", "notes": "or soy sauce (use tamari for GF) (approx 1 tbsp)" },
-      { "name": "Gochujang", "amount": 9, "unit": "g", "notes": "Korean chili paste (approx 1/2 tbsp)" },
-      { "name": "Sugar", "amount": 4, "unit": "g", "notes": "(approx 1 tsp)" },
-      { "name": "Water", "amount": 120, "unit": "g", "notes": "or anchovy/kelp stock (approx 120ml or 1/2 cup)" },
-      { "name": "Sundubu (Silken Tofu)", "amount": 350, "unit": "g", "notes": "1 tube, Korean soft silken tofu" },
-      { "name": "Egg", "amount": 1, "unit": "large", "notes": "room temperature" },
-      { "name": "Green Onion", "amount": 0.5, "unit": "stalk", "notes": "chopped, for garnish" },
-      { "name": "Sesame Oil", "amount": 2, "unit": "g", "notes": "for finishing (approx 1/2 tsp)" }
-    ],
-    "instructions": [
-      { "stepNumber": 1, "description": "Heat neutral oil in a Korean earthenware pot (ttukbaegi) or a small heavy-bottomed pot over medium heat." },
-      { "stepNumber": 2, "description": "Add chopped onion, minced garlic, and sliced pork belly (if using). Sauté until the pork is mostly cooked through, about 3-4 minutes." },
-      { "stepNumber": 3, "description": "Add the chopped kimchi and cook, stirring occasionally, until it softens slightly, about 2-3 minutes." },
-      { "stepNumber": 4, "description": "Stir in gochugaru, fish sauce (or soy sauce), gochujang, and sugar. Cook for about 30 seconds, stirring constantly, until fragrant." },
-      { "stepNumber": 5, "description": "Pour in the water (or stock) and bring the mixture to a boil." },
-      { "stepNumber": 6, "description": "Cut the sundubu tube package in half and carefully squeeze the tofu directly into the boiling stew. Use a spoon to gently break it into large, soft curds." },
-      { "stepNumber": 7, "description": "Let the stew boil gently for another 3-4 minutes to allow the flavors to meld and the tofu to heat through." },
-      { "stepNumber": 8, "description": "Reduce the heat to low. Make a small well in the center of the stew and carefully crack the egg into it." },
-      { "stepNumber": 9, "description": "Garnish with chopped green onions and drizzle with sesame oil." },
-      { "stepNumber": 10, "description": "Serve immediately while bubbling hot, typically with a bowl of steamed rice on the side." }
-    ],
-    "notes": [
-      "Using well-fermented, sour kimchi yields the best flavor for this stew.",
-      "The earthenware pot (ttukbaegi) retains heat well, keeping the stew bubbling hot at the table.",
-      "Adjust the amount of gochugaru (approx 9g/tbsp) and gochujang (approx 18g/tbsp) to control the spice level.",
-      "Pork belly (70g) is optional; you can substitute with thinly sliced beef, seafood (like shrimp or clams), or mushrooms for a vegetarian option (also omit fish sauce).",
-      "Be gentle when breaking up the tofu to maintain large, soft curds.",
-      "Serve piping hot with rice and potentially other Korean side dishes (banchan).",
-      "Weight conversions for tbsp/tsp are approximate.",
-      "Fermented Ingredients: Contains **Kimchi** (fermented Napa cabbage and vegetables), **Gochujang** (fermented chili paste), and **Fish Sauce** (fermented fish).",
-      "FODMAP Information: High-FODMAP ingredients include Kimchi (fructans/mannitol), Garlic (fructans), Onion (fructans), Gochujang (fructans), Silken Tofu (fructans/GOS), and potentially Fish Sauce/Soy Sauce (check ingredients). Low-FODMAP ingredients include Neutral Oil, Pork Belly, Sugar, Water, Egg, Green Onion (green parts only), Sesame Oil.",
-      "Low-FODMAP Modification Tips: This dish is generally high FODMAP and requires significant changes. Consider using garlic/onion-free kimchi (if available) or limit portion to low-FODMAP amount (check Monash app). Omit garlic and onion (use garlic/onion-infused oil instead). Replace silken tofu with firm or extra-firm tofu. Use low-FODMAP gochujang substitute or omit. Ensure sauces (fish/soy) are low FODMAP. Use only green parts of green onions.",
-      "Vitamins & Minerals: Kimchi is rich in probiotics, vitamin K, vitamin C, and vitamin A. Pork belly provides B vitamins and selenium. Tofu offers calcium, manganese, selenium, protein and iron. Gochugaru is rich in Vitamin A (capsanthin) and Vitamin C. Gochujang adds some vitamins/minerals depending on ingredients. Fish sauce provides sodium and B vitamins. Eggs provide protein, vitamin D, vitamin B12, choline, and selenium. Green onion adds Vitamin K, C. Sesame oil offers Vitamin E, K."
-    ],
-    "nutritionFacts": {
-      "protein": 25,
-      "carbs": 15,
-      "fat": 30,
-      "fiber": 4,
-      "sugar": 5,
-      "sodium": 1200
-    }
-  },
+    {
+      "title": "Kimchi Sundubu Jjigae (Soft Tofu Stew with Kimchi)",
+      "description": "A rich and spicy Korean stew featuring soft silken tofu (sundubu) and fermented kimchi, often cooked with pork belly for extra flavor, and finished with a fresh egg cracked directly into the bubbling pot.",
+      "cookingTime": 25,
+      "servings": 2,
+      "difficulty": "MEDIUM",
+      "cuisineType": "Asia",
+      "regionOfOrigin": "South Korea",
+      "imageUrl": "/images/recipes/Kimchi Sundubu Jjigae.webp",
+      "calories": 450,
+      "type": "MAIN",
+      "isVegetarian": false,
+      "isVegan": false,
+      "isGlutenFree": false,
+      "isPescatarian": false,
+      "isLactoseFree": true,
+      "isNutFree": true,
+      "isFermented": true,
+      "isLowFodmap": false,
+      "ingredients": [
+        { "name": "Neutral Oil", "amount": 14, "unit": "g", "notes": "e.g., vegetable, canola (approx 1 tbsp)" },
+        { "name": "Onion", "amount": 40, "unit": "g", "notes": "finely chopped (approx 1/4 cup)" },
+        { "name": "Garlic", "amount": 1, "unit": "clove", "notes": "minced" },
+        { "name": "Pork Belly", "amount": 70, "unit": "g", "notes": "thinly sliced (optional)" },
+        { "name": "Kimchi", "amount": 165, "unit": "g", "notes": "chopped, preferably aged/sour (approx 1 cup)" },
+        { "name": "Gochugaru", "amount": 9, "unit": "g", "notes": "Korean chili flakes, adjust to taste (approx 1 tbsp)" },
+        { "name": "Fish Sauce", "amount": 15, "unit": "g", "notes": "or soy sauce (use tamari for GF) (approx 1 tbsp)" },
+        { "name": "Gochujang", "amount": 9, "unit": "g", "notes": "Korean chili paste (approx 1/2 tbsp)" },
+        { "name": "Sugar", "amount": 4, "unit": "g", "notes": "(approx 1 tsp)" },
+        { "name": "Water", "amount": 120, "unit": "g", "notes": "or anchovy/kelp stock (approx 120ml or 1/2 cup)" },
+        { "name": "Sundubu (Silken Tofu)", "amount": 350, "unit": "g", "notes": "1 tube, Korean soft silken tofu" },
+        { "name": "Egg", "amount": 1, "unit": "large", "notes": "room temperature" },
+        { "name": "Green Onion", "amount": 0.5, "unit": "stalk", "notes": "chopped, for garnish" },
+        { "name": "Sesame Oil", "amount": 2, "unit": "g", "notes": "for finishing (approx 1/2 tsp)" }
+      ],
+      "instructions": [
+        { "stepNumber": 1, "description": "Heat neutral oil in a Korean earthenware pot (ttukbaegi) or a small heavy-bottomed pot over medium heat.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/1.png" },
+        { "stepNumber": 2, "description": "Add chopped onion, minced garlic, and sliced pork belly (if using). Sauté until the pork is mostly cooked through, about 3-4 minutes.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/2.png" },
+        { "stepNumber": 3, "description": "Add the chopped kimchi and cook, stirring occasionally, until it softens slightly, about 2-3 minutes.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/3.png" },
+        { "stepNumber": 4, "description": "Stir in gochugaru, fish sauce (or soy sauce), gochujang, and sugar. Cook for about 30 seconds, stirring constantly, until fragrant.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/4.png" },
+        { "stepNumber": 5, "description": "Pour in the water (or stock) and bring the mixture to a boil.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/5.png" },
+        { "stepNumber": 6, "description": "Cut the sundubu tube package in half and carefully squeeze the tofu directly into the boiling stew. Use a spoon to gently break it into large, soft curds.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/6.png" },
+        { "stepNumber": 7, "description": "Let the stew boil gently for another 3-4 minutes to allow the flavors to meld and the tofu to heat through.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/7.png" },
+        { "stepNumber": 8, "description": "Reduce the heat to low. Make a small well in the center of the stew and carefully crack the egg into it.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/8.png" },
+        { "stepNumber": 9, "description": "Garnish with chopped green onions and drizzle with sesame oil.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/9.png" },
+        { "stepNumber": 10, "description": "Serve immediately while bubbling hot, typically with a bowl of steamed rice on the side.", "imageUrl": "/recipe_step_images/Kimchi_Sundubu_Jjigae/10.png" }
+      ],
+      "notes": [
+        "Using well-fermented, sour kimchi yields the best flavor for this stew.",
+        "The earthenware pot (ttukbaegi) retains heat well, keeping the stew bubbling hot at the table.",
+        "Adjust the amount of gochugaru (approx 9g/tbsp) and gochujang (approx 18g/tbsp) to control the spice level.",
+        "Pork belly (70g) is optional; you can substitute with thinly sliced beef, seafood (like shrimp or clams), or mushrooms for a vegetarian option (also omit fish sauce).",
+        "Be gentle when breaking up the tofu to maintain large, soft curds.",
+        "Serve piping hot with rice and potentially other Korean side dishes (banchan).",
+        "Weight conversions for tbsp/tsp are approximate."
+      ],
+      "dietaryNotes": {
+        "fermentationInfo": "Contains Kimchi (fermented Napa cabbage and vegetables), Gochujang (fermented chili paste), and Fish Sauce (fermented fish).",
+        "fodmapInfo": "High-FODMAP ingredients include Kimchi (fructans/mannitol), Garlic (fructans), Onion (fructans), Gochujang (fructans), Silken Tofu (fructans/GOS), and potentially Fish Sauce/Soy Sauce (check ingredients). Low-FODMAP ingredients include Neutral Oil, Pork Belly, Sugar, Water, Egg, Green Onion (green parts only), Sesame Oil.",
+        "fodmapModificationTips": "This dish is generally high FODMAP and requires significant changes. Consider using garlic/onion-free kimchi (if available) or limit portion to low-FODMAP amount (check Monash app). Omit garlic and onion (use garlic/onion-infused oil instead). Replace silken tofu with firm or extra-firm tofu. Use low-FODMAP gochujang substitute or omit. Ensure sauces (fish/soy) are low FODMAP. Use only green parts of green onions.",
+        "keyNutrients": "Kimchi is rich in probiotics, vitamin K, vitamin C, and vitamin A. Pork belly provides B vitamins and selenium. Tofu offers calcium, manganese, selenium, protein and iron. Gochugaru is rich in Vitamin A (capsanthin) and Vitamin C. Gochujang adds some vitamins/minerals depending on ingredients. Fish sauce provides sodium and B vitamins. Eggs provide protein, vitamin D, vitamin B12, choline, and selenium. Green onion adds Vitamin K, C. Sesame oil offers Vitamin E, K."
+      },
+      "nutritionFacts": {
+        "protein": 25,
+        "carbs": 15,
+        "fat": 30,
+        "fiber": 4,
+        "sugar": 5,
+        "sodium": 1200
+      }
+    },
   {
     "title": "肉骨茶 (Bak Kut Teh)",
     "description": "A nourishing pork rib soup that originated from Singapore and Malaysia, featuring tender pork ribs simmered in a rich, aromatic broth infused with garlic, white pepper, and Chinese herbs. Despite its name meaning \"meat bone tea\", the dish contains no tea - it was traditionally served with Chinese tea on the side.",

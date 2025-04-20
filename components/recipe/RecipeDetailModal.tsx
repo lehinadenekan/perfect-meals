@@ -91,7 +91,9 @@ const FAST_FORWARD_AMOUNT = 10;
 interface DietaryNotesData {
   fodmapInfo?: string;
   keyNutrients?: string;
-  antiInflammatory?: string;
+  antiInflammatoryInfo?: string;
+  fermentationInfo?: string;
+  fodmapModificationTips?: string;
 }
 
 // Helper function to split text into sentences (simple version)
@@ -146,13 +148,14 @@ export default function RecipeDetailModal({
   const recipeToDisplay = detailedRecipe || initialRecipe;
   const isAuthor = session?.user?.id === recipeToDisplay?.authorId;
   const initialIsFavourite = initialRecipe?.isFavourite ?? false;
-  // Get dietaryNotes specifically from detailedRecipe after it's loaded
   const dietaryNotesData = detailedRecipe?.dietaryNotes as DietaryNotesData | null | undefined;
 
   // Pre-process sentences for rendering
   const fodmapSentences = dietaryNotesData?.fodmapInfo ? splitIntoSentences(dietaryNotesData.fodmapInfo) : [];
   const nutrientSentences = dietaryNotesData?.keyNutrients ? splitIntoSentences(dietaryNotesData.keyNutrients) : [];
-  const antiInflammatorySentences = dietaryNotesData?.antiInflammatory ? splitIntoSentences(dietaryNotesData.antiInflammatory) : [];
+  const antiInflammatorySentences = dietaryNotesData?.antiInflammatoryInfo ? splitIntoSentences(dietaryNotesData.antiInflammatoryInfo) : [];
+  const fermentationSentences = dietaryNotesData?.fermentationInfo ? splitIntoSentences(dietaryNotesData.fermentationInfo) : [];
+  const fodmapModTipsSentences = dietaryNotesData?.fodmapModificationTips ? splitIntoSentences(dietaryNotesData.fodmapModificationTips) : [];
 
   // Prepare slides data for the lightbox from instructions that have images
   const instructionsWithImages = (recipeToDisplay.instructions || []).filter(
@@ -498,13 +501,50 @@ export default function RecipeDetailModal({
                               </div>
                             )}
                             {/* NEW: Dietary & Health Information Section */}
-                            {(fodmapSentences.length > 0 || nutrientSentences.length > 0 || antiInflammatorySentences.length > 0) && (
+                            {(fodmapSentences.length > 0 || nutrientSentences.length > 0 || antiInflammatorySentences.length > 0 || fermentationSentences.length > 0 || fodmapModTipsSentences.length > 0) && (
                               <div className="mt-8 print-break-inside-avoid">
                                 <h3 className="text-lg font-semibold mb-4 text-gray-900 print:text-black">Dietary & Health Information</h3>
                                 <Accordion type="single" collapsible className="w-full space-y-2">
+                                  {/* 1. Anti-inflammatory Properties - Conditionally Render */}
+                                  {antiInflammatorySentences.length > 0 && (
+                                    <AccordionItem value="anti-inflammatory" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                      <AccordionTrigger
+                                        className="text-base hover:no-underline py-3 print:py-1"
+                                      >
+                                        Anti-inflammatory Properties
+                                      </AccordionTrigger>
+                                      <AccordionContent className="pt-1 pb-3">
+                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                          {antiInflammatorySentences.map((sentence, index) => ( <li key={`anti-${index}`}>{sentence}</li> ))}
+                                        </ul>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+
+                                  {/* 2. Fermentation Details - Conditionally Render */}
+                                  {fermentationSentences.length > 0 && (
+                                    <AccordionItem value="fermentation" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                      <AccordionTrigger
+                                        className="text-base hover:no-underline py-3 print:py-1"
+                                      >
+                                        Fermentation Details
+                                      </AccordionTrigger>
+                                      <AccordionContent className="pt-1 pb-3">
+                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                          {fermentationSentences.map((sentence, index) => ( <li key={`ferment-${index}`}>{sentence}</li> ))}
+                                        </ul>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  )}
+
+                                  {/* 3. FODMAP Info - Conditionally Render */}
                                   {fodmapSentences.length > 0 && (
                                     <AccordionItem value="fodmap" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger className="text-base hover:no-underline py-3 print:py-1">FODMAP Information</AccordionTrigger>
+                                      <AccordionTrigger
+                                        className="text-base hover:no-underline py-3 print:py-1"
+                                      >
+                                        FODMAP Information
+                                      </AccordionTrigger>
                                       <AccordionContent className="pt-1 pb-3">
                                         <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
                                           {fodmapSentences.map((sentence, index) => ( <li key={`fodmap-${index}`}>{sentence}</li> ))}
@@ -512,9 +552,15 @@ export default function RecipeDetailModal({
                                       </AccordionContent>
                                     </AccordionItem>
                                   )}
+
+                                  {/* 4. Key Nutrients - Conditionally Render */}
                                   {nutrientSentences.length > 0 && (
                                     <AccordionItem value="nutrients" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger className="text-base hover:no-underline py-3 print:py-1">Key Nutrients</AccordionTrigger>
+                                      <AccordionTrigger
+                                        className="text-base hover:no-underline py-3 print:py-1"
+                                      >
+                                        Key Nutrients
+                                      </AccordionTrigger>
                                       <AccordionContent className="pt-1 pb-3">
                                         <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
                                           {nutrientSentences.map((sentence, index) => ( <li key={`nutrient-${index}`}>{sentence}</li> ))}
@@ -522,12 +568,18 @@ export default function RecipeDetailModal({
                                       </AccordionContent>
                                     </AccordionItem>
                                   )}
-                                  {antiInflammatorySentences.length > 0 && (
-                                    <AccordionItem value="anti-inflammatory" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger className="text-base hover:no-underline py-3 print:py-1">Anti-inflammatory Properties</AccordionTrigger>
+
+                                  {/* 5. Low-FODMAP Tips - Conditionally Render */}
+                                  {fodmapModTipsSentences.length > 0 && (
+                                    <AccordionItem value="fodmap-mod-tips" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                      <AccordionTrigger
+                                        className="text-base hover:no-underline py-3 print:py-1"
+                                      >
+                                        Low-FODMAP Tips
+                                      </AccordionTrigger>
                                       <AccordionContent className="pt-1 pb-3">
                                         <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {antiInflammatorySentences.map((sentence, index) => ( <li key={`anti-${index}`}>{sentence}</li> ))}
+                                          {fodmapModTipsSentences.map((sentence, index) => ( <li key={`fodmap-mod-${index}`}>{sentence}</li> ))}
                                         </ul>
                                       </AccordionContent>
                                     </AccordionItem>
