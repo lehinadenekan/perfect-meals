@@ -4,7 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*.googleusercontent.com',
+        hostname: 'res.cloudinary.com', // <-- ADDED Cloudinary Hostname
+        pathname: '**', // Allow any path
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com', // Keep for Google Profile Images etc.
         pathname: '**',
       },
       {
@@ -23,13 +28,11 @@ const nextConfig = {
         port: '3000',
         pathname: '/**',
       },
-      // --- ADDED THIS BLOCK ---
       {
         protocol: 'https',
         hostname: 'ichef.bbci.co.uk',
-        pathname: '/**', // Allow any path on this hostname
+        pathname: '/**',
       },
-      // --- END ADDED BLOCK ---
       {
         protocol: 'https',
         hostname: 'img.clerk.com',
@@ -49,6 +52,19 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'sisijemimah.com',
         port: '',
+        pathname: '/**',
+      },
+      // You might need to add other hostnames here if your AI extracts images from them
+      // e.g., zenaskitchen.com, images.immediate.co.uk
+      // Though the Cloudinary upload should handle most cases now.
+      {
+        protocol: 'https',
+        hostname: 'zenaskitchen.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.immediate.co.uk',
         pathname: '/**',
       },
     ],

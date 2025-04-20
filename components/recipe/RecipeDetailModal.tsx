@@ -494,7 +494,7 @@ export default function RecipeDetailModal({
                               <div className="mt-8 recipe-modal-notes">
                                 <h3 className="text-lg font-semibold mb-4">Notes</h3>
                                 <div className="bg-blue-50 p-4 rounded-lg">
-                                  <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm">
+                                  <ul className="list-disc list-outside space-y-2 text-gray-700 text-sm pl-5">
                                     {recipeToDisplay.notes.map((note, index) => (<li key={index}>{note}</li>))}
                                   </ul>
                                 </div>

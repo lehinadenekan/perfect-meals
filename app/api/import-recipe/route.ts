@@ -2,6 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import OpenAI from 'openai'; // Import OpenAI library
+import { v2 as cloudinary } from 'cloudinary'; // <-- Added Cloudinary import
+
+// --- Added Cloudinary Configuration ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true, // Ensure secure URLs are used
+});
+// --- End Cloudinary Configuration ---
 
 // Define the expected request body schema (only URL needed now)
 const ImportRequestSchema = z.object({
@@ -166,6 +176,13 @@ export async function POST(req: NextRequest) {
         throw new Error("AI model returned an empty or invalid response structure.");
       }
 
+      // --- Added Check: Ensure response looks like JSON before parsing ---
+      if (!responseText.trim().startsWith('{')) {
+        console.error("[AI_IMPORT_RECIPE] AI response does not start with '{', likely not JSON:", responseText);
+        throw new Error("AI did not return valid JSON content.");
+      }
+      // --- End Added Check ---
+
       // Parse JSON
       let parsedResponse: unknown;
       try {
@@ -192,6 +209,35 @@ export async function POST(req: NextRequest) {
         console.warn("[AI_IMPORT_RECIPE] AI response missing mandatory fields or has empty arrays:", aiResponseJson);
         throw new Error("AI failed to extract mandatory recipe fields (title, ingredients, instructions).");
       }
+
+      // --- Process and Upload Image to Cloudinary (if imageUrl exists) ---
+      let finalImageUrl = aiResponseJson.imageUrl; // Start with the URL from AI
+      if (finalImageUrl && typeof finalImageUrl === 'string' && finalImageUrl.startsWith('http')) {
+        console.log(`[AI_IMPORT_RECIPE] Attempting to upload image from: ${finalImageUrl}`);
+        try {
+          // Ensure Cloudinary is configured
+          if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+            console.warn("[AI_IMPORT_RECIPE] Cloudinary credentials missing. Skipping image upload.");
+          } else {
+            const uploadResult = await cloudinary.uploader.upload(finalImageUrl, {
+              folder: "recipe_imports", // Optional: Organize uploads in Cloudinary
+              // You could use allowed_formats, transformation, etc. here if needed
+            });
+            finalImageUrl = uploadResult.secure_url; // Use the new Cloudinary URL
+            console.log(`[AI_IMPORT_RECIPE] Successfully uploaded image to Cloudinary: ${finalImageUrl}`);
+          }
+        } catch (imageError: unknown) {
+          console.error(`[AI_IMPORT_RECIPE] Failed to fetch or upload image from ${aiResponseJson.imageUrl}:`, imageError);
+          finalImageUrl = undefined; // Clear the image URL if upload failed
+        }
+      } else {
+        // If no valid imageUrl from AI, ensure it's cleared
+        finalImageUrl = undefined;
+      }
+
+      // Update the response object with the final image URL (Cloudinary or undefined)
+      aiResponseJson.imageUrl = finalImageUrl;
+      // --- End Image Processing ---
 
       console.log(`[AI_IMPORT_RECIPE] Successfully parsed recipe from AI for: ${url}`);
       return NextResponse.json({ data: aiResponseJson }, { status: 200 });
