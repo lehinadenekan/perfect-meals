@@ -4,8 +4,9 @@
     "module": "CommonJS",
     "moduleResolution": "node", // Added to override base config
     "outDir": "dist",
+    "rootDir": ".",
     "noEmit": false,
     "jsx": "react"
   },
-  "include": ["server.ts"]
+  "include": ["server.ts", "lib/**/*.ts"]
 }

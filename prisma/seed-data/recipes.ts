@@ -50,21 +50,21 @@ export type { SeedRecipeRecipe };
 export const seedRecipes: SeedRecipeRecipe[] = [
   {
     "title": "Quinoa Buddha Bowl",
-    "description": "A vibrant and nutritious bowl featuring protein-rich quinoa, perfectly roasted sweet potatoes, crispy chickpeas, and fresh kale, all drizzled with a creamy tahini dressing. This balanced meal combines different textures and flavors while providing essential nutrients for a satisfying and healthy dining experience.",
-    "cookingTime": 40,
+    "description": "A vibrant and nutritious bowl featuring protein-rich quinoa, roasted sweet potatoes, crispy chickpeas, fresh kale, sweetcorn, avocado, tomato, cucumber, and parsley, all drizzled with a creamy tahini dressing. This balanced meal combines different textures and flavors for a satisfying and healthy dining experience.",
+    "cookingTime": 45,
     "servings": 2,
     "difficulty": "EASY",
-    "cuisineType": "South America",
-    "regionOfOrigin": "Peru",
-    "imageUrl": "/images/recipes/quinoa-buddha-bowl.jpg",
-    "calories": 450,
+    "cuisineType": "South America", // Or "Global Fusion" if you prefer the previous update
+    "regionOfOrigin": "Peru", // Or "Various" if you prefer the previous update
+    "imageUrl": "/images/recipes/quinoa_buddha_bowl2.jpg",
+    "calories": 550,
     "type": "LUNCH",
     "isVegetarian": true,
     "isVegan": true,
     "isGlutenFree": true,
     "isPescatarian": false,
     "isLactoseFree": true,
-    "isNutFree": false,
+    "isNutFree": true,
     "isFermented": false,
     "isLowFodmap": false,
     "ingredients": [
@@ -73,43 +73,79 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       { "name": "Sweet Potato", "amount": 1, "unit": "medium", "notes": "peeled and cut into 1-inch cubes" },
       { "name": "Chickpeas", "amount": 1, "unit": "can", "notes": "15 oz can, drained, rinsed, and patted dry" },
       { "name": "Kale", "amount": 134, "unit": "g", "notes": "approx 2 cups, stems removed, leaves torn" },
-      { "name": "Olive Oil", "amount": 2, "unit": "tablespoons", "notes": "divided" },
+      { "name": "Olive Oil", "amount": 3, "unit": "tablespoons", "notes": "divided (2 for roasting, 1 for kale)" },
       { "name": "Tahini", "amount": 3, "unit": "tablespoons", "notes": "well-stirred" },
       { "name": "Lemon Juice", "amount": 2, "unit": "tablespoons", "notes": "freshly squeezed" },
       { "name": "Garlic", "amount": 1, "unit": "clove", "notes": "minced" },
-      { "name": "Maple Syrup", "amount": 1, "unit": "teaspoon" },
-      { "name": "Sea Salt", "amount": 1, "unit": "teaspoon", "notes": "divided" },
+      { "name": "Maple Syrup", "amount": 1, "unit": "teaspoon", "notes": "adjust to taste" },
+      { "name": "Sea Salt", "amount": 1.25, "unit": "teaspoon", "notes": "divided (1/4 for quinoa, 1/2 for roasting, pinch for kale, 1/4 for dressing)" },
       { "name": "Black Pepper", "amount": 0.5, "unit": "teaspoon", "notes": "freshly ground" },
-      { "name": "Cumin", "amount": 1, "unit": "teaspoon", "notes": "ground" },
-      { "name": "Paprika", "amount": 0.5, "unit": "teaspoon" },
-      { "name": "Warm Water", "amount": 3, "unit": "tablespoons", "notes": "for thinning tahini dressing" }
+      { "name": "Cumin", "amount": 1, "unit": "teaspoon", "notes": "ground, divided" },
+      { "name": "Paprika", "amount": 0.5, "unit": "teaspoon", "notes": "smoked or sweet" },
+      { "name": "Warm Water", "amount": 3, "unit": "tablespoons", "notes": "for thinning tahini dressing" },
+      { "name": "Sweetcorn", "amount": 150, "unit": "g", "notes": "approx 1 cup, frozen or canned (drained)" },
+      { "name": "Avocado", "amount": 1, "unit": "medium", "notes": "sliced or cubed" },
+      { "name": "Tomato", "amount": 1, "unit": "medium", "notes": "diced" },
+      { "name": "Cucumber", "amount": 0.5, "unit": "medium", "notes": "diced" },
+      { "name": "Parsley", "amount": 2, "unit": "tablespoons", "notes": "fresh, chopped" }
     ],
     "instructions": [
-      { "stepNumber": 1, "description": "Preheat oven to 400°F (200°C) and line two baking sheets with parchment paper." },
-      { "stepNumber": 2, "description": "Rinse quinoa thoroughly in a fine-mesh strainer. Combine with 474 grams water and 1/4 teaspoon salt in a medium saucepan. Bring to a boil, reduce heat to low, cover, and simmer for 15-20 minutes until water is absorbed and quinoa is fluffy. Remove from heat, fluff with a fork, and let stand covered for 5 minutes." },
-      { "stepNumber": 3, "description": "Toss sweet potato cubes with 1 tablespoon olive oil, 1/4 teaspoon salt, cumin, and paprika. Spread on one baking sheet. On the second sheet, toss chickpeas with 1 tablespoon olive oil, 1/4 teaspoon salt, and remaining cumin. Roast both for 20-25 minutes, stirring halfway through. Sweet potatoes should be tender and chickpeas crispy." },
-      { "stepNumber": 4, "description": "While vegetables roast, prepare the tahini dressing: Whisk together tahini, lemon juice, minced garlic, maple syrup, 1/4 teaspoon salt, and black pepper. Gradually add warm water until you reach desired consistency. The dressing should be pourable but still creamy." },
-      { "stepNumber": 5, "description": "Place torn kale in a large bowl. Drizzle with 1 teaspoon olive oil and a pinch of salt. Massage the kale with your hands for 1-2 minutes until it becomes darker and more tender." },
-      { "stepNumber": 6, "description": "To assemble bowls: Divide quinoa between two bowls. Arrange roasted sweet potatoes, crispy chickpeas, and massaged kale around the quinoa. Drizzle generously with tahini dressing." },
-      { "stepNumber": 7, "description": "Optional: garnish with additional toppings like sesame seeds, microgreens, or a squeeze of lemon juice." }
+      {
+        "stepNumber": 1,
+        "description": "Preheat oven to 400°F (200°C). Line two baking sheets with parchment paper.",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_1.png"
+      },
+      {
+        "stepNumber": 2,
+        "description": "Rinse the Quinoa thoroughly. In a saucepan, combine quinoa, cooking Water, and 1/4 teaspoon Sea Salt. Bring to a boil, then reduce heat, cover, and simmer for 15-20 minutes until water is absorbed. Fluff with a fork.",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_2.png"
+      },
+      {
+        "stepNumber": 3,
+        "description": "On one baking sheet, toss cubed Sweet Potato with 1 tablespoon Olive Oil, 1/4 teaspoon Sea Salt, half the Cumin, and the Paprika. On the second sheet, toss rinsed Chickpeas with 1 tablespoon Olive Oil, 1/4 teaspoon Sea Salt, and the remaining Cumin. Roast both sheets for 20-25 minutes until sweet potato is tender and chickpeas are crispy.",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_3.png"
+      },
+      {
+        "stepNumber": 4,
+        "description": "Prepare the dressing: In a small bowl, whisk together Tahini, fresh Lemon Juice, minced Garlic, Maple Syrup, 1/4 teaspoon Sea Salt, and Black Pepper. Gradually whisk in Warm Water until the dressing is smooth and pourable.",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_4.png"
+      },
+      {
+        "stepNumber": 5,
+        "description": "Prepare the fresh components: Place torn Kale in a bowl, drizzle with 1 teaspoon Olive Oil and a pinch of Sea Salt, then massage until tender. Dice the Tomato and Cucumber. Slice or cube the Avocado. Chop the fresh Parsley. Ensure Sweetcorn is ready (thawed if frozen, drained if canned).",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_5.png"
+      },
+      {
+        "stepNumber": 6,
+        "description": "Assemble the bowls: Divide the cooked Quinoa between two bowls. Top with roasted Sweet Potato, crispy Chickpeas, massaged Kale, Sweetcorn, diced Tomato, diced Cucumber, and Avocado slices. Drizzle generously with the prepared tahini dressing.",
+        "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_6.png"
+      },
+      {
+        "stepNumber": 7,
+        "description": "Garnish the bowls with chopped fresh Parsley before serving."
+        // "imageUrl": "/recipe_step_images/quinoa_buddha_bowl/quinoa_buddha_bowl_7.png" // Uncomment if you have an image for step 7
+      }
     ],
     "notes": [
-      "For meal prep: Prepare components separately and store in airtight containers. The tahini dressing will keep for up to 5 days in the refrigerator.",
-      "To make the bowl more filling, add sliced avocado or additional roasted vegetables.",
-      "The chickpeas can be seasoned with different spice combinations - try curry powder or za'atar for variation.",
-      "Massage the kale well - this step breaks down the tough fibers and makes it more digestible.",
-      "If tahini is too thick, warm it slightly before mixing the dressing.",
-      "FODMAP Information: High-FODMAP ingredients include Chickpeas (GOS), Sweet Potato (mannitol in servings > 75g or ~1/2 cup), and Garlic (fructans). Tahini is moderate-FODMAP in servings > 2 tablespoons. Low-FODMAP ingredients include Quinoa, Kale, Olive Oil, Lemon Juice, Maple Syrup, Salt, Pepper, Cumin, Paprika.",
-      "Low-FODMAP Modification Tips: Replace chickpeas with canned lentils (drained, rinsed, limit to 1/2 cup per serving) or firm tofu. Omit garlic or replace with garlic-infused oil. Limit sweet potato portion to 75g per serving. Limit tahini to 2 tablespoons per serving. Ensure maple syrup is pure (no high-fructose corn syrup).",
-      "Vitamins & Minerals: Quinoa provides manganese, phosphorus, magnesium, folate, and thiamin (B1). Sweet Potatoes are rich in Vitamin A (beta-carotene), Vitamin C, and manganese. Chickpeas offer manganese and folate (B9). Kale is an excellent source of Vitamin K, Vitamin A, and Vitamin C. Olive Oil contributes Vitamin E and K. Tahini provides thiamin (B1), phosphorus, and copper. Lemon Juice adds Vitamin C. Cumin offers iron. Paprika contains Vitamin A."
+      "Ensure all vegetables like Tomato, Cucumber, and Avocado are fresh.",
+      "Chopped Parsley adds brightness to the final dish.",
+      "Adjust seasoning (Sea Salt, Black Pepper) to your preference.",
+      "If using frozen Sweetcorn, thaw it first.",
+      "The amount of Warm Water needed for the dressing may vary based on tahini consistency.",
+      "Make sure Garlic is finely minced for the dressing."
     ],
+    "dietaryNotes": {
+      "fodmapInfo": "This bowl contains several ingredients that are moderate-to-high in FODMAPs, which may trigger symptoms in sensitive individuals. Key ingredients to be mindful of include: Chickpeas (GOS), Sweet Potato (Mannitol in servings > ~1/2 cup/75g), Garlic (Fructans), Avocado (Sorbitol, limit to ~1/8 per serving), Sweetcorn** (Sorbitol/Fructans, limit to ~1/4 cup/38g), and potentially Tahini (Fructans/GOS in servings > 2 tbsp). Many components are low-FODMAP, such as Quinoa, Kale, Olive Oil, Lemon Juice, Maple Syrup, Tomato, Cucumber, Parsley, Cumin, Paprika, Salt, and Peppe*.\n    *   Low-FODMAP Modifications: Replace garlic with garlic-infused olive oil. Swap chickpeas for canned lentils (rinsed, limit to 1/2 cup per serving) or firm tofu. Limit sweet potato, avocado, sweetcorn, and tahini to low-FODMAP portion sizes as indicated above, or omit them.",
+      "keyNutrients": "Quinoa and Chickpeas provide complete plant-based protein and significant fiber. Sweet Potato is rich in Vitamin A (beta-carotene) and Vitamin C. Kale is an excellent source of Vitamin K, Vitamin A, and Vitamin C. Healthy monounsaturated fats come from Olive Oil, Avocado, and Tahini. You'll also get a good range of B vitamins (like Folate from chickpeas, quinoa, avocado, and Thiamin from quinoa, tahini) and minerals including Manganese (quinoa, sweet potato, chickpeas, kale), Magnesium, and Phosphorus (quinoa).",
+      "antiInflammatory": "The Extra Virgin Olive Oil and Avocado provide healthy monounsaturated fats and beneficial compounds. Kale, Sweet Potato, Tomato, and other colourful vegetables contribute antioxidants and phytonutrients. **Quinoa** contains flavonoids like quercetin. Spices like Cumin, Paprika, and Black Pepper also possess anti-inflammatory potential. Overall, the combination of healthy fats, high fiber, antioxidants, vitamins, and minerals supports an anti-inflammatory eating pattern."
+    },
     "nutritionFacts": {
-      "protein": 15,
-      "carbs": 65,
-      "fat": 12,
-      "fiber": 8,
-      "sugar": 6,
-      "sodium": 400
+      "protein": 18,
+      "carbs": 75,
+      "fat": 20,
+      "fiber": 15,
+      "sugar": 10,
+      "sodium": 550
     }
   },
   {

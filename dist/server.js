@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var http_1 = require("http");
 var url_1 = require("url");
 var next_1 = __importDefault(require("next"));
-var socket_1 = require("./lib/socket");
+var path_1 = __importDefault(require("path")); // <-- Import path again
+// Keep this import commented or removed if lib/socket has side effects
+// import { initializeSocket } from './lib/socket';
 var PORT = 3000; // Force port 3000
 var dev = process.env.NODE_ENV !== 'production';
 var app = (0, next_1.default)({ dev: dev });
@@ -16,8 +18,14 @@ app.prepare().then(function () {
         var parsedUrl = (0, url_1.parse)(req.url, true);
         handle(req, res, parsedUrl);
     });
+    // Dynamically require initializeSocket using an absolute path
+    // __dirname will be /Users/lehinadenekan/Desktop/SaaS/dist at runtime
+    var socketLibPath = path_1.default.resolve(__dirname, './lib/socket');
+    // eslint-disable-next-line
+    var initializeSocket = require(socketLibPath).initializeSocket;
     // Initialize Socket.IO
-    var io = (0, socket_1.initializeSocket)(server);
+    // Assuming initializeSocket returns a SocketIOServer instance
+    var io = initializeSocket(server);
     // Socket.IO event handlers
     io.on('connection', function (socket) {
         console.log('Client connected');

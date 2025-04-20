@@ -1,5 +1,5 @@
 // prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { seedRecipes } from './seed-data/recipes';
 import { FERMENTED_FOODS, FermentedIngredient } from '../lib/utils/dietary-classification';
 
@@ -99,7 +99,8 @@ async function main() {
 
   // --- Create/Update Recipes ---
   console.log('Seeding recipes...');
-  for (const recipeData of seedRecipes) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const recipeData of seedRecipes as any[]) {
     try {
       const isRecipeVegetarian = recipeData.isVegetarian ?? false;
       const isRecipePescatarian = checkPescatarian(recipeData.ingredients, isRecipeVegetarian);
@@ -125,21 +126,26 @@ async function main() {
           isPescatarian: isRecipePescatarian,
           calories: recipeData.calories,
           notes: recipeData.notes,
+          dietaryNotes: recipeData.dietaryNotes ?? Prisma.JsonNull,
           ...(cuisineInfo && { cuisines: { connect: { id: cuisineInfo.id } } }),
       };
 
       const recipe = await prisma.recipe.upsert({
-        where: { title: recipeData.title }, // Assuming title is unique for upsert
+        where: { title: recipeData.title },
         create: {
           ...recipeInputData,
           ingredients: {
-            create: recipeData.ingredients.map(ingredient => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            create: recipeData.ingredients.map((ingredient: any) => ({
               name: ingredient.name, amount: ingredient.amount, unit: ingredient.unit, notes: ingredient.notes, isFermented: isIngredientFermented(ingredient.name),
             })),
           },
           instructions: {
-            create: recipeData.instructions.map(instruction => ({
-              stepNumber: instruction.stepNumber, description: instruction.description,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            create: recipeData.instructions.map((instruction: any) => ({
+              stepNumber: instruction.stepNumber,
+              description: instruction.description,
+              imageUrl: instruction.imageUrl ?? null,
             })),
           },
           ...(recipeData.nutritionFacts && {
@@ -150,9 +156,15 @@ async function main() {
         },
         update: {
           ...recipeInputData,
-          // Handle updating relations if needed (e.g., cuisines, ingredients, instructions)
-          // Example (simple replacement, adjust if needed):
-          // cuisines: cuisineInfo ? { set: [{ id: cuisineInfo.id }] } : { set: [] },
+          instructions: {
+            deleteMany: {},
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            create: recipeData.instructions.map((instruction: any) => ({
+              stepNumber: instruction.stepNumber,
+              description: instruction.description,
+              imageUrl: instruction.imageUrl ?? null,
+            })),
+          },
         },
       });
       console.log(`Upserted recipe: ${recipe.title}`);

@@ -12,6 +12,7 @@ export interface Instruction {
   stepNumber: number;
   description: string;
   recipeId: string;
+  imageUrl?: string;
 }
 
 export interface NutritionFacts {

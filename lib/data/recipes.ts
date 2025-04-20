@@ -1,27 +1,27 @@
 // lib/data/recipes.ts
-// Remove unused PrismaClient and User imports
-// import { PrismaClient, Recipe, Ingredient, Instruction, User } from '@prisma/client';
-import { Recipe, Ingredient, Instruction, NutritionFacts, Tag, Category, Cuisine } from '@prisma/client'; // Keep used types
-import 'server-only'; // Ensures this module only runs on the server
+// Modify imports at the top
+import { Recipe, Ingredient, NutritionFacts, Tag, Category, Cuisine, Prisma } from '@prisma/client'; // Add Prisma
+import { Instruction } from '@/lib/types/recipe'; // Import Instruction from our defined types
+import 'server-only';
+import { prisma } from '@/lib/prisma';
 
-// Assume a shared Prisma client instance if you have one in lib/prisma.ts
-import { prisma } from '@/lib/prisma'; // Correct import for prisma client
-
-// Define the detailed recipe data structure including related fields
+// Type definition will now use the correct Instruction type
 export type RecipeDetailData = Recipe & {
   ingredients: Ingredient[];
-  instructions: Instruction[];
-  author: {
+  instructions: Instruction[]; // Uses Instruction from '@/lib/types/recipe'
+  author: { // Replace {} with the actual author structure
     id: string;
     name?: string | null;
     image?: string | null;
   } | null;
-  nutritionFacts?: NutritionFacts | null; // Use the imported type
-  tags?: Tag[]; // Use the imported type
-  category?: Category | null; // Use the imported type
-  cuisine?: Cuisine | null; // Use the imported type
+  nutritionFacts?: NutritionFacts | null;
+  tags?: Tag[];
+  category?: Category | null;
+  cuisine?: Cuisine | null;
   isFavourite?: boolean;
+  dietaryNotes?: Prisma.JsonValue | null; // <-- Add this field
 };
+
 
 /**
  * Fetches a single recipe with its full details by ID.
@@ -35,26 +35,19 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
     const recipe = await prisma.recipe.findUnique({
       where: { id },
       include: {
-        // --- MODIFIED INCLUDE BLOCK ---
         ingredients: true,
         instructions: {
           orderBy: {
             stepNumber: 'asc',
           },
         },
-        nutritionFacts: true, // Include related nutrition facts
-        author: { // Include author details
-          select: { // Select only necessary fields
-             id: true,
-             name: true,
-             image: true,
-          }
+        nutritionFacts: true,
+        author: {
+          select: { id: true, name: true, image: true }
         },
-        tags: true, // Include related tags
-        categories: true, // Include related categories
-        cuisines: true, // Include related cuisines
-        // Include other relations as needed by RecipeDetailModal here
-        // --- END MODIFIED INCLUDE BLOCK ---
+        tags: true,
+        categories: true,
+        cuisines: true,
       },
     });
 

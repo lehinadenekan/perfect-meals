@@ -77,12 +77,13 @@ model Recipe {
   regionOfOrigin     String?
   search_vector      Unsupported("tsvector")?
   calories           Int?
-  notes              String[]
+  notes              String[]           @default([])
+  dietaryNotes       Json?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]
   instructions       Instruction[]
   nutritionFacts     NutritionFacts?
-  author             User                     @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  author             User   @relation("AuthoredRecipes", fields: [authorId], references: [id])
   generationJob      RecipeGenerationJob?     @relation("JobRecipes", fields: [jobId], references: [id])
   albums             RecipeToAlbum[]
   reviews            Review[]
@@ -114,11 +115,12 @@ model Ingredient {
 model Instruction {
   id          String @id @default(cuid())
   stepNumber  Int
-  description String
+  description String @db.Text
   recipeId    String
   recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  imageUrl    String?
 
-  @@index([recipeId])
+  @@unique([recipeId, stepNumber])
 }
 
 model NutritionFacts {

@@ -1,7 +1,11 @@
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import { initializeSocket } from './lib/socket';
+import path from 'path'; // <-- Import path again
+import { Server as SocketIOServer, Socket } from 'socket.io'; // <-- Import Socket type
+
+// Keep this import commented or removed if lib/socket has side effects
+// import { initializeSocket } from './lib/socket';
 
 const PORT = 3000; // Force port 3000
 const dev = process.env.NODE_ENV !== 'production';
@@ -14,11 +18,18 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
+  // Dynamically require initializeSocket using an absolute path
+  // __dirname will be /Users/lehinadenekan/Desktop/SaaS/dist at runtime
+  const socketLibPath = path.resolve(__dirname, './lib/socket');
+  // eslint-disable-next-line
+  const { initializeSocket } = require(socketLibPath);
+
   // Initialize Socket.IO
-  const io = initializeSocket(server);
+  // Assuming initializeSocket returns a SocketIOServer instance
+  const io: SocketIOServer = initializeSocket(server);
 
   // Socket.IO event handlers
-  io.on('connection', (socket) => {
+  io.on('connection', (socket: Socket) => { // <-- Use imported Socket type
     console.log('Client connected');
 
     socket.on('disconnect', () => {
@@ -28,7 +39,7 @@ app.prepare().then(() => {
 
   server.listen(PORT, () => {
     console.log(`> Ready on http://localhost:${PORT}`);
-  }).on('error', (err: any) => {
+  }).on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`Port ${PORT} is already in use. Please make sure no other service is running on port ${PORT}.`);
       process.exit(1);
