@@ -10,12 +10,13 @@ export const createMockRecipe = (overrides: Partial<Recipe> = {}): Recipe => {
     createdAt: new Date('2023-01-01T10:00:00Z'),
     updatedAt: new Date('2023-01-01T11:00:00Z'),
     title: 'Mock Recipe Title',
-    description: 'Mock description here.',
+    description: 'Mock recipe description.',
     cookingTime: 30,
     servings: 4,
     difficulty: 'Medium',
-    cuisineType: 'Mock Cuisine',
-    authorId: 'mock-author-123',
+    cuisineType: 'Italian',
+    authorId: 'mock-user-id',
+    imageUrl: '/images/mock-recipe.jpg',
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
@@ -26,10 +27,10 @@ export const createMockRecipe = (overrides: Partial<Recipe> = {}): Recipe => {
     isLowFodmap: false,
     isPescatarian: false,
     needsDietaryReview: false,
-    imageUrl: 'https://example.com/mock.jpg',
     regionOfOrigin: 'Mock Region',
     calories: 500,
     notes: [],
+    dietaryNotes: null,
   }
 
   return { ...defaults, ...overrides }

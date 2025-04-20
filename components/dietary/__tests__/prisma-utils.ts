@@ -48,10 +48,11 @@ export const mockIngredient = {
 
 // Instruction
 export const mockInstruction = {
-  id: 'inst1',
+  id: 'instruction-1',
   stepNumber: 1,
-  description: 'Dice tomatoes',
-  recipeId: mockRecipe.id
+  description: 'Chop the onions',
+  recipeId: 'recipe-1',
+  imageUrl: null,
 };
 
 // NutritionFacts
