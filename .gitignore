@@ -43,3 +43,8 @@ backups/*.tar.gz
 *.mp4
 *.mov
 .env*.local
+
+# MCP Server (if run locally and contains sensitive info)
+mcp.json
+
+servers/
