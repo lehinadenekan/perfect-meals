@@ -1,11 +1,66 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, Prisma, Instruction, NutritionFacts } from '@prisma/client'; // Ensure NutritionFacts is imported
+import { PrismaClient, Prisma, Instruction, NutritionFacts } from '@prisma/client';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import type { Session } from 'next-auth';
 import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
 const prisma = new PrismaClient();
+
+// --- START: Continent to Country Mapping ---
+const REGION_MAP: Record<string, string[]> = {
+  europe: [
+    "Albania", "Andorra", "Armenia", "Austria", "Belarus", "Belgium", "Bosnia and Herzegovina",
+    "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "England", // Added England
+    "Estonia", "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland",
+    "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
+    "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", "Poland",
+    "Portugal", "Romania", "Russia", "San Marino", "Serbia", "Slovakia", "Slovenia",
+    "Spain", "Sweden", "Switzerland", "Turkey", "Ukraine", "United Kingdom", "Vatican City"
+    // Add other countries as needed for "Europe" based on your data
+  ],
+  africa: [
+    "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde",
+    "Cameroon", "Central African Republic", "Chad", "Comoros", "Congo, Democratic Republic of the",
+    "Congo, Republic of the", "Cote d'Ivoire", "Djibouti", "Egypt", "Equatorial Guinea",
+    "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau",
+    "Kenya", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania",
+    "Mauritius", "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda",
+    "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa",
+    "South Sudan", "Sudan", "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe"
+    // Add other African countries as needed
+  ],
+  asia: [
+    "Afghanistan", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Bhutan", "Brunei",
+    "Cambodia", "China", "Cyprus", "Georgia", "India", "Indonesia", "Iran", "Iraq", "Israel",
+    "Japan", "Jordan", "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Malaysia",
+    "Maldives", "Mongolia", "Myanmar", "Nepal", "North Korea", "Oman", "Pakistan", "Palestine",
+    "Philippines", "Qatar", "Russia", "Saudi Arabia", "Singapore", "South Korea", "Sri Lanka",
+    "Syria", "Taiwan", "Tajikistan", "Thailand", "Timor-Leste", "Turkey", "Turkmenistan",
+    "United Arab Emirates", "Uzbekistan", "Vietnam", "Yemen"
+     // Add other Asian countries as needed
+  ],
+  'north america': [ // Use lowercase for keys if comparing lowercase input
+    "Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada", "Costa Rica", "Cuba",
+    "Dominica", "Dominican Republic", "El Salvador", "Grenada", "Guatemala", "Haiti",
+    "Honduras", "Jamaica", "Mexico", "Nicaragua", "Panama", "Saint Kitts and Nevis",
+    "Saint Lucia", "Saint Vincent and the Grenadines", "Trinidad and Tobago", "United States"
+     // Add other North American countries as needed
+  ],
+  'south america': [
+    "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Guyana", "Paraguay",
+    "Peru", "Suriname", "Uruguay", "Venezuela"
+     // Add other South American countries as needed
+  ],
+  oceania: [
+    "Australia", "Fiji", "Kiribati", "Marshall Islands", "Micronesia", "Nauru", "New Zealand",
+    "Palau", "Papua New Guinea", "Samoa", "Solomon Islands", "Tonga", "Tuvalu", "Vanuatu"
+     // Add other Oceanian countries as needed
+  ]
+  // Add other continents/regions as needed by your frontend filters
+};
+// --- END: Continent to Country Mapping ---
+
 
 // Define the structure of the transformed recipe object
 type TransformedRecipe = {
@@ -16,7 +71,7 @@ type TransformedRecipe = {
   servings?: number;
   difficulty?: string;
   cuisineType?: string;
-  regionOfOrigin?: string; // This is the field we expect on the frontend
+  regionOfOrigin?: string;
   imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +91,7 @@ type TransformedRecipe = {
     recipeId: string;
     isFermented: boolean;
   }[];
-  instructions: Instruction[]; // Use the imported Instruction type
+  instructions: Instruction[];
   type?: string;
   cuisineId?: string;
   tags: string[];
@@ -49,7 +104,7 @@ type TransformedRecipe = {
   isPescatarian: boolean;
   isFermented: boolean;
   calories?: number;
-  nutritionFacts?: NutritionFacts | null; // Use the imported NutritionFacts type
+  nutritionFacts?: NutritionFacts | null;
 };
 
 
@@ -61,21 +116,18 @@ type RecipeParams = {
   searchInput?: string;
 };
 
-// Define DbRecipe type directly using the validator structure
 type DbRecipe = Prisma.RecipeGetPayload<{
     include: {
         ingredients: true;
         instructions: true;
         nutritionFacts: true;
         categories: true;
-        cuisines: true; // Still include cuisines if needed for cuisineType
+        cuisines: true;
         tags: true;
         author: true;
     };
 }>;
 
-
-// This function will get recipes from our local database
 async function getRandomRecipesFromDB(
   params: RecipeParams,
   userId?: string,
@@ -83,16 +135,14 @@ async function getRandomRecipesFromDB(
   console.log('[Generate Fn Start] Starting recipe generation with params:', {
     dietTypes: params.dietTypes?.length || 0,
     selectedRegions: params.selectedRegions?.length || 0,
-    excludedFoods: params.excludedFoods?.length || 0, // Log count
-    searchInputProvided: !!params.searchInput,       // Log if search input exists
+    excludedFoods: params.excludedFoods?.length || 0,
+    searchInputProvided: !!params.searchInput,
     userId: userId || 'anonymous',
     timestamp: new Date().toISOString()
   });
 
-  // Step 1: Build base query conditions
   const conditions: Prisma.RecipeWhereInput[] = [];
 
-  // Add search term filter if provided
   if (params.searchInput) {
     const searchTerm = params.searchInput.toLowerCase();
     console.log(`[Filter] Adding search term condition for: "${searchTerm}"`);
@@ -105,7 +155,6 @@ async function getRandomRecipesFromDB(
     });
   }
 
-  // Add dietary preferences to where clause if they exist
   if (params.dietTypes?.length > 0) {
     const dietConditions: Prisma.RecipeWhereInput[] = [];
     console.log(`[Filter] Adding dietary conditions for: ${params.dietTypes.join(', ')}`);
@@ -127,27 +176,49 @@ async function getRandomRecipesFromDB(
     }
   }
 
-  // Add cuisine region filters if provided
+  // --- START: Modified Region Filtering ---
   if (params.selectedRegions?.length > 0) {
-    console.log(`[Filter] Adding DIRECT regionOfOrigin conditions for: ${params.selectedRegions.join(', ')}`);
-    // --- CHANGE HERE ---
-    // Filter directly on the Recipe.regionOfOrigin field
-    conditions.push({
-      regionOfOrigin: {
-        in: params.selectedRegions, // Check if regionOfOrigin is one of the selected regions
-        mode: 'insensitive'        // Keep case-insensitivity
+    const targetCountries: string[] = [];
+    console.log(`[Filter] Processing selected regions: ${params.selectedRegions.join(', ')}`);
+
+    params.selectedRegions.forEach(regionInput => {
+      const regionLower = regionInput.toLowerCase();
+      const countries = REGION_MAP[regionLower]; // Look up in the map
+
+      if (countries) {
+        console.log(`[Filter] Mapping region "${regionInput}" to countries: ${countries.length} found.`);
+        targetCountries.push(...countries);
+      } else {
+        // Optional: Handle if it's already a country or unknown region
+        // For now, we assume frontend only sends mapped continents/regions
+        // If it could be a country, you might add: targetCountries.push(regionInput);
+        console.warn(`[Filter] Region "${regionInput}" not found in REGION_MAP. Ignoring.`);
       }
     });
-    // --- END CHANGE ---
-  }
 
-  // Combine all conditions with AND
+    // Only add the filter if we found corresponding countries
+    if (targetCountries.length > 0) {
+       // Use Set to remove duplicate countries if multiple regions map to the same country
+      const uniqueTargetCountries = Array.from(new Set(targetCountries));
+      console.log(`[Filter] Adding regionOfOrigin condition for countries: ${uniqueTargetCountries.join(', ')}`);
+      conditions.push({
+        regionOfOrigin: {
+          in: uniqueTargetCountries, // Filter using the mapped list of countries
+          mode: 'insensitive'
+        }
+      });
+    } else {
+        console.warn(`[Filter] No target countries identified for selected regions: ${params.selectedRegions.join(', ')}. Region filter not applied.`);
+    }
+  }
+  // --- END: Modified Region Filtering ---
+
+
   const baseWhereClause: Prisma.RecipeWhereInput = {
-    AND: conditions.length > 0 ? conditions : undefined // Avoid empty AND {}
+    AND: conditions.length > 0 ? conditions : undefined
   };
 
   try {
-    // Step 2: Get initial set of recipes (limited for performance)
     const initialFetchLimit = 100;
     console.log(`[DB Query] Fetching up to ${initialFetchLimit} recipes with base filters: ${JSON.stringify(baseWhereClause)}`);
 
@@ -162,7 +233,6 @@ async function getRandomRecipesFromDB(
 
     console.log(`[DB Result] Initial fetch count (after base filters): ${dbRecipes.length}`);
 
-    // Step 3: Apply word boundary filter if search term is provided
     if (params.searchInput && dbRecipes.length > 0) {
       const searchTerm = params.searchInput.toLowerCase();
       const searchTerms = [searchTerm];
@@ -180,7 +250,6 @@ async function getRandomRecipesFromDB(
 
       console.log(`[Post-Filter] Count after word boundary filter: ${dbRecipes.length}`);
 
-      // Sort results by relevance if search term exists
       dbRecipes = dbRecipes.sort((a, b) => {
         const getScore = (recipe: DbRecipe): number => {
           let score = 0;
@@ -194,7 +263,6 @@ async function getRandomRecipesFromDB(
       console.log(`[Post-Filter] Recipes sorted by search relevance.`);
     }
 
-    // Step 4: Apply excluded foods filtering in memory if needed
     if (params.excludedFoods?.length > 0 && dbRecipes.length > 0) {
       console.log(`[Post-Filter] Applying excluded foods filter for: ${params.excludedFoods.join(', ')}`);
 
@@ -214,25 +282,22 @@ async function getRandomRecipesFromDB(
           const descriptionContainsTerm = recipe.description?.toLowerCase().includes(term) || false;
           return titleContainsTerm || ingredientsContainTerm || descriptionContainsTerm;
         });
-        return !hasExcludedFood; // Keep if it DOES NOT contain excluded term
+        return !hasExcludedFood;
       });
 
       console.log(`[Post-Filter] Count after exclusion filter: ${dbRecipes.length} (excluded ${initialCountBeforeExclusion - dbRecipes.length})`);
     }
 
-    // Step 5: Handle no results case
     if (dbRecipes.length === 0) {
       console.warn('[Result] No recipes found after all filters.');
-      return []; // Return empty array
+      return [];
     }
 
-    // Step 6: Select random recipes from the filtered list
-    const count = 8; // Number of recipes to return
+    const count = 8;
     const randomSelection = dbRecipes.sort(() => 0.5 - Math.random()).slice(0, count);
 
     console.log(`[Result] Selected ${randomSelection.length} random recipes from ${dbRecipes.length} potential matches.`);
 
-    // Step 7: Map the final selection to the expected frontend structure
     const transformedRecipes: TransformedRecipe[] = randomSelection.map(recipe => {
       const region = recipe.regionOfOrigin || undefined;
       const relevantCuisine = recipe.cuisines?.find(c => c.name);
@@ -276,7 +341,7 @@ async function getRandomRecipesFromDB(
       params: params,
       timestamp: new Date().toISOString()
     });
-    return []; // Return empty array on error
+    return [];
   }
 }
 
@@ -291,40 +356,41 @@ export async function POST(request: Request) {
 
     console.log('[API Request Body]', reqBody);
 
-    // Get recipes using the main logic function
     const recipes = await getRandomRecipesFromDB(reqBody, userId);
 
-    // --- MODIFIED RESPONSE FOR NO RECIPES ---
     if (!recipes || recipes.length === 0) {
       console.warn('[API Response] No recipes found matching criteria. Returning 200 OK with empty list.');
-      // Log diagnostic info about DB state if no recipes found
       const totalRecipes = await prisma.recipe.count();
       console.log(`[API Diagnostics] Total recipes in DB: ${totalRecipes}`);
-      // Add more specific counts if helpful (e.g., count by region)
       if (reqBody.selectedRegions?.length > 0) {
          try {
-             const regionCounts = await prisma.cuisine.groupBy({
-                 by: ['region'],
-                 _count: { region: true },
-                 where: { region: { in: reqBody.selectedRegions, mode: 'insensitive' } }
-             });
-             console.log(`[API Diagnostics] Counts for selected regions:`, regionCounts);
+            // Attempt to count countries matching the mapped regions
+            const targetCountries = reqBody.selectedRegions.flatMap(region => REGION_MAP[region.toLowerCase()] || []);
+            const uniqueTargetCountries = Array.from(new Set(targetCountries));
+             if (uniqueTargetCountries.length > 0) {
+                 const countryCounts = await prisma.recipe.groupBy({
+                     by: ['regionOfOrigin'],
+                     _count: { regionOfOrigin: true },
+                     where: { regionOfOrigin: { in: uniqueTargetCountries, mode: 'insensitive' } }
+                 });
+                 console.log(`[API Diagnostics] Counts for target countries:`, countryCounts);
+             } else {
+                console.log(`[API Diagnostics] No countries mapped for selected regions: ${reqBody.selectedRegions.join(', ')}`)
+             }
          } catch (regionCountError) {
-             console.error("[API Diagnostics] Error fetching region counts:", regionCountError);
+             console.error("[API Diagnostics] Error fetching country counts:", regionCountError);
          }
       }
 
-      // Return 200 OK, but indicate no recipes found in the payload
       return NextResponse.json(
         {
-          recipes: [], // Send empty array
-          success: true, // Indicate API call succeeded
-          message: 'No recipes found matching your criteria. Try adjusting your preferences.', // Informative message
+          recipes: [],
+          success: true,
+          message: 'No recipes found matching your criteria. Try adjusting your preferences.',
         },
-        { status: 200 } // Use 200 OK status
+        { status: 200 }
       );
     }
-    // --- END OF MODIFICATION ---
 
     console.log(`[API Response] Returning ${recipes.length} recipes. Success. Status 200.`);
     return NextResponse.json({
@@ -338,13 +404,12 @@ export async function POST(request: Request) {
       {
         error: 'Failed to generate recipes due to a server error.',
         success: false,
-        details: process.env.NODE_ENV === 'development' ? String(error) : undefined // Only show details in dev
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
       },
       { status: 500 }
     );
   } finally {
       console.log(`[API End] /api/recipes/generate POST request finished.`);
-      // Consider Prisma disconnect implications in serverless environments
       // await prisma.$disconnect();
   }
 }
