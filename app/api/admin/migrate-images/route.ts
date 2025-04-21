@@ -1,31 +1,54 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/auth';
+// Remove v5 import: import { auth } from '@/auth';
+// Add v4 imports:
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/auth';
 import imageService from '@/app/services/imageService';
 
 export async function POST() {
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user?.email) {
+    // Check authentication using v4 pattern
+    // Replace v5 call: const session = await auth();
+    const session = await getServerSession(authOptions);
+
+    // Check user email from v4 session
+    const userEmail = session?.user?.email;
+    if (!userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all recipes with external image URLs
+    // Add admin check if required for this route
+    // const isAdmin = userEmail && process.env.ADMIN_EMAILS?.split(',').includes(userEmail);
+    // if (!isAdmin) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
+
+
+    // Get all recipes with potentially external image URLs to check
     const recipes = await prisma.recipe.findMany({
       where: {
+        // Select recipes that *might* have external URLs, refine if needed
+        // This logic might need adjustment based on exactly which URLs you want to migrate
         OR: [
-          // Check for any external URLs
           { imageUrl: { startsWith: 'http://' } },
           { imageUrl: { startsWith: 'https://' } },
-          // Exclude local URLs
-          { NOT: { imageUrl: { startsWith: '/images/' } } },
-          { NOT: { imageUrl: { startsWith: '/static/' } } }
-        ]
-      }
+          // If you ONLY want to migrate http/https, remove the NOT clauses
+          // If you want to migrate anything NOT starting with /images or /static, keep them
+           { NOT: { imageUrl: { startsWith: '/images/' } } },
+           { NOT: { imageUrl: { startsWith: '/static/' } } }
+        ],
+        // Ensure imageUrl is not null or empty before attempting migration
+        imageUrl: {
+          not: null,
+        },
+        // Add another NOT check for empty string if necessary
+        // NOT: { imageUrl: '' }
+      },
+       select: { id: true, title: true, imageUrl: true } // Select only needed fields
     });
 
-    console.log(`Found ${recipes.length} recipes with external images`);
+    console.log(`Found ${recipes.length} recipes with potentially external images`);
 
     // Log the URLs for debugging
     recipes.forEach(recipe => {
@@ -33,22 +56,27 @@ export async function POST() {
     });
 
     const results = {
-      total: recipes.length,
+      totalChecked: recipes.length, // Renamed for clarity
       success: 0,
       failed: 0,
+      skipped: 0, // Added skipped counter
       errors: [] as string[]
     };
 
     // Process each recipe
     for (const recipe of recipes) {
       try {
-        if (!recipe.imageUrl) continue;
+        // Ensure imageUrl is present and looks like a URL we want to migrate
+        if (!recipe.imageUrl || !recipe.imageUrl.startsWith('http')) {
+             results.skipped++;
+             continue; // Skip if no URL or not an external URL
+        }
 
         console.log(`Processing recipe: ${recipe.title}`);
-        
+
         // Download and store the image
         const localImageUrl = await imageService.downloadAndStoreImage(recipe.imageUrl, recipe.title);
-        
+
         if (localImageUrl) {
           // Update the recipe with the local image URL
           await prisma.recipe.update({
@@ -60,6 +88,7 @@ export async function POST() {
         } else {
           results.failed++;
           results.errors.push(`Failed to download image for ${recipe.title}`);
+          console.warn(`Failed to download image for recipe: ${recipe.title} from URL: ${recipe.imageUrl}`);
         }
       } catch (error) {
         results.failed++;
@@ -68,6 +97,8 @@ export async function POST() {
         console.error(`Error processing recipe ${recipe.title}:`, error);
       }
     }
+
+    console.log("Image migration results:", results); // Log results
 
     return NextResponse.json({
       message: 'Image migration completed',
@@ -78,4 +109,4 @@ export async function POST() {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: `Failed to migrate images: ${errorMessage}` }, { status: 500 });
   }
-} 
+}

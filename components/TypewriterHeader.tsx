@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 const TypewriterHeader = () => {
   const [text, setText] = useState('');
-  const fullText = 'looking for recipe ideas?_';
+  const fullText = 'looking for recipe ideas?';
   const typingSpeed = 100; // Medium pace - 100ms per character
   const pauseDuration = 5000; // 5 seconds pause when complete
 

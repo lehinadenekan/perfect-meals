@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 // import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma'; // Use shared prisma instance
 // Use correct import for getServerSession
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth/next'; // Restore v4 import
+import { authOptions } from '@/auth'; // Correct path
+// import { auth } from '@/auth'; // Remove v5 import
 // Zod for validation
 import { z } from 'zod';
 
@@ -32,7 +33,8 @@ export async function GET(
   _request: Request, // Use Request, mark as unused
   { params }: RouteContext
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions); // Restore v4 call
+  // const session = await auth(); // Remove v5 call
   const { albumId } = params;
   const _userId = session?.user?.id;
 
@@ -71,7 +73,8 @@ export async function GET(
 
 // --- PATCH Handler for Updating Description --- 
 export async function PATCH(request: Request, { params }: RouteContext) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions); // Restore v4 call
+  // const session = await auth(); // Remove v5 call
   const { albumId } = params;
 
   // 1. Check Authentication
@@ -139,7 +142,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
 // --- Optional: DELETE Handler --- 
 export async function DELETE(_request: Request, { params }: RouteContext) {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions); // Restore v4 call
+    // const session = await auth(); // Remove v5 call
     const { albumId } = params;
 
     // 1. Check Authentication

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/auth';
+// Remove v5 import: import { auth } from '@/auth';
+// Add v4 imports:
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/auth';
 
 // Force dynamic rendering, disable static generation
 export const dynamic = 'force-dynamic';
@@ -18,11 +21,21 @@ function safeNumber(value: unknown): number {
 
 export async function GET() {
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Check authentication using v4 pattern
+    // Replace v5 call: const session = await auth();
+    const session = await getServerSession(authOptions);
+
+    // Check user email from v4 session
+    const userEmail = session?.user?.email;
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Unauthorized - No user email found' }, { status: 401 });
     }
+
+    // Add your admin check logic here if needed (e.g., checking against a list)
+    // const isAdmin = userEmail && process.env.ADMIN_EMAILS?.split(',').includes(userEmail);
+    // if (!isAdmin) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     // Count all recipes
     const totalRecipes = await prisma.recipe.count();
@@ -81,9 +94,9 @@ export async function GET() {
 
     // Get a sample of all image URLs by pattern
     const rawImagePatterns = await prisma.$queryRaw`
-      SELECT 
-        CASE 
-          WHEN "imageUrl" IS NULL OR "imageUrl" = '' THEN 'No image' 
+      SELECT
+        CASE
+          WHEN "imageUrl" IS NULL OR "imageUrl" = '' THEN 'No image'
           WHEN "imageUrl" LIKE '/recipe-images/%' THEN 'Local image'
           WHEN "imageUrl" LIKE '/placeholder%' THEN 'Placeholder'
           WHEN "imageUrl" LIKE 'http%' THEN 'External image'
@@ -119,4 +132,4 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: `Failed to check images: ${errorMessage}` }, { status: 500 });
   }
-} 
+}

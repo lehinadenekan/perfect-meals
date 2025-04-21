@@ -3,7 +3,7 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma'; // Use named import
 import { getServerSession } from 'next-auth/next'; // Import getServerSession
-import { authOptions } from '@/lib/auth'; // Import authOptions configuration
+import { authOptions } from '@/auth'; // Correct import path
 import { z } from 'zod'; // Import Zod
 import { Album, Prisma } from '@prisma/client'; // Import Album type and Prisma namespace
 import { put } from '@vercel/blob'; // Import Vercel Blob upload function

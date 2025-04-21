@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+// Remove v5 import: import { auth } from '@/auth';
+// Add v4 imports:
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering, disable static generation
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await auth();
-  const userEmail = session?.user?.email;
+  // Replace v5 call: const session = await auth();
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email; // Get email from v4 session
 
   if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,13 +20,14 @@ export async function GET() {
   try {
     const userPreferences = await prisma.userPreference.findUnique({
       where: {
-        userEmail: userEmail,
+        userEmail: userEmail, // Use email from session
       },
       select: {
-        dietTypes: true,
+        dietTypes: true, // Select only the dietTypes field
       },
     });
 
+    // Return the array of dietTypes or an empty array if no preferences found
     return NextResponse.json(userPreferences?.dietTypes || []);
   } catch (error) {
     console.error('Error fetching dietary restrictions:', error);
@@ -33,51 +38,71 @@ export async function GET() {
   }
 }
 
-type DietaryRestriction =
-  | 'vegetarian'
-  | 'vegan'
-  | 'gluten-free'
-  | 'dairy-free'
-  | 'kosher'
-  | 'halal'
-  | 'low-carb';
+// Consider defining this type more globally if used elsewhere
+// Also, these seem more like diet types than restrictions based on the DB field name
+// type DietaryRestriction =
+//   | 'vegetarian'
+//   | 'vegan'
+//   | 'gluten-free'
+//   | 'dairy-free' // Note: dairy-free might not be directly in your DIET_TYPES enum
+//   | 'kosher'     // Note: kosher might not be directly in your DIET_TYPES enum
+//   | 'halal'      // Note: halal might not be directly in your DIET_TYPES enum
+//   | 'low-carb';   // Note: low-carb might not be directly in your DIET_TYPES enum
+
+// Suggestion: Use string[] to align with other parts, unless strict validation against DIET_TYPES is needed
+// type DietaryRestrictionInput = { restrictions: string[] }; // More flexible
+type DietaryRestrictionInput = { restrictions: string[] }; // Changed type to string[]
 
 export async function PUT(request: Request) {
-  const session = await auth();
-  const userEmail = session?.user?.email;
+  // Replace v5 call: const session = await auth();
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email; // Get email from v4 session
 
   if (!userEmail) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    // Add validation for the request body (e.g., using Zod)
     const data = await request.json();
-    const { restrictions } = data as { restrictions: DietaryRestriction[] };
+    // Validate the received data shape and type
+    const { restrictions } = data as DietaryRestrictionInput;
 
+    if (!Array.isArray(restrictions)) {
+      return NextResponse.json({ error: 'Invalid input: restrictions must be an array' }, { status: 400 });
+    }
+    // Optional: Validate each string against your known DIET_TYPES enum/object keys if needed
+
+    // Prepare the data for the 'dietTypes' field in UserPreference model
     const updateData = {
-      dietTypes: restrictions,
+      dietTypes: restrictions, // Store the array of strings directly
     };
 
+    // Use upsert to create or update the user's preferences
     const updatedPreferences = await prisma.userPreference.upsert({
       where: {
-        userEmail: userEmail,
+        userEmail: userEmail, // Use email as the unique identifier
       },
-      update: updateData,
+      update: updateData, // Update the dietTypes field
       create: {
         userEmail: userEmail,
-        cookingTime: 'MEDIUM',
-        mealPrep: false,
-        servingSize: 2,
-        ...updateData,
+        // Add default values for other required fields if not provided
+        cookingTime: 'MEDIUM', // Example default
+        mealPrep: false,      // Example default
+        servingSize: 2,       // Example default
+        ...updateData,        // Include the dietTypes from the request
       },
+      select: { dietTypes: true } // Select only the updated field to return
     });
 
-    return NextResponse.json(updatedPreferences);
+    // Return only the updated restrictions array
+    return NextResponse.json(updatedPreferences.dietTypes);
   } catch (error) {
     console.error('Error updating dietary restrictions:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: 'Failed to update dietary restrictions' },
+      { error: `Failed to update dietary restrictions: ${errorMessage}` },
       { status: 500 }
     );
   }
-} 
+}

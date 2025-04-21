@@ -1,23 +1,17 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+// Removed Prisma DietType import as it doesn't exist in the schema
+// Removed Heroicons imports
+import DietSelector from './DietSelector'; // <<<--- !!! THIS ONE STILL NEEDS TO BE FOUND !!!
+import RegionSelector from './GeographicFilter'; // <<<--- CORRECTED FILENAME
+import { ExcludedFoodsInput } from './ExcludedFoodsInput'; // <<<--- USE NAMED IMPORT
+import MealCarousel from '../recipe/MealCarousel'; // <<<--- CORRECTED PATH
+import { Recipe } from '@/lib/types/recipe'; // <<<--- CORRECTED IMPORT PATH
 import { useSession } from 'next-auth/react';
-import * as Progress from '@radix-ui/react-progress';
-import { DietType, DIET_TYPES } from '@/types/diet';
-import GeographicFilter from './GeographicFilter';
-import MealCarousel from '../recipe/MealCarousel';
-import { Recipe } from '@/lib/types/recipe';
-import { usePreferenceUpdates } from '@/app/hooks/usePreferenceUpdates';
-import { ExcludedFoodsInput } from './ExcludedFoodsInput';
-import { DIET_ICONS } from '@/app/config/dietaryIcons';
-import DataPills from './DataPills';
 
-// Define the order of diet types for top and bottom rows
-const TOP_ROW_DIETS: DietType[] = ['fermented', 'gluten-free', 'lactose-free', 'low-FODMAP'];
-const BOTTOM_ROW_DIETS: DietType[] = ['nut-free', 'pescatarian', 'vegan', 'vegetarian'];
-
-// Export the props interface
+// Interface for props expected by the component
 export interface DietaryPreferenceSelectorProps {
-  selectedDiets: DietType[];
-  setSelectedDiets: Dispatch<SetStateAction<DietType[]>>;
+  selectedDiets: string[]; // <<<--- CHANGED DietType[] to string[]
+  setSelectedDiets: Dispatch<SetStateAction<string[]>>; // <<<--- CHANGED DietType[] to string[]
   excludedFoods: string[];
   setExcludedFoods: Dispatch<SetStateAction<string[]>>;
   selectedRegions: string[];
@@ -41,260 +35,167 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
   setCurrentStep,
 }) => {
   const { data: session, status } = useSession();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { updatePreferences } = usePreferenceUpdates({
-    dietTypes: [],
-    excludedFoods: [],
-    selectedRegions: [],
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Reset all selections when component mounts
+  // Effect to save preferences
   useEffect(() => {
-    setSelectedDiets([]);
-    setExcludedFoods([]);
-    setSelectedRegions([]);
-  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
-
-  // Load preferences from localStorage on mount
-  useEffect(() => {
-    // Only run on client
-    if (typeof window !== 'undefined') {
-      const storedPrefs = localStorage.getItem('dietaryPrefs');
-      if (storedPrefs) {
-        try { 
-          const parsedPrefs = JSON.parse(storedPrefs);
-          // Update state directly inside useEffect
-          setSelectedDiets(currentDiets => parsedPrefs.selectedDiets || currentDiets);
-          setExcludedFoods(currentFoods => parsedPrefs.excludedFoods || currentFoods);
-          setSelectedRegions(currentRegions => parsedPrefs.selectedRegions || currentRegions);
-        } catch (error) {
-          console.error("Failed to parse dietaryPrefs from localStorage", error);
-          // Optionally clear the invalid item
-          // localStorage.removeItem('dietaryPrefs');
-        }
-      }
-    }
-  }, [setSelectedDiets, setExcludedFoods, setSelectedRegions]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-
-  // Existing handlers
-  const handleDietToggle = async (dietType: DietType) => {
-    setSelectedDiets((prev: DietType[]) => {
-      const newDiets = prev.includes(dietType)
-        ? prev.filter((d: DietType) => d !== dietType)
-        : [...prev, dietType];
-
-      if (session?.user) {
+    const savePreferences = async () => {
+      if (status === 'authenticated' && session?.user?.id) {
+        console.log('User authenticated, attempting to save preferences...');
         setIsSaving(true);
-        Promise.resolve(updatePreferences({
-          dietTypes: newDiets,
-          excludedFoods,
-          selectedRegions,
-        })).finally(() => setIsSaving(false));
-      }
+        setError(null);
 
-      return newDiets;
-    });
+        // Payload uses selectedDiets which is already string[]
+        const payload = {
+          userId: session.user.id,
+          dietTypes: selectedDiets,
+          regions: selectedRegions,
+          excludedFoods: excludedFoods,
+        };
+        console.log('Saving preferences payload:', payload);
+
+
+        try {
+          const response = await fetch('/api/user/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Failed to save preferences:', errorData);
+            setError(errorData.error || 'Failed to save preferences.');
+          } else {
+             console.log('Preferences saved successfully');
+          }
+
+        } catch (err) {
+          console.error('Error saving preferences:', err);
+          setError('An unexpected error occurred while saving preferences.');
+        } finally {
+          setIsSaving(false);
+        }
+      } else {
+        console.log('User not authenticated or session data unavailable. Skipping preference save.');
+      }
+    };
+
+    // Debounce saving preferences
+    const handler = setTimeout(() => {
+      if (!isLoading) {
+        savePreferences();
+      }
+    }, 1500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [selectedDiets, selectedRegions, excludedFoods, status, session, isLoading]);
+
+
+  // Handle toggling a diet type (now accepts string)
+  const handleDietToggle = (dietType: string) => { // <<<--- CHANGED DietType to string
+    setSelectedDiets(prev =>
+      prev.includes(dietType) ? prev.filter(d => d !== dietType) : [...prev, dietType]
+    );
   };
 
+
+  // Function to fetch recipes based on current selections
   const handleGenerateRecipes = async () => {
     setIsLoading(true);
+    setError(null);
     setRecipes([]);
+
+    // Payload uses selectedDiets which is already string[]
+    const payload = {
+      dietTypes: selectedDiets,
+      selectedRegions: selectedRegions,
+      excludedFoods: excludedFoods,
+    };
+
+    console.log('Generating recipes with payload:', payload);
+
     try {
       const response = await fetch('/api/recipes/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dietTypes: selectedDiets,
-          excludedFoods,
-          selectedRegions,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate recipes');
+      if (!response.ok || !data.success) {
+        const errorMessage = data.message || data.error || 'Failed to generate recipes.';
+        console.error('Error generating recipes:', errorMessage, `HTTP status: ${response.status}`);
+        setError(errorMessage);
+        setRecipes([]);
+      } else {
+         console.log('Recipes generated successfully:', data.recipes?.length || 0);
+         setRecipes(data.recipes || []);
       }
-
-      if (!data.success || !Array.isArray(data.recipes)) {
-        throw new Error('Invalid response format from server');
-      }
-
-      setRecipes(data.recipes);
-    } catch (error) {
-      console.error('Error generating recipes:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate recipes';
-      alert(errorMessage);
+    } catch (err) {
+      console.error('Network or other error generating recipes:', err);
+      setError('An unexpected error occurred while generating recipes.');
+      setRecipes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
-    const totalCards = TOP_ROW_DIETS.length + BOTTOM_ROW_DIETS.length;
-    const cardsPerRow = TOP_ROW_DIETS.length;
-
-    switch (e.key) {
-      case 'ArrowRight':
-        e.preventDefault();
-        const nextIndex = (index + 1) % totalCards;
-        const nextCard = document.querySelectorAll('[role="button"]')[nextIndex] as HTMLElement;
-        nextCard?.focus();
-        break;
-      case 'ArrowLeft':
-        e.preventDefault();
-        const prevIndex = (index - 1 + totalCards) % totalCards;
-        const prevCard = document.querySelectorAll('[role="button"]')[prevIndex] as HTMLElement;
-        prevCard?.focus();
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        const downIndex = (index + cardsPerRow) % totalCards;
-        const downCard = document.querySelectorAll('[role="button"]')[downIndex] as HTMLElement;
-        downCard?.focus();
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        const upIndex = (index - cardsPerRow + totalCards) % totalCards;
-        const upCard = document.querySelectorAll('[role="button"]')[upIndex] as HTMLElement;
-        upCard?.focus();
-        break;
-      case 'Enter':
-      case ' ':
-        e.preventDefault();
-        handleDietToggle(index < cardsPerRow ? TOP_ROW_DIETS[index] : BOTTOM_ROW_DIETS[index - cardsPerRow]);
-        break;
+  const handleNext = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  // Step navigation handlers
-  const handleNext = () => {
-    setCurrentStep((prev: number) => Math.min(prev + 1, 3));
-  };
-
   const handleBack = () => {
-    setCurrentStep((prev: number) => Math.max(prev - 1, 1));
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
-  const onRemoveRegion = (region: string) => {
-    setSelectedRegions((prev: string[]) => prev.filter(r => r !== region));
-  };
+  // const onRemoveRegion = (region: string) => {
+  //   setSelectedRegions(prev => prev.filter(r => r !== region));
+  // };
 
-  const onRemoveExcludedFood = (food: string) => {
-    setExcludedFoods((prev: string[]) => prev.filter((f: string) => f !== food));
-  };
+  // const onRemoveExcludedFood = (food: string) => {
+  //   setExcludedFoods(prev => prev.filter(f => f !== food));
+  // };
 
-  // Render step content
+
   const renderStepContent = () => {
-    const dataPills = (
-      <DataPills
-        selectedDiets={selectedDiets}
-        selectedRegions={currentStep >= 2 ? selectedRegions : []}
-        excludedFoods={currentStep === 3 ? excludedFoods : []}
-        onRemoveDiet={handleDietToggle}
-        onRemoveRegion={currentStep >= 2 ? onRemoveRegion : undefined}
-        onRemoveExcludedFood={currentStep === 3 ? onRemoveExcludedFood : undefined}
-        showRegions={currentStep >= 2}
-        showExcludedFoods={currentStep === 3}
-      />
-    );
-
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-8">
-            {dataPills}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {TOP_ROW_DIETS.map((dietType, index) => (
-                <div key={dietType} className="group relative">
-                  <div className="absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 -top-12">
-                    {DIET_TYPES[dietType].description}
-                    <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 transform rotate-45 -bottom-1" />
-                  </div>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={selectedDiets.includes(dietType)}
-                    onClick={() => handleDietToggle(dietType)}
-                    onKeyDown={(e) => handleKeyDown(e, index)}
-                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
-                      ? 'border-yellow-400 text-yellow-500 shadow-lg'
-                      : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
-                      }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-5 h-5 mr-3 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
-                          }`,
-                        'aria-hidden': true
-                      })}
-                      <span className="font-medium">{DIET_TYPES[dietType].title}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {BOTTOM_ROW_DIETS.map((dietType, index) => (
-                <div key={dietType} className="group relative">
-                  <div className="absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 -top-12">
-                    {DIET_TYPES[dietType].description}
-                    <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 transform rotate-45 -bottom-1" />
-                  </div>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={selectedDiets.includes(dietType)}
-                    onClick={() => handleDietToggle(dietType)}
-                    onKeyDown={(e) => handleKeyDown(e, index + TOP_ROW_DIETS.length)}
-                    className={`relative flex items-center justify-center p-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 transform hover:scale-105 border-2 bg-white ${selectedDiets.includes(dietType)
-                      ? 'border-yellow-400 text-yellow-500 shadow-lg'
-                      : 'border-transparent hover:border-yellow-200 text-gray-600 hover:shadow-lg'
-                      }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      {React.createElement(DIET_ICONS[dietType], {
-                        className: `w-5 h-5 mr-3 ${selectedDiets.includes(dietType) ? 'text-yellow-500' : 'text-gray-600'
-                          }`,
-                        'aria-hidden': true
-                      })}
-                      <span className="font-medium">{DIET_TYPES[dietType].title}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <DietSelector
+            selectedDiets={selectedDiets} // Pass string[]
+            onDietToggle={handleDietToggle} // Pass function accepting string
+          />
         );
       case 2:
         return (
-          <div className="space-y-8">
-            {dataPills}
-            <GeographicFilter
-              selectedRegions={selectedRegions}
-              onRegionsChange={setSelectedRegions}
-            />
-          </div>
+          <RegionSelector
+            selectedRegions={selectedRegions}
+            onRegionsChange={setSelectedRegions}
+          />
         );
       case 3:
         return (
-          <div className="space-y-8">
-            {dataPills}
-            <ExcludedFoodsInput
-              excludedFoods={excludedFoods}
-              onExcludedFoodsChange={setExcludedFoods}
-            />
-          </div>
+          <ExcludedFoodsInput
+            excludedFoods={excludedFoods}
+            onExcludedFoodsChange={setExcludedFoods}
+          />
         );
       default:
         return null;
     }
   };
 
-  // Calculate progress percentage based on current step (out of 3 steps)
-  const progressValue = currentStep === 1 ? 33 : currentStep === 2 ? 66 : 100;
+  // No progressValue calculation needed
 
   return (
     <div
@@ -302,21 +203,10 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
       role="region"
       aria-label="dietary preferences selection"
     >
-      {/* Progress Indicator - Replaced dots with Radix Progress */}
-      <div className="mb-8 px-4 sm:px-0"> {/* Added padding for smaller screens */}
-        <Progress.Root
-          className="relative overflow-hidden bg-gray-200 rounded-full w-full h-[10px]" // Styling for the bar root
-          style={{ transform: 'translateZ(0)' }} // Required for animation in some browsers
-          value={progressValue}
-        >
-          <Progress.Indicator
-            className="bg-white w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]" // Changed bg-yellow-400 to bg-white
-            style={{ transform: `translateX(-${100 - progressValue}%)` }}
-          />
-        </Progress.Root>
-      </div>
+      {/* Progress Bar section is completely removed */}
 
-      <div className="text-center mb-16">
+      {/* Adjusted margin here to provide spacing */}
+      <div className="text-center mb-16 mt-8"> {/* Added mt-8 for spacing */}
         <h2 className="text-2xl font-bold">
           {currentStep === 1 && 'Choose Your Dietary Preferences'}
           {currentStep === 2 && 'Select Regional Preferences'}
@@ -368,18 +258,25 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
           Saving preferences...
         </p>
       )}
+       {error && !isLoading && ( // Display error messages only when not loading
+        <p className="text-center mt-4 text-red-600">
+          Error: {error}
+        </p>
+      )}
 
-      {/* Recipe Results */}
-      {recipes.length > 0 && (
-        <>
-          <p className="text-center mt-4 text-gray-600">
-            Click &ldquo;Generate New Recipes&rdquo; anytime to see different recipes!
-          </p>
+
+      {/* Recipe Results - Conditionally render based on loading/error state */}
+      {!isLoading && !error && recipes.length > 0 && ( // Only show carousel if not loading, no error, and recipes exist
           <div className="mt-8">
             <MealCarousel title="Meals based on your preferences" recipes={recipes} />
           </div>
-        </>
       )}
+      {/* Display message if loading finished, step 3 reached, no error, but no recipes found */}
+       {!isLoading && !error && recipes.length === 0 && currentStep === 3 && (
+         <p className="text-center mt-8 text-gray-600"> {/* Added more top margin */}
+           No recipes found matching your criteria. Try adjusting your preferences.
+         </p>
+       )}
     </div>
   );
 };

@@ -2,8 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client'; // Import Prisma types
-import { getServerSession } from 'next-auth/next'; // Or your auth provider's method
-import { authOptions } from '@/lib/auth'; // Adjust path to your auth options
+import { getServerSession } from 'next-auth/next'; // Restore v4 import
+import { authOptions } from '@/auth'; // Correct path
+// import { auth } from '@/auth'; // Remove v5 import
 import { prisma } from '@/lib/prisma'; // Adjust path to your prisma client instance
 
 // Define the expected input schema for saving an imported recipe
@@ -96,7 +97,8 @@ const parseIngredient = (ingredientStr: string): { name: string; amount: number 
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions); // Restore v4 call
+    // const session = await auth(); // Remove v5 call
     const userIdentifier = session?.user?.id;
     if (!userIdentifier) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

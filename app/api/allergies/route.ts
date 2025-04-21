@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 // Force dynamic rendering, disable static generation
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -38,7 +39,7 @@ interface AllergyInput {
 }
 
 export async function PUT(request: Request) {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
 
   if (!userEmail) {

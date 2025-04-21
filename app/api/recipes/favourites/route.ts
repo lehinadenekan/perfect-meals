@@ -1,7 +1,8 @@
 // app/api/recipes/favourites/route.ts
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth'; // Adjust path if needed
+import { getServerSession } from 'next-auth/next'; // Restore v4 import
+import { authOptions } from '@/auth'; // Correct path
+// import { auth } from '@/auth'; // Remove v5 import
 import { prisma } from '@/lib/prisma';   // Adjust path if needed
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   console.log("[API GET /favourites] Request received");
   try {
-    const session = await getServerSession(authOptions);
+    // const session = await auth(); // Remove v5 call
+    const session = await getServerSession(authOptions); // Restore v4 call
     const userId = session?.user?.id;
 
     if (!userId) {
@@ -86,7 +88,8 @@ export async function GET() {
 export async function POST(request: Request) {
   console.log("[API POST /favourites] Request received");
   try {
-    const session = await getServerSession(authOptions);
+    // const session = await auth(); // Remove v5 call
+    const session = await getServerSession(authOptions); // Restore v4 call
     const userId = session?.user?.id; // Use ID for DB operations
 
     // Check for auth using userId

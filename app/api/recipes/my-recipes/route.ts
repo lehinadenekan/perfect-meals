@@ -1,7 +1,8 @@
 // app/api/recipes/my-recipes/route.ts
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth'; // Adjust path if needed
+import { getServerSession } from 'next-auth/next'; // Restore v4 import
+import { authOptions } from '@/auth'; // Correct path
+// import { auth } from '@/auth'; // Remove v5 import
 import { prisma } from '@/lib/prisma';   // Adjust path if needed
 
 // Force dynamic rendering, disable static generation
@@ -10,7 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   console.log("[API GET /my-recipes] Request received");
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions); // Restore v4 call
+    // const session = await auth(); // Remove v5 call
     const userId = session?.user?.id;
 
     if (!userId) {

@@ -7,14 +7,13 @@ import DietaryPreferenceSelector from './dietary/DietaryPreferenceSelector';
 import FavouriteRecipes from '@/components/favourite-recipes/FavouriteRecipes';
 import SearchResults from './search/SearchResults';
 import { Recipe } from '@/lib/types/recipe';
-import { DietType } from '@/types/diet';
 import RecentlyViewedRecipes from './recently-viewed/RecentlyViewedRecipes';
 
 type CurrentView = 'default' | 'favorites' | 'searchResults' | 'recentlyViewed';
 
 // This component contains all the logic previously in app/page.tsx
 export default function HomePageClient() {
-  const [selectedDiets, setSelectedDiets] = useState<DietType[]>([]);
+  const [selectedDiets, setSelectedDiets] = useState<string[]>([]);
   const [excludedFoods, setExcludedFoods] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient, Prisma, Instruction, NutritionFacts } from '@prisma/client';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/auth";
 import type { Session } from 'next-auth';
 import { FOOD_VARIATIONS } from '@/app/config/foodVariations';
 
