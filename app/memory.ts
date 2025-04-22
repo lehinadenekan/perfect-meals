@@ -152,3 +152,23 @@
 //   - Investigation confirmed `prisma generate` *is* creating the correct types in `node_modules/.prisma/client/index.d.ts`.
 //   - Root cause identified as the editor/TS server environment not picking up the generated types.
 //   - Temporary Fix: Added `// @ts-expect-error` comments in relevant API routes (`/api/recipes`, `/api/recipes/import`, potentially seed script) to suppress editor errors until the environment issue is resolved (e.g., by restarting TS Server/editor).
+
+// --- Recent Fixes & Debugging (Recipe Source Implementation) ---
+// Debugging Homepage Load Issue (Logged In):
+//   - Issue: Homepage showed "No recipes found" only when user was logged in.
+//   - Cause: The filter `authorId: { not: userId }` in `/api/recipes` GET (intended to hide user's own recipes from Discover) was incorrectly filtering out ADMIN recipes because their `authorId` is `null`.
+//   - Fix: Removed the `{ authorId: { not: userId } }` filter logic from the GET handler in `/api/recipes/route.ts` as the `source: 'ADMIN'` filter is sufficient for the Discover page.
+// Build Errors & Fixes:
+//   - Encountered build failures on Vercel due to ESLint errors related to `@ts-expect-error` usage and unused variables (`userEmail`, `userId` after commenting out filters, `RecipeSource` import in test utils, `dietaryNotes` field mismatch).
+//   - Resolved by:
+//     - Removing `@ts-expect-error` comments once the Vercel build environment correctly recognized the Prisma types.
+//     - Removing the unused variable declarations (`userId`, `userEmail`) from `/api/recipes/route.ts` GET handler.
+//     - Removing unused `RecipeSource` import from `src/test/utils/test-utils.ts`.
+//     - Correcting the `SeedRecipeRecipe` interface in `prisma/seed-data/recipes.ts` to include the `dietaryNotes` field.
+// Test Utilities (`src/test/utils/test-utils.ts`):
+//   - Updated `createMockRecipe` function to include the required `source` field in the default mock object to prevent test-related type errors.
+// Current Status:
+//   - Recipe source differentiation logic is implemented.
+//   - Discover page correctly shows only ADMIN recipes, regardless of login status.
+//   - Build process on Vercel is passing.
+//   - Potential lingering local TS environment/cache issues might cause editor errors despite correct generated types.
