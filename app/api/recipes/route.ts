@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
     const userEmail = session?.user?.email;
     // --- Get User ID --- 
-    const userId = session?.user?.id; 
+    // const userId = session?.user?.id; // REMOVE - No longer used in this GET handler
 
     // --- Build Where Clause ---
     const where: Prisma.RecipeWhereInput = {
