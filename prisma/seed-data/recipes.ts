@@ -4432,7 +4432,7 @@ export const seedRecipes: SeedRecipeRecipe[] = [
         difficulty: 'MEDIUM',
         cuisineType: 'Africa',
         regionOfOrigin: 'Tanzania',
-        imageUrl: '/images/recipes/kaimati.jpg',
+        imageUrl: '/images/recipes/kaimati.webp',
         calories: 350,
         type: 'DESSERT',
         isVegetarian: true,

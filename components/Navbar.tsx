@@ -4,7 +4,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import AuthModal from './AuthModal';
+import LoginPromptModal from './LoginPromptModal';
 import {
   Search, User, Settings, LogOut, Bookmark, PlusCircle, CalendarDays, Compass, ChevronDown, List, History,
   FilePlus2, UploadCloud, Sparkles
@@ -16,12 +18,14 @@ interface NavbarProps {
 
 const Navbar = ({ onSearch }: NavbarProps) => {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isCollectionDropdownOpen, setIsCollectionDropdownOpen] = useState(false);
   const [isAddRecipeDropdownOpen, setIsAddRecipeDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
 
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const collectionDropdownRef = useRef<HTMLDivElement>(null);
@@ -132,7 +136,13 @@ const Navbar = ({ onSearch }: NavbarProps) => {
   const CollectionDropdown = () => (
     <div className="relative" ref={collectionDropdownRef}>
        <button
-         onClick={() => setIsCollectionDropdownOpen(!isCollectionDropdownOpen)}
+         onClick={() => {
+           if (session) {
+             setIsCollectionDropdownOpen(!isCollectionDropdownOpen);
+           } else {
+             setIsPromptModalOpen(true);
+           }
+         }}
          className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
          aria-haspopup="true"
          aria-expanded={isCollectionDropdownOpen}
@@ -172,7 +182,13 @@ const Navbar = ({ onSearch }: NavbarProps) => {
   const AddRecipeDropdown = () => (
     <div className="relative" ref={addRecipeDropdownRef}>
       <button
-        onClick={() => setIsAddRecipeDropdownOpen(!isAddRecipeDropdownOpen)}
+        onClick={() => {
+          if (session) {
+            setIsAddRecipeDropdownOpen(!isAddRecipeDropdownOpen);
+          } else {
+            setIsPromptModalOpen(true);
+          }
+        }}
         className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
         aria-haspopup="true"
         aria-expanded={isAddRecipeDropdownOpen}
@@ -234,18 +250,33 @@ const Navbar = ({ onSearch }: NavbarProps) => {
               </Link>
 
               {/* Conditionally render Collection Dropdown if logged in */}
-              {session && <CollectionDropdown />}
+              {/* {session && <CollectionDropdown />} */}
+              <CollectionDropdown />
 
               {/* Conditionally render Add Recipe Dropdown if logged in */}
-              {session && <AddRecipeDropdown />}
+              {/* {session && <AddRecipeDropdown />} */}
+              <AddRecipeDropdown />
 
-              {/* Render Meal Planner Link */}
-              <Link href="/meal-planner" passHref legacyBehavior>
+              {/* Render Meal Planner Link/Button */}
+              {/* <Link href="/meal-planner" passHref legacyBehavior>
                  <a className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium">
                    <CalendarDays size={16} />
                    <span className="hidden sm:inline">Meal Planner</span>
                  </a>
-              </Link>
+              </Link> */}
+              <button
+                onClick={() => {
+                  if (session) {
+                    router.push('/meal-planner');
+                  } else {
+                    setIsPromptModalOpen(true);
+                  }
+                }}
+                className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
+              >
+                <CalendarDays size={16} />
+                <span className="hidden sm:inline">Meal Planner</span>
+              </button>
            </div>
 
           {/* Middle: Search Bar */}
@@ -288,6 +319,15 @@ const Navbar = ({ onSearch }: NavbarProps) => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      <LoginPromptModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        onLoginClick={() => {
+          setIsPromptModalOpen(false);
+          setIsAuthModalOpen(true);
+        }}
       />
     </>
   );

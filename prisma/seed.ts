@@ -1,6 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient, Prisma } from '@prisma/client';
-import { seedRecipes } from './seed-data/recipes';
+import { seedRecipes, SeedRecipeRecipe } from './seed-data/recipes';
 import { FERMENTED_FOODS, FermentedIngredient } from '../lib/utils/dietary-classification';
 
 const prisma = new PrismaClient();
@@ -45,6 +45,12 @@ function checkPescatarian(ingredients: { name: string }[], isVegetarian: boolean
   }
 
   return hasFishOrSeafood && !hasOtherMeat;
+}
+
+// Helper to map seed type to category name (adjust if needed)
+function mapTypeToCategory(type: string): string {
+  // Simple mapping, could be more complex
+  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 }
 
 // --- Main Seeding Logic ---
@@ -99,23 +105,26 @@ async function main() {
 
   // --- Create/Update Recipes ---
   console.log('Seeding recipes...');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const recipeData of seedRecipes as any[]) {
+  for (const recipeData of seedRecipes) {
+    console.log(`Processing recipe: ${recipeData.title}`);
     try {
+      const categoryName = mapTypeToCategory(recipeData.type);
       const isRecipeVegetarian = recipeData.isVegetarian ?? false;
       const isRecipePescatarian = checkPescatarian(recipeData.ingredients, isRecipeVegetarian);
       const cuisineMapKey = (recipeData.cuisineType && recipeData.regionOfOrigin) ? `${recipeData.cuisineType}|${recipeData.regionOfOrigin}` : null;
       const cuisineInfo = cuisineMapKey ? cuisineMap.get(cuisineMapKey) : null;
 
-      const recipeInputData = {
-          title: recipeData.title,
+      await prisma.recipe.upsert({
+        where: { title: recipeData.title },
+        update: {
           description: recipeData.description,
           cookingTime: recipeData.cookingTime,
           servings: recipeData.servings,
           difficulty: recipeData.difficulty,
-          regionOfOrigin: recipeData.regionOfOrigin || null,
+          cuisineType: recipeData.cuisineType,
+          regionOfOrigin: recipeData.regionOfOrigin,
           imageUrl: recipeData.imageUrl,
-          author: { connect: { id: adminUser.id } },
+          calories: recipeData.calories,
           isVegetarian: isRecipeVegetarian,
           isVegan: recipeData.isVegan ?? false,
           isGlutenFree: recipeData.isGlutenFree ?? false,
@@ -124,50 +133,88 @@ async function main() {
           isFermented: recipeData.isFermented ?? false,
           isLowFodmap: recipeData.isLowFodmap ?? false,
           isPescatarian: isRecipePescatarian,
-          calories: recipeData.calories,
+          source: 'ADMIN',
+          authorId: null,
           notes: recipeData.notes,
-          dietaryNotes: recipeData.dietaryNotes ?? Prisma.JsonNull,
-          ...(cuisineInfo && { cuisines: { connect: { id: cuisineInfo.id } } }),
-      };
-
-      const recipe = await prisma.recipe.upsert({
-        where: { title: recipeData.title },
-        create: {
-          ...recipeInputData,
+          dietaryNotes: recipeData.dietaryNotes ? JSON.stringify(recipeData.dietaryNotes) : Prisma.JsonNull,
           ingredients: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            create: recipeData.ingredients.map((ingredient: any) => ({
-              name: ingredient.name, amount: ingredient.amount, unit: ingredient.unit, notes: ingredient.notes, isFermented: isIngredientFermented(ingredient.name),
+            deleteMany: {},
+            create: recipeData.ingredients.map(ing => ({
+              name: ing.name,
+              amount: ing.amount,
+              unit: ing.unit,
+              notes: ing.notes,
             })),
           },
-          instructions: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            create: recipeData.instructions.map((instruction: any) => ({
-              stepNumber: instruction.stepNumber,
-              description: instruction.description,
-              imageUrl: instruction.imageUrl ?? null,
-            })),
-          },
-          ...(recipeData.nutritionFacts && {
-             nutritionFacts: {
-                create: { protein: recipeData.nutritionFacts.protein, carbs: recipeData.nutritionFacts.carbs, fat: recipeData.nutritionFacts.fat, fiber: recipeData.nutritionFacts.fiber, sugar: recipeData.nutritionFacts.sugar, sodium: recipeData.nutritionFacts.sodium },
-            }
-          }),
-        },
-        update: {
-          ...recipeInputData,
           instructions: {
             deleteMany: {},
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            create: recipeData.instructions.map((instruction: any) => ({
-              stepNumber: instruction.stepNumber,
-              description: instruction.description,
-              imageUrl: instruction.imageUrl ?? null,
+            create: recipeData.instructions.map(inst => ({
+              stepNumber: inst.stepNumber,
+              description: inst.description,
             })),
+          },
+          nutritionFacts: {
+            upsert: {
+              create: recipeData.nutritionFacts,
+              update: recipeData.nutritionFacts,
+            }
+          },
+          categories: {
+            set: [],
+            connectOrCreate: {
+              where: { name: categoryName },
+              create: { name: categoryName },
+            },
+          },
+        },
+        create: {
+          title: recipeData.title,
+          description: recipeData.description,
+          cookingTime: recipeData.cookingTime,
+          servings: recipeData.servings,
+          difficulty: recipeData.difficulty,
+          cuisineType: recipeData.cuisineType,
+          regionOfOrigin: recipeData.regionOfOrigin,
+          imageUrl: recipeData.imageUrl,
+          calories: recipeData.calories,
+          isVegetarian: isRecipeVegetarian,
+          isVegan: recipeData.isVegan ?? false,
+          isGlutenFree: recipeData.isGlutenFree ?? false,
+          isLactoseFree: recipeData.isLactoseFree ?? false,
+          isNutFree: recipeData.isNutFree ?? false,
+          isFermented: recipeData.isFermented ?? false,
+          isLowFodmap: recipeData.isLowFodmap ?? false,
+          isPescatarian: isRecipePescatarian,
+          source: 'ADMIN',
+          authorId: null,
+          notes: recipeData.notes,
+          dietaryNotes: recipeData.dietaryNotes ? JSON.stringify(recipeData.dietaryNotes) : Prisma.JsonNull,
+          ingredients: {
+            create: recipeData.ingredients.map(ing => ({
+              name: ing.name,
+              amount: ing.amount,
+              unit: ing.unit,
+              notes: ing.notes,
+            })),
+          },
+          instructions: {
+            create: recipeData.instructions.map(inst => ({
+              stepNumber: inst.stepNumber,
+              description: inst.description,
+            })),
+          },
+          nutritionFacts: {
+            create: recipeData.nutritionFacts,
+          },
+          categories: {
+            connectOrCreate: {
+              where: { name: categoryName },
+              create: { name: categoryName },
+            },
           },
         },
       });
-      console.log(`Upserted recipe: ${recipe.title}`);
+      console.log(`Upserted recipe: ${recipeData.title}`);
     } catch (error) {
       console.error(`Error upserting recipe ${recipeData.title}:`, error);
     }

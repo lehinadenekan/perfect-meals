@@ -77,6 +77,7 @@ export default function RecipeCard({
             alt={recipe.title}
             width={240}
             height={180}
+            className="w-full h-full"
             style={{ objectFit: 'cover' }}
             priority={false}
             onError={(e) => {

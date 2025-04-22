@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// --- Enum for Recipe Source ---
+enum RecipeSource {
+  ADMIN         // Added by site administrators (for public directory)
+  USER_CREATED  // Manually created by a regular user
+  USER_IMPORTED // Imported via URL by a regular user
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -62,7 +69,6 @@ model Recipe {
   servings           Int?
   difficulty         String?
   cuisineType        String?
-  authorId           String
   isVegetarian       Boolean?                 @default(false)
   isVegan            Boolean?                 @default(false)
   isGlutenFree       Boolean?                 @default(false)
@@ -83,7 +89,9 @@ model Recipe {
   ingredients        Ingredient[]
   instructions       Instruction[]
   nutritionFacts     NutritionFacts?
-  author             User   @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  source             RecipeSource             @default(USER_CREATED)
+  author             User?                    @relation("AuthoredRecipes", fields: [authorId], references: [id])
+  authorId           String?
   generationJob      RecipeGenerationJob?     @relation("JobRecipes", fields: [jobId], references: [id])
   albums             RecipeToAlbum[]
   reviews            Review[]

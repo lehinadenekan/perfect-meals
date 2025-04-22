@@ -130,6 +130,8 @@ export async function POST(req: NextRequest) {
                 imageUrl: recipeData.imageUrl || null, // Ensure empty string becomes null
                 servings: servingsInt, // Parsed integer or undefined
                 authorId: userIdentifier,
+                source: 'USER_IMPORTED', // Set the source for imported recipes
+                // Add other fields from SaveImportedRecipeSchema if needed (e.g., cookingTime parsed from totalTime)
             },
         });
 
