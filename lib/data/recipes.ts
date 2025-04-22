@@ -1,6 +1,6 @@
 // lib/data/recipes.ts
 // Modify imports at the top
-import { Recipe, Ingredient, NutritionFacts, Tag, Category, Cuisine, Prisma } from '@prisma/client'; // Add Prisma
+import { Recipe, Ingredient, NutritionFacts, Tag, Category, Cuisine, DietaryNotes } from '@prisma/client'; // Removed unused Prisma import
 import { Instruction } from '@/lib/types/recipe'; // Import Instruction from our defined types
 import 'server-only';
 import { prisma } from '@/lib/prisma';
@@ -19,7 +19,7 @@ export type RecipeDetailData = Recipe & {
   category?: Category | null;
   cuisine?: Cuisine | null;
   isFavourite?: boolean;
-  dietaryNotes?: Prisma.JsonValue | null; // <-- Add this field
+  dietaryNotes?: DietaryNotes | null; // <-- Changed from Prisma.JsonValue
 };
 
 
@@ -48,6 +48,7 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
         tags: true,
         categories: true,
         cuisines: true,
+        dietaryNotes: true,
       },
     });
 

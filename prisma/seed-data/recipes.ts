@@ -12,6 +12,7 @@ interface Ingredient {
 interface Instruction {
   stepNumber: number;
   description: string;
+  imageUrl?: string | null; // Added optional imageUrl
 }
 
 interface NutritionFacts {

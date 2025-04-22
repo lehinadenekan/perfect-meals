@@ -83,8 +83,8 @@ model Recipe {
   regionOfOrigin     String?
   search_vector      Unsupported("tsvector")?
   calories           Int?
-  notes              String[]           @default([])
-  dietaryNotes       Json?
+  notes              String[]                 @default([])
+  dietaryNotes       DietaryNotes?
   dietaryFeedback    DietaryFeedback[]
   ingredients        Ingredient[]
   instructions       Instruction[]
@@ -332,4 +332,14 @@ model IngredientMapping {
 
   @@index([amazonSearchTerm]) // Index for potential reverse lookups
   @@index([ingredientQuery])  // Index for faster query lookups
+}
+
+// New DietaryNotes model
+model DietaryNotes {
+  id                   String  @id @default(cuid())
+  fodmapInfo           String?
+  keyNutrients         String?
+  antiInflammatoryInfo String?
+  recipeId             String  @unique // Enforces one-to-one relation
+  recipe               Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }

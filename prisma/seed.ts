@@ -1,6 +1,6 @@
 // prisma/seed.ts
-import { PrismaClient, Prisma } from '@prisma/client';
-import { seedRecipes, SeedRecipeRecipe } from './seed-data/recipes';
+import { PrismaClient } from '@prisma/client';
+import { seedRecipes } from './seed-data/recipes';
 import { FERMENTED_FOODS, FermentedIngredient } from '../lib/utils/dietary-classification';
 
 const prisma = new PrismaClient();
@@ -114,8 +114,10 @@ async function main() {
       const cuisineMapKey = (recipeData.cuisineType && recipeData.regionOfOrigin) ? `${recipeData.cuisineType}|${recipeData.regionOfOrigin}` : null;
       const cuisineInfo = cuisineMapKey ? cuisineMap.get(cuisineMapKey) : null;
 
+      // --- Start of Upsert Block ---
       await prisma.recipe.upsert({
         where: { title: recipeData.title },
+        // --- UPDATE part of upsert ---
         update: {
           description: recipeData.description,
           cookingTime: recipeData.cookingTime,
@@ -134,31 +136,62 @@ async function main() {
           isLowFodmap: recipeData.isLowFodmap ?? false,
           isPescatarian: isRecipePescatarian,
           source: 'ADMIN',
-          authorId: null,
+          authorId: null, // Keep as null for ADMIN recipes
           notes: recipeData.notes,
-          dietaryNotes: recipeData.dietaryNotes ? JSON.stringify(recipeData.dietaryNotes) : Prisma.JsonNull,
+
+          // --- Dietary Notes (Update - Upsert if exists, do nothing if missing) ---
+          dietaryNotes: recipeData.dietaryNotes
+            ? { // If seed data HAS dietary notes:
+                upsert: { // Use upsert for the related record
+                  create: { // Data for creating if it doesn't exist
+                    fodmapInfo: recipeData.dietaryNotes.fodmapInfo,
+                    keyNutrients: recipeData.dietaryNotes.keyNutrients,
+                    antiInflammatoryInfo: recipeData.dietaryNotes.antiInflammatoryInfo,
+                    // Add other fields if needed
+                  },
+                  update: { // Data for updating if it *does* exist
+                    fodmapInfo: recipeData.dietaryNotes.fodmapInfo,
+                    keyNutrients: recipeData.dietaryNotes.keyNutrients,
+                    antiInflammatoryInfo: recipeData.dietaryNotes.antiInflammatoryInfo,
+                    // Add other fields if needed
+                  },
+                },
+              }
+            : undefined, // If seed data is missing, DO NOTHING to the relation
+
+          // --- Ingredients (Update - Replace) ---
           ingredients: {
-            deleteMany: {},
-            create: recipeData.ingredients.map(ing => ({
+            deleteMany: {}, // Delete all existing ingredients for this recipe
+            create: recipeData.ingredients.map(ing => ({ // Create the new set
               name: ing.name,
               amount: ing.amount,
               unit: ing.unit,
               notes: ing.notes,
+              isFermented: isIngredientFermented(ing.name)
             })),
           },
+
+          // --- Instructions (Update - Replace) ---
           instructions: {
-            deleteMany: {},
-            create: recipeData.instructions.map(inst => ({
+            deleteMany: {}, // Delete all existing instructions for this recipe
+            create: recipeData.instructions.map(inst => ({ // Create the new set
               stepNumber: inst.stepNumber,
               description: inst.description,
+              imageUrl: inst.imageUrl, // <-- Included imageUrl
             })),
           },
-          nutritionFacts: {
-            upsert: {
-              create: recipeData.nutritionFacts,
-              update: recipeData.nutritionFacts,
-            }
-          },
+
+          // --- Nutrition Facts (Update - Upsert if exists, do nothing if missing) ---
+          nutritionFacts: recipeData.nutritionFacts
+            ? {
+                upsert: {
+                  create: recipeData.nutritionFacts,
+                  update: recipeData.nutritionFacts,
+                },
+              }
+            : undefined, // If seed data is missing, DO NOTHING to the relation
+
+          // --- Categories (Update) --- Keep set:[] before connectOrCreate
           categories: {
             set: [],
             connectOrCreate: {
@@ -166,7 +199,14 @@ async function main() {
               create: { name: categoryName },
             },
           },
+          // --- Cuisines (Update) --- Keep set:[] before connect
+          cuisines: cuisineInfo ? {
+              set: [],
+              connect: { id: cuisineInfo.id }
+          } : { set: [] } // Explicitly disconnect all if no cuisine info
+
         },
+        // --- CREATE part of upsert --- (Remains largely the same)
         create: {
           title: recipeData.title,
           description: recipeData.description,
@@ -186,41 +226,72 @@ async function main() {
           isLowFodmap: recipeData.isLowFodmap ?? false,
           isPescatarian: isRecipePescatarian,
           source: 'ADMIN',
-          authorId: null,
+          authorId: null, // Keep as null for ADMIN recipes
           notes: recipeData.notes,
-          dietaryNotes: recipeData.dietaryNotes ? JSON.stringify(recipeData.dietaryNotes) : Prisma.JsonNull,
+
+          // --- Dietary Notes (Create) ---
+          dietaryNotes: recipeData.dietaryNotes
+            ? {
+                create: {
+                  fodmapInfo: recipeData.dietaryNotes.fodmapInfo,
+                  keyNutrients: recipeData.dietaryNotes.keyNutrients,
+                  antiInflammatoryInfo: recipeData.dietaryNotes.antiInflammatoryInfo,
+                  // Add other fields if needed
+                },
+              }
+            : undefined, // Don't create if no data
+
+          // --- Ingredients (Create) ---
           ingredients: {
             create: recipeData.ingredients.map(ing => ({
               name: ing.name,
               amount: ing.amount,
               unit: ing.unit,
               notes: ing.notes,
+              isFermented: isIngredientFermented(ing.name)
             })),
           },
+
+          // --- Instructions (Create) ---
           instructions: {
             create: recipeData.instructions.map(inst => ({
               stepNumber: inst.stepNumber,
               description: inst.description,
+              imageUrl: inst.imageUrl, // <-- Included imageUrl
             })),
           },
-          nutritionFacts: {
-            create: recipeData.nutritionFacts,
-          },
+
+          // --- Nutrition Facts (Create) ---
+          nutritionFacts: recipeData.nutritionFacts
+            ? { create: recipeData.nutritionFacts }
+            : undefined,
+
+          // --- Categories (Create) ---
           categories: {
             connectOrCreate: {
               where: { name: categoryName },
               create: { name: categoryName },
             },
           },
+           // --- Cuisines (Create) ---
+          cuisines: cuisineInfo ? {
+              connect: { id: cuisineInfo.id }
+          } : undefined
+
         },
       });
+      // --- End of Upsert Block ---
+
       console.log(`Upserted recipe: ${recipeData.title}`);
     } catch (error) {
       console.error(`Error upserting recipe ${recipeData.title}:`, error);
+      // Optional: Re-throw error if you want the seed to stop on first failure
+      // throw error;
     }
   }
   console.log('Recipe seeding finished.');
   // --- End Create/Update Recipes ---
+
 
   // ================================================
   // --- Seed Ingredient Mappings (NEW SECTION) ---

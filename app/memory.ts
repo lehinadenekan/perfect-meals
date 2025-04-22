@@ -71,7 +71,24 @@
 //   - Component Design: Functional components, passing props including state setters and callbacks.
 // Authentication System: Overview of the NextAuth.js v4 setup, location and structure of authOptions, typical usage of useSession hook in Client Components.
 // Database Interaction: Key models in prisma/schema.prisma, common patterns for using Prisma Client, important relations, and any specific data handling logic.
+//   - Added `DietaryNotes` model with a one-to-one relation to `Recipe` (replacing the previous `Json?` field).
+//   - Seed script (`prisma/seed.ts`) updated to correctly handle creating/updating the related `DietaryNotes` record and populating `Instruction.imageUrl` during upserts.
 // API & Server Logic: Structure of API routes (app/api/...) and Server Actions (lib/actions/...), request/response patterns, validation approaches (e.g., Zod), and error handling strategies.
+//   - API Logic:
+//     - Discover Page (`/api/recipes` GET): Now strictly filters using `where: { source: 'ADMIN' }` (using string literal due to TS type issues) to only show admin recipes.
+//     - Manual Creation (`/api/recipes` POST): Sets `source: 'USER_CREATED'` (using string literal) when creating new recipes.
+//     - Import (`/api/recipes/import` POST): Sets `source: 'USER_IMPORTED'` (using string literal) when saving imported recipes.
+//     - My Collection (`/api/recipes/my-recipes` GET): Verified to fetch recipes based only on `authorId`, correctly showing both USER_CREATED and USER_IMPORTED recipes.
+//     - Detail Fetch (`/api/recipes/[id]` GET): Updated via `lib/data/recipes.ts` (`getRecipeById`) to include the related `dietaryNotes` record and ensure `instructions` are included with `imageUrl`.
+//   - Seeding (`prisma/seed.ts`):
+//     - New seed script created to upsert recipes from `prisma/seed-data/recipes.ts`.
+//     - Uses `title` as the unique identifier for upserting.
+//     - Sets `source: 'ADMIN'` and `authorId: null` for all seeded recipes.
+//     - Configured in `package.json` to run via `pnpm prisma db seed`.
+//     - Updated upsert logic to correctly handle creating/updating related `DietaryNotes` and `Instruction.imageUrl` fields, resolving previous P2025/P2014 errors.
+//   - Initial Data Fix (`scripts/mark-all-recipes-admin.ts`):
+//     - One-time script created and run to update all pre-existing recipes to `source: 'ADMIN'`.
+//     - This resolved the initial HTTP 500 error on the homepage after the API filter was added.
 // Key Workflows & Components:
 //   - Recipe Filtering: Implemented via `FilterModal.tsx` using sub-components like `DietSelector.tsx`, `GeographicFilters.tsx`, `ExcludedFoodsInput.tsx`. Preferences can be saved for logged-in users.
 //   - Excluded Foods Input (`components/dietary/ExcludedFoodsInput.tsx`): Allows users to type foods, adds them as removable pills on Enter/comma, uses Backspace to remove last item.
@@ -134,19 +151,21 @@
 //   - Added `RecipeSource` enum (ADMIN, USER_CREATED, USER_IMPORTED).
 //   - Added `source RecipeSource @default(USER_CREATED)` field to `Recipe` model.
 //   - Made `authorId` on `Recipe` nullable (`String?`) to allow ADMIN recipes without a specific user author.
-// API Logic:
-//   - Discover Page (`/api/recipes` GET): Now strictly filters using `where: { source: 'ADMIN' }` (using string literal due to TS type issues) to only show admin recipes.
-//   - Manual Creation (`/api/recipes` POST): Sets `source: 'USER_CREATED'` (using string literal) when creating new recipes.
-//   - Import (`/api/recipes/import` POST): Sets `source: 'USER_IMPORTED'` (using string literal) when saving imported recipes.
-//   - My Collection (`/api/recipes/my-recipes` GET): Verified to fetch recipes based only on `authorId`, correctly showing both USER_CREATED and USER_IMPORTED recipes.
-// Seeding (`prisma/seed.ts`):
-//   - New seed script created to upsert recipes from `prisma/seed-data/recipes.ts`.
-//   - Uses `title` as the unique identifier for upserting.
-//   - Sets `source: 'ADMIN'` (using string literal) and `authorId: null` for all seeded recipes.
-//   - Configured in `package.json` to run via `pnpm prisma db seed`.
-// Initial Data Fix (`scripts/mark-all-recipes-admin.ts`):
-//   - One-time script created and run to update all pre-existing recipes to `source: 'ADMIN'`.
-//   - This resolved the initial HTTP 500 error on the homepage after the API filter was added.
+//   - API Logic:
+//     - Discover Page (`/api/recipes` GET): Now strictly filters using `where: { source: 'ADMIN' }` (using string literal due to TS type issues) to only show admin recipes.
+//     - Manual Creation (`/api/recipes` POST): Sets `source: 'USER_CREATED'` (using string literal) when creating new recipes.
+//     - Import (`/api/recipes/import` POST): Sets `source: 'USER_IMPORTED'` (using string literal) when saving imported recipes.
+//     - My Collection (`/api/recipes/my-recipes` GET): Verified to fetch recipes based only on `authorId`, correctly showing both USER_CREATED and USER_IMPORTED recipes.
+//     - Detail Fetch (`/api/recipes/[id]` GET): Updated via `lib/data/recipes.ts` (`getRecipeById`) to include the related `dietaryNotes` record and ensure `instructions` are included with `imageUrl`.
+//   - Seeding (`prisma/seed.ts`):
+//     - New seed script created to upsert recipes from `prisma/seed-data/recipes.ts`.
+//     - Uses `title` as the unique identifier for upserting.
+//     - Sets `source: 'ADMIN'` and `authorId: null` for all seeded recipes.
+//     - Configured in `package.json` to run via `pnpm prisma db seed`.
+//     - Updated upsert logic to correctly handle creating/updating related `DietaryNotes` and `Instruction.imageUrl` fields, resolving previous P2025/P2014 errors.
+//   - Initial Data Fix (`scripts/mark-all-recipes-admin.ts`):
+//     - One-time script created and run to update all pre-existing recipes to `source: 'ADMIN'`.
+//     - This resolved the initial HTTP 500 error on the homepage after the API filter was added.
 // Troubleshooting (TypeScript Type Errors):
 //   - Persistent TS errors occurred where `source` field / `RecipeSource` enum were used, despite successful migration.
 //   - Investigation confirmed `prisma generate` *is* creating the correct types in `node_modules/.prisma/client/index.d.ts`.

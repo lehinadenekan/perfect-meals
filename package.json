@@ -26,7 +26,8 @@
     "update-images": "ts-node scripts/update-recipe-images.ts",
     "fix-steak-kidney-pie": "ts-node scripts/fix-steak-kidney-pie.ts",
     "prepare": "husky",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dev:force": "kill $(lsof -t -i:3000) 2>/dev/null || true && pnpm dev"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
