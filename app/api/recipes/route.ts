@@ -57,9 +57,10 @@ export async function GET(request: Request) {
     // --- Get User ID --- 
     const userId = session?.user?.id; 
 
-    // --- Build Where Clause --- 
+    // --- Build Where Clause ---
     const where: Prisma.RecipeWhereInput = {
-        // @ts-ignore - Ignore error until Prisma generate issue is resolved
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error - Ignore error until Prisma generate issue is resolved
         source: 'ADMIN'
     };
     const andConditions: Prisma.RecipeWhereInput[] = []; // Use AND for combining different filter types
@@ -239,7 +240,8 @@ export async function POST(request: Request) {
           cookingTime: recipeData.cookingTime,
           servings: recipeData.servings,
           authorId: userId, // Connect to the logged-in user using ID
-          // @ts-ignore - Ignore error until Prisma generate issue is resolved
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error - Ignore error until Prisma generate issue is resolved
           source: 'USER_CREATED', // Use string literal
 
           // Map optional fields, using defaults from Prisma schema if not provided
