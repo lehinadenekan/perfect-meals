@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Recipe } from '@prisma/client'
+import { Recipe, RecipeSource } from '@prisma/client'
 
 export { render, screen, fireEvent, userEvent }
 
@@ -31,6 +31,7 @@ export const createMockRecipe = (overrides: Partial<Recipe> = {}): Recipe => {
     calories: 500,
     notes: [],
     dietaryNotes: null,
+    source: 'ADMIN',
   }
 
   return { ...defaults, ...overrides }
