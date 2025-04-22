@@ -32,81 +32,170 @@ interface CreateRecipePayload {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dietTypesParam = searchParams.get('dietTypes') || '';
-    const includePartialMatches = searchParams.get('includePartialMatches') === 'true';
-    const dietTypes = dietTypesParam ? dietTypesParam.split(',') : [];
 
-    // Replace v5 call: const session = await auth();
+    // --- Pagination Parameters ---
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10); // Default limit 20
+    const skip = (page - 1) * limit;
+
+    // --- Filter Parameters ---
+    const dietsParam = searchParams.get('diets') || '';
+    const regionsParam = searchParams.get('regions') || '';
+    const excludedFoodsParam = searchParams.get('excludedFoods') || '';
+    const cookingStylesParam = searchParams.get('cookingStyles') || '';
+    const mealCategoriesParam = searchParams.get('mealCategories') || '';
+
+    const diets = dietsParam ? dietsParam.split(',').map(d => d.trim()).filter(d => d) : [];
+    const regions = regionsParam ? regionsParam.split(',').map(r => r.trim()).filter(r => r) : [];
+    const excludedFoods = excludedFoodsParam ? excludedFoodsParam.split(',').map(f => f.trim()).filter(f => f) : [];
+    const cookingStyles = cookingStylesParam ? cookingStylesParam.split(',').map(s => s.trim()).filter(s => s) : [];
+    const mealCategories = mealCategoriesParam ? mealCategoriesParam.split(',').map(c => c.trim()).filter(c => c) : [];
+
+    // --- Session for excluding recent --- 
     const session = await getServerSession(authOptions);
-    const userEmail = session?.user?.email; // Get email from v4 session
+    const userEmail = session?.user?.email;
+    // --- Get User ID --- 
+    const userId = session?.user?.id; 
 
-    // Use const for where, properties can still be assigned
+    // --- Build Where Clause --- 
     const where: Prisma.RecipeWhereInput = {};
+    const andConditions: Prisma.RecipeWhereInput[] = []; // Use AND for combining different filter types
 
-    // Apply dietary filters if needed
-    if (!includePartialMatches || dietTypes.length > 0) {
-      if (dietTypes.length > 0) {
-        const dietConditions: Prisma.RecipeWhereInput[] = [];
-        // Map provided diet types to corresponding boolean fields
-        if (dietTypes.includes('vegetarian')) dietConditions.push({ isVegetarian: true });
-        if (dietTypes.includes('vegan')) dietConditions.push({ isVegan: true });
-        if (dietTypes.includes('gluten-free')) dietConditions.push({ isGlutenFree: true });
-        // Map 'dairy-free' to 'isLactoseFree' based on previous examples
-        if (dietTypes.includes('dairy-free')) dietConditions.push({ isLactoseFree: true });
-        if (dietTypes.includes('pescatarian')) dietConditions.push({ isPescatarian: true });
-        if (dietTypes.includes('nut-free')) dietConditions.push({ isNutFree: true });
-        // Add mappings for other potential diet types if necessary
-
-        if (dietConditions.length > 0) {
-          // Use AND for multiple selections if user wants *all* applied,
-          // or OR if *any* apply (current logic uses OR)
-          where.OR = dietConditions;
+    // 1. Dietary Filters (Using AND logic now)
+    // Map diet names to schema fields (adjust field names if needed)
+    const dietFieldMap: { [key: string]: keyof Prisma.RecipeWhereInput } = {
+      vegetarian: 'isVegetarian',
+      vegan: 'isVegan',
+      glutenFree: 'isGlutenFree', // Assuming 'gluten-free' maps to isGlutenFree
+      lactoseFree: 'isLactoseFree', // Assuming 'dairy-free' maps to isLactoseFree
+      nutFree: 'isNutFree',
+      pescatarian: 'isPescatarian',
+      // Add other mappings as needed
+    };
+    if (diets.length > 0) {
+      diets.forEach(diet => {
+        const field = dietFieldMap[diet.toLowerCase().replace('-', '')]; // Normalize key
+        if (field) {
+          andConditions.push({ [field]: true });
         }
-      }
+      });
     }
 
-    // Filter out recently shown recipes for logged-in users
-    if (userEmail) { // Check if user is logged in using email
+    // 2. Regional Filters (Assuming 'regionOfOrigin' is the field)
+    if (regions.length > 0) {
+      andConditions.push({ regionOfOrigin: { in: regions, mode: 'insensitive' } });
+    }
+
+    // 3. Cooking Style Filters (Using 'tags' relation based on schema)
+    if (cookingStyles.length > 0) {
+       andConditions.push({
+         tags: { // Filter on the 'tags' relation
+           some: { // Check if *some* related tag matches
+             name: { // Match based on the tag's 'name' field
+               in: cookingStyles,
+               mode: 'insensitive'
+             }
+           }
+         }
+       });
+    }
+
+    // 4. Meal Category Filters (Using 'categories' relation based on schema)
+    if (mealCategories.length > 0) {
+       andConditions.push({
+         categories: { // Filter on the 'categories' relation
+           some: { // Check if *some* related category matches
+             name: { // Match based on the category's 'name' field
+               in: mealCategories,
+               mode: 'insensitive'
+             }
+           }
+         }
+       });
+    }
+
+    // 5. Excluded Foods Filters (Requires checking ingredients)
+    if (excludedFoods.length > 0) {
+      andConditions.push({
+        NOT: {
+          ingredients: {
+            some: {
+              name: {
+                in: excludedFoods,
+                mode: 'insensitive' // Case-insensitive matching
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 6. Exclude Recently Shown (If user logged in)
+    if (userEmail) {
       const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
       const recentlyShownRecipes = await prisma.userRecipeHistory.findMany({
-          where: {
-              userEmail: userEmail, // Filter by userEmail
-              shownAt: { gte: fourMinutesAgo }
-          },
+          where: { userEmail: userEmail, shownAt: { gte: fourMinutesAgo } },
           select: { recipeId: true }
       });
-
       if (recentlyShownRecipes.length > 0) {
-        // Ensure NOT clause doesn't overwrite other potential where clauses
-        if (!where.NOT) {
-            where.NOT = {};
-        }
-        // Add the ID filter to the NOT clause
-        (where.NOT as Prisma.RecipeWhereInput).id = {
-            in: recentlyShownRecipes.map(r => r.recipeId)
-        };
+        andConditions.push({
+          id: { notIn: recentlyShownRecipes.map(r => r.recipeId) }
+        });
       }
     }
 
+    // --- Add condition to exclude user's own recipes --- 
+    if (userId) {
+        andConditions.push({ authorId: { not: userId } });
+    }
+
+    // Combine all conditions with AND
+    if (andConditions.length > 0) {
+       where.AND = andConditions;
+    }
+
+    // --- Database Queries --- 
+    // Query for recipes with pagination and filtering
     const recipes = await prisma.recipe.findMany({
       where,
       include: {
         ingredients: true,
-        instructions: { orderBy: { stepNumber: 'asc' } }, // Keep instruction include
-        // Consider including other relations if needed by the frontend
-        // nutritionFacts: true,
-        // author: { select: { name: true, image: true } }, // Example
+        instructions: { orderBy: { stepNumber: 'asc' } },
+        categories: { select: { name: true } },
+        tags: { select: { name: true } }, 
+        nutritionFacts: true, 
+        // author: { select: { name: true, image: true } }, 
       },
-      take: 50, // Limit results
+      skip: skip,
+      take: limit,
+      orderBy: { 
+         // Define a default sort order, e.g., by creation date or title
+         createdAt: 'desc' 
+         // title: 'asc' 
+      }
     });
 
-    // Shuffle recipes before returning
-    const shuffledRecipes = [...recipes].sort(() => Math.random() - 0.5);
-    return NextResponse.json(shuffledRecipes);
+    // Query for total count of recipes matching filters (for pagination)
+    const totalCount = await prisma.recipe.count({
+      where,
+    });
+
+    // --- Return Response --- 
+    // No shuffling needed with pagination
+    return NextResponse.json({ 
+      recipes, 
+      totalCount, 
+      currentPage: page, 
+      totalPages: Math.ceil(totalCount / limit) 
+    });
 
   } catch (error) {
     console.error('Error fetching recipes:', error);
-    return NextResponse.json({ error: 'Failed to fetch recipes' }, { status: 500 });
+    // Log the error for debugging
+    if (error instanceof Error) {
+        console.error(error.message);
+    }
+    return NextResponse.json({ error: 'Failed to fetch recipes', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
 

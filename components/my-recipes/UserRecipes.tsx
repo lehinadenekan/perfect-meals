@@ -4,23 +4,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
-import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline';
 
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
-import RecipeCard from '@/components/recipe/RecipeCard'; // Assuming this is the correct RecipeCard component
-import { Recipe } from '@/lib/types/recipe'; // Adjust path if needed
+import RecipeCard from '@/components/recipe/RecipeCard';
+import { Recipe } from '@/lib/types/recipe';
 import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 
-// Define props
-interface UserRecipesProps {
-  onCreateClick: () => void; // Handler for the "Create New Recipe" button
-}
+// Removed UserRecipesProps interface as it's empty
 
 // Define type for fetched user recipe (includes isFavourite status from API)
 type UserRecipe = Recipe & { isFavourite: boolean };
 
-const UserRecipes: React.FC<UserRecipesProps> = ({ onCreateClick }) => {
+const UserRecipes: React.FC = () => {
   const { status } = useSession();
   const [userRecipes, setUserRecipes] = useState<UserRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,11 +140,7 @@ const UserRecipes: React.FC<UserRecipesProps> = ({ onCreateClick }) => {
   return (
     <div className="p-4 bg-white rounded-lg shadow space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">My Created & Imported Recipes</h2>
-        <Button onClick={onCreateClick}>
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Create New Recipe
-        </Button>
+        <h2 className="text-xl font-semibold">My Recipes</h2>
       </div>
 
       {userRecipes.length === 0 ? (

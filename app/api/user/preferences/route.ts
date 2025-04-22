@@ -30,7 +30,14 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       // Return default structure with userEmail if not found
-      preferences: userPreferences || { userEmail: userEmail, dietTypes: [], excludedFoods: [] },
+      preferences: userPreferences || { 
+        userEmail: userEmail, 
+        dietTypes: [], 
+        excludedFoods: [],
+        regions: [],
+        cookingStyles: [],
+        mealCategories: []
+      },
     });
   } catch (error) {
     console.error('Error fetching preferences:', error);
@@ -54,9 +61,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { dietTypes, excludedFoods } = await request.json() as {
-      dietTypes: string[];
-      excludedFoods: string[];
+    // --- Destructure new fields from request body --- 
+    const { 
+      dietTypes, 
+      excludedFoods, 
+      regions, 
+      cookingStyles, 
+      mealCategories 
+    } = await request.json() as {
+      dietTypes?: string[];
+      excludedFoods?: string[];
+      regions?: string[];
+      cookingStyles?: string[];
+      mealCategories?: string[];
     };
 
     // // No need to separately find the user, upsert handles it via relation
@@ -78,13 +95,18 @@ export async function POST(request: Request) {
       update: {
         dietTypes: { set: dietTypes || [] },
         excludedFoods: { set: excludedFoods || [] },
+        regions: { set: regions || [] },
+        cookingStyles: { set: cookingStyles || [] },
+        mealCategories: { set: mealCategories || [] },
       },
       create: {
         // userEmail is the primary key, Prisma handles relation implicitly if user exists
         userEmail: userEmail, // Use userEmail
         dietTypes: dietTypes || [],
         excludedFoods: excludedFoods || [],
-        // You might need default values for other fields if they are required
+        regions: regions || [],
+        cookingStyles: cookingStyles || [],
+        mealCategories: mealCategories || [],
         cookingTime: 'MEDIUM', // Example default
         servingSize: 2,       // Example default
         mealPrep: false,      // Example default

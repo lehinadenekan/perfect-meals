@@ -32,7 +32,7 @@ export default function FavoritesPage() {
     <main className="min-h-screen bg-[#ffc800]">
       {/* Include the Navbar */}
       <Navbar
-        onHomeClick={() => router.push('/')}
+        // onHomeClick={() => router.push('/')} // REMOVED: Redundant, Navbar has Discover link
         onSearch={handleSearch}
         // Add other props Navbar might need (e.g., session status if handled there)
       />

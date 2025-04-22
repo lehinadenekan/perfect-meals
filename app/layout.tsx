@@ -24,11 +24,6 @@ export default function RootLayout({
   // --- Get router instance ---
   const router = useRouter();
 
-  // --- Define actual navigation function ---
-  const handleHomeClick = useCallback(() => {
-    router.push('/'); // Navigate to the homepage
-  }, [router]); // Dependency on router
-
   // --- Placeholder search handler (replace if implementing search) ---
   const handleSearch = useCallback(async (term: string) => {
     console.log(`Search triggered for: ${term} - Placeholder`);
@@ -44,12 +39,12 @@ export default function RootLayout({
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1744468975179679"
           crossOrigin="anonymous"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Recipe App</title>
+        <title>Recipe Ideas</title>
       </head>
       <body className="bg-[#ffc800]">
         <Providers>
            {/* --- Pass the actual handleHomeClick function --- */}
-           <Navbar onHomeClick={handleHomeClick} onSearch={handleSearch} />
+           <Navbar onSearch={handleSearch} />
 
            <FavouritesProvider>
              <main className="flex-grow">

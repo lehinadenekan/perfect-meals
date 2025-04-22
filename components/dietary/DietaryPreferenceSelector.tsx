@@ -95,15 +95,6 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
     };
   }, [selectedDiets, selectedRegions, excludedFoods, status, session, isLoading]);
 
-
-  // Handle toggling a diet type (now accepts string)
-  const handleDietToggle = (dietType: string) => { // <<<--- CHANGED DietType to string
-    setSelectedDiets(prev =>
-      prev.includes(dietType) ? prev.filter(d => d !== dietType) : [...prev, dietType]
-    );
-  };
-
-
   // Function to fetch recipes based on current selections
   const handleGenerateRecipes = async () => {
     setIsLoading(true);
@@ -172,8 +163,8 @@ const DietaryPreferenceSelector: React.FC<DietaryPreferenceSelectorProps> = ({
       case 1:
         return (
           <DietSelector
-            selectedDiets={selectedDiets} // Pass string[]
-            onDietToggle={handleDietToggle} // Pass function accepting string
+            selectedPreferences={selectedDiets}
+            onChange={setSelectedDiets}
           />
         );
       case 2:

@@ -203,6 +203,9 @@ model UserPreference {
   servingSize   Int      @default(2)
   dietTypes     String[] @default([])
   excludedFoods String[] @default([])
+  regions         String[] @default([])
+  cookingStyles   String[] @default([])
+  mealCategories  String[] @default([])
   user          User     @relation(fields: [userEmail], references: [email])
 }
 
