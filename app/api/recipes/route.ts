@@ -132,6 +132,7 @@ export async function GET(request: Request) {
       });
     }
 
+    /* // Temporarily comment out user-specific filters for debugging
     // 6. Exclude Recently Shown (If user logged in)
     if (userEmail) {
       const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
@@ -150,6 +151,7 @@ export async function GET(request: Request) {
     if (userId) {
         andConditions.push({ authorId: { not: userId } });
     }
+    */
 
     // Combine all conditions with AND
     if (andConditions.length > 0) {
