@@ -45,6 +45,14 @@ interface SeedRecipeRecipe {
   instructions: Instruction[];
   nutritionFacts: NutritionFacts;
   notes?: string[];
+  dietaryNotes?: {
+    fermentationInfo?: string;
+    fodmapInfo?: string;
+    keyNutrients?: string;
+    antiInflammatoryInfo?: string;
+    fodmapModificationTips?: string;
+    // Add any other potential keys within dietaryNotes if they exist
+};
 }
 export type { SeedRecipeRecipe };
 export const seedRecipes: SeedRecipeRecipe[] = [
