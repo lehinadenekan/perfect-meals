@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Recipe, RecipeSource } from '@prisma/client'
+import { Recipe } from '@prisma/client'
 
 export { render, screen, fireEvent, userEvent }
 
