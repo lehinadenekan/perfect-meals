@@ -147,11 +147,13 @@ export async function GET(request: Request) {
       }
     }
 
-    // --- Add condition to exclude user's own recipes --- 
+    // --- REMOVE block excluding user's own recipes --- 
+    /*
     if (userId) {
         andConditions.push({ authorId: { not: userId } });
     }
-    // End uncommented block
+    */
+    // --- End REMOVED block ---
 
     // Combine all conditions with AND
     if (andConditions.length > 0) {
