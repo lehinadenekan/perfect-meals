@@ -72,16 +72,17 @@ async function main() {
   // --- Seed Cuisines ---
   console.log('Seeding cuisines...');
   const cuisineMap = new Map<string, { id: string }>(); // Map "name|region" to cuisine ID
+  // NOTE: Still reading recipeData.continent here to populate the Cuisine model
   for (const recipeData of seedRecipes) {
-    if (recipeData.cuisineType && recipeData.regionOfOrigin) {
-        const mapKey = `${recipeData.cuisineType}|${recipeData.regionOfOrigin}`;
+    if (recipeData.continent && recipeData.regionOfOrigin) {
+        const mapKey = `${recipeData.continent}|${recipeData.regionOfOrigin}`;
         if (!cuisineMap.has(mapKey)) {
             try {
                 const cuisine = await prisma.cuisine.upsert({
-                    where: { name: recipeData.cuisineType },
+                    where: { name: recipeData.continent },
                     update: { region: recipeData.regionOfOrigin },
                     create: {
-                        name: recipeData.cuisineType,
+                        name: recipeData.continent,
                         region: recipeData.regionOfOrigin,
                         averagePreparationTime: 30,
                         commonIngredients: [],
@@ -95,7 +96,7 @@ async function main() {
                 cuisineMap.set(mapKey, { id: cuisine.id });
                 console.log(`Upserted cuisine: ${cuisine.name} (${cuisine.region})`);
             } catch (error) {
-                 console.error(`Error upserting cuisine ${recipeData.cuisineType}:`, error);
+                 console.error(`Error upserting cuisine ${recipeData.continent}:`, error);
             }
         }
     }
@@ -111,7 +112,8 @@ async function main() {
       const categoryName = mapTypeToCategory(recipeData.type);
       const isRecipeVegetarian = recipeData.isVegetarian ?? false;
       const isRecipePescatarian = checkPescatarian(recipeData.ingredients, isRecipeVegetarian);
-      const cuisineMapKey = (recipeData.cuisineType && recipeData.regionOfOrigin) ? `${recipeData.cuisineType}|${recipeData.regionOfOrigin}` : null;
+      // NOTE: Still reading recipeData.continent & regionOfOrigin to find the Cuisine relation
+      const cuisineMapKey = (recipeData.continent && recipeData.regionOfOrigin) ? `${recipeData.continent}|${recipeData.regionOfOrigin}` : null;
       const cuisineInfo = cuisineMapKey ? cuisineMap.get(cuisineMapKey) : null;
 
       // --- Start of Upsert Block ---
@@ -123,8 +125,8 @@ async function main() {
           cookingTime: recipeData.cookingTime,
           servings: recipeData.servings,
           difficulty: recipeData.difficulty,
-          cuisineType: recipeData.cuisineType,
           regionOfOrigin: recipeData.regionOfOrigin,
+          continent: recipeData.continent,
           imageUrl: recipeData.imageUrl,
           calories: recipeData.calories,
           isVegetarian: isRecipeVegetarian,
@@ -213,8 +215,8 @@ async function main() {
           cookingTime: recipeData.cookingTime,
           servings: recipeData.servings,
           difficulty: recipeData.difficulty,
-          cuisineType: recipeData.cuisineType,
           regionOfOrigin: recipeData.regionOfOrigin,
+          continent: recipeData.continent,
           imageUrl: recipeData.imageUrl,
           calories: recipeData.calories,
           isVegetarian: isRecipeVegetarian,

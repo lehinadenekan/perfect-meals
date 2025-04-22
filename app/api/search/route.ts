@@ -34,7 +34,6 @@ export async function GET(request: Request) {
       nutritionFacts: true,
       categories: true,
       cuisines: true,
-      tags: true
     },
     orderBy: {
       title: 'asc'
@@ -43,7 +42,7 @@ export async function GET(request: Request) {
   });
 
   // Post-process to filter for word boundaries
-  const filteredRecipes = recipes.filter(recipe => {
+  const filteredRecipes = recipes.filter((recipe: typeof recipes[0]) => {
     // Check if any searchTerm appears as a whole word in title
     const titleMatches = searchTerms.some(term => {
       const regex = new RegExp(`\\b${term}\\b`, 'i');
@@ -57,7 +56,7 @@ export async function GET(request: Request) {
     }) : false;
     
     // Check if any searchTerm appears as a whole word in ingredients
-    const ingredientMatches = recipe.ingredients.some(ingredient => {
+    const ingredientMatches = recipe.ingredients.some((ingredient: { name: string }) => {
       return searchTerms.some(term => {
         const regex = new RegExp(`\\b${term}\\b`, 'i');
         return regex.test(ingredient.name);
@@ -82,7 +81,7 @@ export async function GET(request: Request) {
       }
       
       // Ingredient match (medium priority)
-      if (recipe.ingredients.some(i => {
+      if (recipe.ingredients.some((i: { name: string }) => {
         return searchTerms.some(term => {
           const regex = new RegExp(`\\b${term}\\b`, 'i');
           return regex.test(i.name);

@@ -86,7 +86,7 @@ export async function POST() {
               cookingTime: 30,
               servings: 4,
               difficulty: 'MEDIUM',
-              cuisineType: 'International',
+              continent: 'International',
               regionOfOrigin: 'International',
               imageUrl: SAMPLE_IMAGES[i],
               isVegetarian: false,

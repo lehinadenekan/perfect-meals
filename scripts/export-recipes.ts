@@ -15,7 +15,6 @@ async function exportRecipes() {
         instructions: true,
         nutritionFacts: true,
         categories: true,
-        tags: true
       }
     });
     

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       await prisma.recipe.update({
         where: { id: recipeId },
         data: {
-          needsDietaryReview: true
+          // needsDietaryReview: true <-- Removed this non-existent field
         }
       });
     }

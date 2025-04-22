@@ -41,11 +41,11 @@ export default function RecipeModalPage({ params }: { params: { recipeId: string
           // Spread the base fields from fetchedRecipe (Prisma Recipe)
           ...fetchedRecipe,
           // Explicitly handle null/undefined mismatches
+          continent: fetchedRecipe.continent ?? undefined,
           description: fetchedRecipe.description ?? undefined,
           cookingTime: fetchedRecipe.cookingTime ?? 30, // Default if null
           servings: fetchedRecipe.servings ?? 4, // Default if null
           difficulty: fetchedRecipe.difficulty ?? 'Medium', // Default if null
-          cuisineType: fetchedRecipe.cuisineType ?? 'Unknown', // Default if null
           regionOfOrigin: fetchedRecipe.regionOfOrigin ?? undefined, // Convert null to undefined
           imageUrl: fetchedRecipe.imageUrl ?? undefined, // Convert null to undefined
           calories: fetchedRecipe.calories ?? undefined, // Convert null to undefined
@@ -84,14 +84,12 @@ export default function RecipeModalPage({ params }: { params: { recipeId: string
           cookingMethods: ('cookingMethods' in fetchedRecipe && Array.isArray(fetchedRecipe.cookingMethods)) ? fetchedRecipe.cookingMethods : [],
           spiceLevel: ('spiceLevel' in fetchedRecipe && typeof fetchedRecipe.spiceLevel === 'string') ? fetchedRecipe.spiceLevel : 'medium',
           subCuisineType: ('subCuisineType' in fetchedRecipe && typeof fetchedRecipe.subCuisineType === 'string') ? fetchedRecipe.subCuisineType : undefined,
-          jobId: ('jobId' in fetchedRecipe && typeof fetchedRecipe.jobId === 'string') ? fetchedRecipe.jobId : undefined,
           showCount: ('showCount' in fetchedRecipe && typeof fetchedRecipe.showCount === 'number') ? fetchedRecipe.showCount : 0,
           hasFeatureFermented: fetchedRecipe.isFermented ?? false,
           hasFermentedIngredients: false, 
           hasFish: false, 
           notes: ('notes' in fetchedRecipe && Array.isArray(fetchedRecipe.notes)) ? fetchedRecipe.notes : [],
           authorId: ('authorId' in fetchedRecipe && typeof fetchedRecipe.authorId === 'string') ? fetchedRecipe.authorId : 'default-author-id',
-          author: undefined,
           nutritionFacts: undefined,
           averageRating: ('averageRating' in fetchedRecipe && typeof fetchedRecipe.averageRating === 'number') ? fetchedRecipe.averageRating : undefined,
           

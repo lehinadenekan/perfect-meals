@@ -13,7 +13,7 @@ async function downloadRecipeImages() {
       await imageService.downloadAndStoreImage(recipe.imageUrl, recipe.title);
       results.push({ recipe: recipe.title, success: true });
       console.log(`✓ Successfully downloaded image for ${recipe.title}`);
-    } catch (error) {
+    } catch (error: unknown) {
       results.push({ 
         recipe: recipe.title, 
         success: false, 
@@ -30,11 +30,11 @@ async function downloadRecipeImages() {
   console.log(`Successful downloads: ${results.filter(r => r.success).length}`);
   console.log(`Failed downloads: ${results.filter(r => !r.success).length}`);
 
-  if (results.some(r => !r.success)) {
+  if (results.some((r: { success: boolean }) => !r.success)) {
     console.log('\nFailed Downloads:');
     results
-      .filter(r => !r.success)
-      .forEach(r => console.log(`- ${r.recipe}: ${r.error}`));
+      .filter((r: { success: boolean }) => !r.success)
+      .forEach((r: { recipe: string; error?: string }) => console.log(`- ${r.recipe}: ${r.error}`));
   }
 }
 

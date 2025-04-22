@@ -35,7 +35,7 @@ export async function GET() {
         servings: true,
         cookingTime: true,
         difficulty: true,
-        cuisineType: true,
+        continent: true,
         regionOfOrigin: true, // <-- ADDED THIS LINE
         createdAt: true,
         updatedAt: true,

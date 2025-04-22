@@ -60,7 +60,6 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
   const filteredRecipes = recipes.filter(recipe => {
     if (filters.vegetarian && !recipe.isVegetarian) return false
     if (filters.vegan && !recipe.isVegan) return false
-    if (filters.cuisine && recipe.cuisineType !== filters.cuisine) return false 
     return true
   })
 

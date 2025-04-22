@@ -107,8 +107,8 @@ export default function RecipeDisplay({ recipe, servingMultiplier = 1 }: RecipeD
                 </span>
             )}
              {/* Add CuisineType, etc. if available */}
-             {recipe.cuisineType && (
-                 <span className="capitalize">{recipe.cuisineType}</span>
+             {recipe.continent && (
+                 <span className="capitalize">{recipe.continent}</span>
              )}
         </div>
 

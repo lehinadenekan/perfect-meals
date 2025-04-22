@@ -68,19 +68,17 @@ model Recipe {
   cookingTime        Int?
   servings           Int?
   difficulty         String?
-  cuisineType        String?
   isVegetarian       Boolean?                 @default(false)
   isVegan            Boolean?                 @default(false)
   isGlutenFree       Boolean?                 @default(false)
   isNutFree          Boolean?                 @default(false)
-  jobId              String?
   isFermented        Boolean?                 @default(false)
   isLactoseFree      Boolean?                 @default(false)
   isLowFodmap        Boolean?                 @default(false)
   isPescatarian      Boolean?                 @default(false)
-  needsDietaryReview Boolean                  @default(false)
   imageUrl           String?
   regionOfOrigin     String?
+  continent          String?
   search_vector      Unsupported("tsvector")?
   calories           Int?
   notes              String[]                 @default([])
@@ -92,18 +90,14 @@ model Recipe {
   source             RecipeSource             @default(USER_CREATED)
   author             User?                    @relation("AuthoredRecipes", fields: [authorId], references: [id])
   authorId           String?
-  generationJob      RecipeGenerationJob?     @relation("JobRecipes", fields: [jobId], references: [id])
   albums             RecipeToAlbum[]
   reviews            Review[]
   recipeHistory      UserRecipeHistory[]
   categories         Category[]               @relation("CategoryToRecipe")
   cuisines           Cuisine[]                @relation("CuisineRecipes")
-  fusionCuisines     Cuisine[]                @relation("RecipeFusionCuisines")
-  tags               Tag[]                    @relation("RecipeToTag")
   savedBy            User[]                   @relation("SavedRecipes")
 
   @@index([authorId])
-  @@index([jobId])
   @@index([search_vector], type: Gin)
 }
 
@@ -152,7 +146,7 @@ model Category {
 model Tag {
   id      String   @id @default(cuid())
   name    String   @unique
-  recipes Recipe[] @relation("RecipeToTag")
+  // recipes Recipe[] @relation("RecipeToTag") // Removed opposite relation
 }
 
 model Review {
@@ -197,7 +191,6 @@ model Cuisine {
   subCuisines            Cuisine[]               @relation("CuisineHierarchy")
   preferences            UserCuisinePreference[]
   recipes                Recipe[]                @relation("CuisineRecipes")
-  fusionRecipes          Recipe[]                @relation("RecipeFusionCuisines")
 
   @@index([region, subRegion])
   @@index([name])
@@ -252,7 +245,7 @@ model RecipeGenerationJob {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   error        String?
-  recipes      Recipe[] @relation("JobRecipes")
+  // recipes      Recipe[] @relation("JobRecipes") // Removed opposite relation
 }
 
 model UserRecipeHistory {

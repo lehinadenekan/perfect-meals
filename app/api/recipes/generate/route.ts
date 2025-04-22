@@ -123,7 +123,6 @@ type DbRecipe = Prisma.RecipeGetPayload<{
         nutritionFacts: true;
         categories: true;
         cuisines: true;
-        tags: true;
         author: true;
     };
 }>;
@@ -226,7 +225,7 @@ async function getRandomRecipesFromDB(
       where: baseWhereClause,
       include: {
         ingredients: true, instructions: true, nutritionFacts: true,
-        categories: true, cuisines: true, tags: true, author: true
+        categories: true, cuisines: true, author: true
       },
       take: initialFetchLimit,
     });
@@ -321,7 +320,7 @@ async function getRandomRecipesFromDB(
         createdAt: recipe.createdAt, updatedAt: recipe.updatedAt, authorId: recipe.authorId,
         author: author, ingredients: recipe.ingredients.map(i => ({ ...i, notes: i.notes || null })),
         instructions: recipe.instructions, type: recipe.categories?.[0]?.name || undefined,
-        cuisineId: cuisineId, tags: recipe.tags?.map(t => t.name) || [],
+        cuisineId: cuisineId, tags: [],
         isVegetarian: recipe.isVegetarian ?? false, isVegan: recipe.isVegan ?? false,
         isGlutenFree: recipe.isGlutenFree ?? false, isNutFree: recipe.isNutFree ?? false,
         isLowFodmap: recipe.isLowFodmap ?? false, isLactoseFree: recipe.isLactoseFree ?? false,

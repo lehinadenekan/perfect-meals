@@ -13,7 +13,7 @@ interface CreateRecipePayload {
   cookingTime: number;
   servings: number;
   difficulty?: string;
-  cuisineType?: string;
+  continent?: string;
   regionOfOrigin?: string;
   imageUrl?: string;
   isVegetarian?: boolean;
@@ -42,13 +42,11 @@ export async function GET(request: Request) {
     const dietsParam = searchParams.get('diets') || '';
     const regionsParam = searchParams.get('regions') || '';
     const excludedFoodsParam = searchParams.get('excludedFoods') || '';
-    const cookingStylesParam = searchParams.get('cookingStyles') || '';
     const mealCategoriesParam = searchParams.get('mealCategories') || '';
 
     const diets = dietsParam ? dietsParam.split(',').map(d => d.trim()).filter(d => d) : [];
     const regions = regionsParam ? regionsParam.split(',').map(r => r.trim()).filter(r => r) : [];
     const excludedFoods = excludedFoodsParam ? excludedFoodsParam.split(',').map(f => f.trim()).filter(f => f) : [];
-    const cookingStyles = cookingStylesParam ? cookingStylesParam.split(',').map(s => s.trim()).filter(s => s) : [];
     const mealCategories = mealCategoriesParam ? mealCategoriesParam.split(',').map(c => c.trim()).filter(c => c) : [];
 
     // --- Session for excluding recent --- 
@@ -89,6 +87,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Cooking Style Filters (Using 'tags' relation based on schema)
+    /* <-- Removed block filtering by non-existent tags relation
     if (cookingStyles.length > 0) {
        andConditions.push({
          tags: { // Filter on the 'tags' relation
@@ -101,6 +100,7 @@ export async function GET(request: Request) {
          }
        });
     }
+    */ // <-- End removed block
 
     // 4. Meal Category Filters (Using 'categories' relation based on schema)
     if (mealCategories.length > 0) {
@@ -168,7 +168,7 @@ export async function GET(request: Request) {
         ingredients: true,
         instructions: { orderBy: { stepNumber: 'asc' } },
         categories: { select: { name: true } },
-        tags: { select: { name: true } }, 
+        // tags: { select: { name: true } }, <-- Removed include for non-existent tags relation
         nutritionFacts: true, 
         // author: { select: { name: true, image: true } }, 
       },
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
 
           // Map optional fields, using defaults from Prisma schema if not provided
           difficulty: recipeData.difficulty,
-          cuisineType: recipeData.cuisineType,
+          continent: recipeData.continent,
           regionOfOrigin: recipeData.regionOfOrigin,
           imageUrl: recipeData.imageUrl,
           isVegetarian: recipeData.isVegetarian,

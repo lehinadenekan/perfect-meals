@@ -68,7 +68,7 @@ export default function AlbumDetailsView({
         cookingTime: recipe.cookingTime ?? 0,
         servings: recipe.servings ?? 0,
         difficulty: recipe.difficulty ?? 'MEDIUM',
-        cuisineType: recipe.cuisineType ?? undefined,
+        continent: recipe.continent ?? undefined,
         regionOfOrigin: recipe.regionOfOrigin ?? undefined,
         imageUrl: recipe.imageUrl ?? undefined,
         authorId: recipe.authorId ?? undefined,

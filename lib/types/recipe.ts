@@ -49,13 +49,12 @@ export interface Recipe {
   cookingTime: number;
   servings: number;
   difficulty: string;
-  cuisineType: string;
+  continent?: string;
   regionOfOrigin?: string;
   imageUrl?: string;
   videoUrl?: string;
   calories?: number;
   authorId: string;
-  author?: Author;
   isVegetarian: boolean;
   isVegan: boolean;
   isGlutenFree: boolean;
@@ -66,12 +65,11 @@ export interface Recipe {
   isFermented: boolean;
   averageRating?: number;
   type: string;
-  cuisineId: string;
+  cuisineId?: string;
   authenticity: string;
   cookingMethods: string[];
   spiceLevel: string;
   subCuisineType?: string;
-  jobId?: string;
   showCount: number;
   hasFeatureFermented: boolean;
   hasFermentedIngredients: boolean;

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
         nutritionFacts: true,
         categories: true,
         cuisines: true,
-        tags: true
+        // tags: true <-- Removed non-existent relation
       }
     });
 

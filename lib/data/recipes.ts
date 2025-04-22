@@ -45,7 +45,6 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
         author: {
           select: { id: true, name: true, image: true }
         },
-        tags: true,
         categories: true,
         cuisines: true,
         dietaryNotes: true,
