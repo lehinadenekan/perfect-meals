@@ -81,6 +81,7 @@ model Recipe {
   continent          String?
   search_vector      Unsupported("tsvector")?
   calories           Int?
+  cookingStyles      String[]                 @default([])
   notes              String[]                 @default([])
   dietaryNotes       DietaryNotes?
   dietaryFeedback    DietaryFeedback[]

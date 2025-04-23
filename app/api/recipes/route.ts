@@ -16,6 +16,8 @@ interface CreateRecipePayload {
   continent?: string;
   regionOfOrigin?: string;
   imageUrl?: string;
+  calories?: number;
+  cookingStyles?: string[];
   isVegetarian?: boolean;
   isVegan?: boolean;
   isGlutenFree?: boolean;
@@ -43,11 +45,13 @@ export async function GET(request: Request) {
     const regionsParam = searchParams.get('regions') || '';
     const excludedFoodsParam = searchParams.get('excludedFoods') || '';
     const mealCategoriesParam = searchParams.get('mealCategories') || '';
+    const cookingStylesParam = searchParams.get('cookingStyles') || '';
 
     const diets = dietsParam ? dietsParam.split(',').map(d => d.trim()).filter(d => d) : [];
     const regions = regionsParam ? regionsParam.split(',').map(r => r.trim()).filter(r => r) : [];
     const excludedFoods = excludedFoodsParam ? excludedFoodsParam.split(',').map(f => f.trim()).filter(f => f) : [];
     const mealCategories = mealCategoriesParam ? mealCategoriesParam.split(',').map(c => c.trim()).filter(c => c) : [];
+    const cookingStyles = cookingStylesParam ? cookingStylesParam.split(',').map(s => s.trim()).filter(s => s) : [];
 
     // --- Session for excluding recent --- 
     const session = await getServerSession(authOptions);
@@ -86,21 +90,14 @@ export async function GET(request: Request) {
       andConditions.push({ regionOfOrigin: { in: regions, mode: 'insensitive' } });
     }
 
-    // 3. Cooking Style Filters (Using 'tags' relation based on schema)
-    /* <-- Removed block filtering by non-existent tags relation
+    // 3. Cooking Style Filters (Using new 'cookingStyles' field)
     if (cookingStyles.length > 0) {
        andConditions.push({
-         tags: { // Filter on the 'tags' relation
-           some: { // Check if *some* related tag matches
-             name: { // Match based on the tag's 'name' field
-               in: cookingStyles,
-               mode: 'insensitive'
-             }
-           }
+         cookingStyles: { // Filter on the new field
+           hasSome: cookingStyles // Check if the array field contains *any* of the specified styles
          }
        });
     }
-    */ // <-- End removed block
 
     // 4. Meal Category Filters (Using 'categories' relation based on schema)
     if (mealCategories.length > 0) {
@@ -249,6 +246,8 @@ export async function POST(request: Request) {
           continent: recipeData.continent,
           regionOfOrigin: recipeData.regionOfOrigin,
           imageUrl: recipeData.imageUrl,
+          calories: recipeData.calories,
+          cookingStyles: recipeData.cookingStyles ?? [],
           isVegetarian: recipeData.isVegetarian,
           isVegan: recipeData.isVegan,
           isGlutenFree: recipeData.isGlutenFree,

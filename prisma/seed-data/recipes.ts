@@ -42,6 +42,7 @@ interface SeedRecipeRecipe {
   isNutFree: boolean;
   isFermented: boolean;
   isLowFodmap: boolean;
+  cookingStyles?: string[];
   ingredients: Ingredient[];
   instructions: Instruction[];
   nutritionFacts: NutritionFacts;
