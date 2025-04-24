@@ -55,6 +55,8 @@ model User {
   preferences        UserPreference?
   recipeHistory      UserRecipeHistory[]
   savedRecipes       Recipe[]                @relation("SavedRecipes")
+  customFoodEntries  CustomFoodEntry[]       // Added inverse relation
+  plannerDays        PlannerDay[]            // Added inverse relation for planner
 
   @@map("users")
 }
@@ -97,6 +99,7 @@ model Recipe {
   categories         Category[]               @relation("CategoryToRecipe")
   cuisines           Cuisine[]                @relation("CuisineRecipes")
   savedBy            User[]                   @relation("SavedRecipes")
+  plannedMeals       PlannerMeal[]            // Added inverse relation
 
   @@index([authorId])
   @@index([search_vector], type: Gin)
@@ -208,6 +211,10 @@ model UserPreference {
   regions         String[] @default([])
   cookingStyles   String[] @default([])
   mealCategories  String[] @default([])
+  dailyProteinGoal Int?     // Added for macro tracking
+  dailyCarbGoal    Int?     // Added for macro tracking
+  dailyFatGoal     Int?     // Added for macro tracking
+  dailyCalorieGoal Int?     // Added for macro tracking
   user          User     @relation(fields: [userEmail], references: [email])
 }
 
@@ -248,6 +255,25 @@ model RecipeGenerationJob {
   error        String?
   // recipes      Recipe[] @relation("JobRecipes") // Removed opposite relation
 }
+
+// Added for custom food tracking
+model CustomFoodEntry {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  servingSize  String? // e.g., "1 medium", "100g"
+  calories     Int?
+  protein      Int?
+  carbs        Int?
+  fat          Int?
+  createdAt    DateTime      @default(now())
+  plannedMeals PlannerMeal[] // Added inverse relation 
+
+  @@index([userId])
+}
+
+// --- End of Custom Food Entry ---
 
 model UserRecipeHistory {
   id        String   @id @default(cuid())
@@ -337,3 +363,46 @@ model DietaryNotes {
   recipeId             String  @unique // Enforces one-to-one relation
   recipe               Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
+
+// --- Planner Models Start ---
+
+enum MealType {
+   BREAKFAST
+   LUNCH
+   DINNER
+   SNACK
+   OTHER
+}
+
+model PlannerDay {
+  id     String        @id @default(cuid())
+  userId String
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade) // Added onDelete Cascade
+  date   DateTime      @db.Date // Store just the date
+  notes  String?       // Added notes field
+  meals  PlannerMeal[]
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model PlannerMeal {
+  id                String           @id @default(cuid())
+  plannerDayId      String
+  plannerDay        PlannerDay       @relation(fields: [plannerDayId], references: [id], onDelete: Cascade)
+  mealType          MealType
+  mealTime          String?          // Added optional meal time (e.g., "HH:mm")
+  recipeId          String?
+  recipe            Recipe?          @relation(fields: [recipeId], references: [id], onDelete: SetNull) // SetNull on recipe delete
+  customFoodEntryId String?
+  customFoodEntry   CustomFoodEntry? @relation(fields: [customFoodEntryId], references: [id], onDelete: SetNull) // SetNull on custom food delete
+  servings          Float?           @default(1.0)
+  isCompleted       Boolean         @default(false)
+
+  // Optional: Add constraint to ensure either recipeId or customFoodEntryId is non-null (handled in application logic)
+  @@index([plannerDayId])
+  @@index([recipeId])
+  @@index([customFoodEntryId])
+}
+
+// --- Planner Models End ---

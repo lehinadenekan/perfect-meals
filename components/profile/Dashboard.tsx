@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { ChartBarIcon, ClockIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/outline';
+import { PreferencesForm } from './PreferencesForm';
 
 interface DashboardData {
   preferences?: {
@@ -209,6 +210,11 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Add the Preferences Form */}
+      <div className="mt-8">
+        <PreferencesForm />
       </div>
     </div>
   );

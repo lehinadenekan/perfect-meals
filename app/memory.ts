@@ -1,3 +1,58 @@
+/**
+ * This file is intended to store context and critical information about the project
+ * to help the AI maintain awareness across sessions or complex changes.
+ */
+
+// --- Project Summary ---
+// Goal: Build a Meal Planning SaaS application with recipe management and macro tracking.
+// Key Technologies: Next.js 14 (App Router), React, TypeScript, Prisma, PostgreSQL (Supabase), Tailwind CSS, next-auth, zod, date-fns.
+
+// --- Core Planner Features Implemented ---
+// Data Model:
+// - Prisma schema includes: PlannerDay, PlannerMeal, MealType enum, UserPreference (with macro goals),
+//   CustomFoodEntry, Recipe, NutritionFacts (currently lacks 'calories' field).
+// - PlannerMeal includes 'servings' (Float?) and 'isCompleted' (Boolean) fields.
+//
+// Planner API:
+// - GET /api/planner: Fetches PlannerDays + nested Meals (Recipe/CustomFood details, Ingredients, Nutrition, isCompleted) for a date range.
+// - POST /api/planner: Adds a Recipe or CustomFoodEntry as a PlannerMeal to a specific date/type. Upserts PlannerDay.
+// - DELETE /api/planner/meal/:mealId: Deletes a specific PlannerMeal (ownership checked).
+// - PUT /api/planner/meal/:mealId: Updates 'servings' and/or 'isCompleted' status (ownership checked).
+//
+// Supporting APIs:
+// - GET /api/search/planner-items: Searches Recipe titles and user's CustomFoodEntry names (case-insensitive).
+// - CRUD APIs implemented for UserPreference and CustomFoodEntry.
+//
+// Utilities (lib/):
+// - calculateDailyMacros(plannerDays): Calculates daily totals (Calories estimated 4-4-9, P, C, F).
+// - generateShoppingList(plannerDays): Aggregates ingredients from planned Recipes, adjusting for servings.
+//
+// Frontend (app/meal-planner/page.tsx):
+// - Displays weekly calendar view with Previous/Next week navigation.
+// - Fetches planner data on load/week change.
+// - Renders daily cards showing calculated macro totals (Cal, P, C, F).
+// - Lists planned meals within each day card, showing meal type and name.
+// - 'Add Meal' Modal:
+//   - Search input with debounced API call to GET /api/search/planner-items.
+//   - Displays search results (Recipe/CustomFood) with selection.
+//   - Form inputs for Meal Type and Servings appear after selection.
+//   - 'Add Meal' button POSTs to /api/planner, handles loading/error state, refreshes data on success.
+// - Inline Editing: Pencil icon allows editing 'servings' inline; Save button PUTs to /api/planner/meal/:mealId.
+// - Meal Completion: Checkbox toggles 'isCompleted' status via PUT to /api/planner/meal/:mealId; applies line-through style.
+// - Shopping List: 'Generate' button calls utility, displays aggregated list in a modal.
+
+// --- Current Status ---
+// - Core planner features are functionally implemented (Backend APIs, Frontend UI/Interaction).
+// - Initial page load error (Internal Server Error) appears resolved after server restart.
+// - Search API authentication error fixed (changed from `auth()` to `getServerSession(authOptions)`).
+// - Prisma query error in GET /api/planner (using include and select simultaneously) resolved.
+
+// --- Potential Next Steps / TODOs ---
+// - Display Macro Goals: Fetch UserPreference and display goals vs. calculated totals on planner page.
+// - UI Refinements: Improve loading states, error display (e.g., toasts instead of alerts), potentially add drag-and-drop for meals.
+// - NutritionFacts Model: Consider adding a dedicated 'calories' field (requires schema change, migration, update calculation logic).
+// - Recipe Display: Show macros on RecipeCard / Recipe Detail pages.
+
 // Project Overview: This project is a comprehensive web application serving as both a directory for traditional recipes and a powerful recipe management tool.
 //   Core Purpose: To provide users with a platform to discover, create, import, generate, and manage recipes effectively.
 //   Target User: Individuals interested in finding traditional recipes, managing their personal recipe collections, and discovering new meal ideas tailored to their specific needs.
@@ -268,3 +323,19 @@
 // `servers` Sub-project Dependencies:
 //   - Issue: TypeScript errors (`Cannot find module...`) occurred for `@modelcontextprotocol/sdk` imports within `servers/src/slack/index.ts`.
 //   - Fix: Installed the required dependencies (`@modelcontextprotocol/sdk` and others) directly within the `servers` directory using `pnpm install` (as it has its own `package.json`).
+
+// == Meal Planner Context (Pre-Restart - YYYY-MM-DD HH:MM) ==
+// Core API endpoints (GET, POST, PUT /:mealId, DELETE /:mealId) are implemented and marked DONE in tasks.
+// Macro calculation logic exists in lib/plannerUtils.ts.
+// Planner UI (app/meal-planner/page.tsx) displays daily data, macros vs goals (fetched from /api/user/preferences), and includes:
+//   - Macro progress bars.
+//   - SVG icons for edit/delete.
+//   - Clickable meal items (placeholder handler: handleViewMealDetails).
+// Task list (app/tasks/planner.ts) updated with detailed breakdown and commented out.
+// Setting/Editing User Goals is NOT yet implemented - requires UI (settings/profile) and PUT /api/user/preferences endpoint.
+// Remaining Core TODOs (see app/tasks/planner.ts for details):
+//   1. Set/Edit User Macro Goals (UI + API).
+//   2. Add Meals to Planner UI Flow (Modal, Search Integration, POST API call).
+//   3. View Meal Details (Modal + Handler Implementation).
+//   4. Shopping List Generation (Utility Function + UI).
+// == End Meal Planner Context ==
