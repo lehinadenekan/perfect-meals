@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form'; // Added Controller
+import { useForm, useFieldArray, Controller, ControllerRenderProps } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from "@/components/ui/input";
@@ -300,48 +300,48 @@ export default function CreateRecipeForm() {
                     </div>
                 </div>
                 {/* --- Phase 5: Cuisine Type & Difficulty Selects --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     {/* Cuisine Type Select */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                      <div>
-                        <Label htmlFor="cuisineType" className="text-base font-medium">Cuisine Type</Label>
+                        <Label htmlFor="cuisineType">Cuisine Type</Label>
                         <Controller
-                            control={control}
                             name="cuisineType"
-                            render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || ""} >
-                                    <SelectTrigger id="cuisineType" className="bg-white"> {/* Added bg-white */}
+                            control={control}
+                            render={({ field }: { field: ControllerRenderProps<CreateRecipeFormData, 'cuisineType'> }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isSubmitting}>
+                                    <SelectTrigger id="cuisineType">
                                         <SelectValue placeholder="Select cuisine type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {CuisineTypeEnum.options.map(cuisine => (
-                                            <SelectItem key={cuisine} value={cuisine}>{cuisine}</SelectItem>
+                                        <SelectItem value="">None</SelectItem>
+                                        {CuisineTypeEnum.options.map(option => (
+                                            <SelectItem key={option} value={option}>{option}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             )}
                         />
-                        {errors.cuisineType && <p className="text-sm text-red-600 mt-1">{errors.cuisineType.message}</p>}
+                        {errors.cuisineType && <p className="text-red-500 text-sm mt-1">{errors.cuisineType.message}</p>}
                     </div>
-                    {/* Difficulty Select */}
                     <div>
-                        <Label htmlFor="difficulty" className="text-base font-medium">Difficulty</Label>
+                        <Label htmlFor="difficulty">Difficulty</Label>
                          <Controller
-                            control={control}
                             name="difficulty"
-                            render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                    <SelectTrigger id="difficulty" className="bg-white"> {/* Added bg-white */}
+                            control={control}
+                            render={({ field }: { field: ControllerRenderProps<CreateRecipeFormData, 'difficulty'> }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isSubmitting}>
+                                    <SelectTrigger id="difficulty">
                                         <SelectValue placeholder="Select difficulty" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {DifficultyEnum.options.map(level => (
-                                             <SelectItem key={level} value={level}>{level}</SelectItem>
+                                        <SelectItem value="">None</SelectItem>
+                                        {DifficultyEnum.options.map(option => (
+                                             <SelectItem key={option} value={option}>{option}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             )}
                         />
-                        {errors.difficulty && <p className="text-sm text-red-600 mt-1">{errors.difficulty.message}</p>}
+                        {errors.difficulty && <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>}
                     </div>
                 </div>
             </div>
@@ -395,7 +395,7 @@ export default function CreateRecipeForm() {
             {/* --- Ingredients Section --- */}
              <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
                  <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Ingredients</h3> {/* Section heading */}
-                 {ingredientFields.map((field, index) => (
+                 {ingredientFields.map((field: Record<"id", string>, index: number) => (
                     // Removed bg-gray-50 from individual item row
                     <div key={field.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start p-3 border rounded-md">
                         {/* Ingredient Name */}
@@ -464,7 +464,7 @@ export default function CreateRecipeForm() {
             {/* --- Instructions Section --- */}
              <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
                  <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Instructions</h3> {/* Section heading */}
-                 {instructionFields.map((field, index) => (
+                 {instructionFields.map((field: Record<"id", string>, index: number) => (
                     // Removed bg-gray-50 from individual item row
                     <div key={field.id} className="flex items-start space-x-3 p-3 border rounded-md">
                         <span className="font-semibold text-gray-600 pt-2">{index + 1}.</span>
