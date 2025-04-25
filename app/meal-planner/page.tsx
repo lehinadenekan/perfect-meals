@@ -28,6 +28,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import Image from 'next/image'; // Import next/image
+import { useSession } from 'next-auth/react'; // Added useSession
+import AddMealModal from '@/components/AddMealModal'; // Import the new modal
 
 // --- Types --- (Remain the same)
 type PlannerMealData = {
@@ -47,15 +49,15 @@ type PlannerMealData = {
     customFoodEntry: CustomFoodEntry | null;
 };
 type PlannerApiResponseDay = {
-    id: string;
+      id: string;
     date: string;
     userId: string;
     notes: string | null;
     meals: PlannerMealData[];
 };
 type SearchResultItem = {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
     type: 'recipe' | 'custom';
     imageUrl?: string | null;
 };
@@ -64,16 +66,16 @@ type SearchResultItem = {
 const ProgressBar = ({ current, goal }: { current: number; goal: number | null | undefined }) => {
     if (!goal || goal <= 0 || current < 0) return null;
     const percentage = Math.min(Math.max((current / goal) * 100, 0), 100);
-    const isOver = current > goal;
-    return (
-      <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden mt-0.5">
-        <div
-          className={`h-1 rounded-full ${isOver ? 'bg-red-500' : 'bg-blue-500'}`}
+  const isOver = current > goal;
+  return (
+    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden mt-0.5">
+      <div 
+        className={`h-1 rounded-full ${isOver ? 'bg-red-500' : 'bg-blue-500'}`}
           style={{ width: `${isOver ? 100 : percentage}%` }}
-        ></div>
-      </div>
-    );
-  };
+      ></div>
+    </div>
+  );
+};
 
 // --- MealPlannerPage Component ---
 const MealPlannerPage = () => {
@@ -83,8 +85,6 @@ const MealPlannerPage = () => {
   const [dailyMacros, setDailyMacros] = useState<DailyMacroTotals[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDateForMeal, setSelectedDateForMeal] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, _setSearchResults] = useState<SearchResultItem[]>([]);
   const [_isSearching, _setIsSearching] = useState(false);
@@ -108,18 +108,23 @@ const MealPlannerPage = () => {
   const [savingNoteForDate, _setSavingNoteForDate] = useState<string | null>(null);
   const [quickItemName, _setQuickItemName] = useState<string>('');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const { status: sessionStatus } = useSession(); // Get session status
+
+  // Add state for the new modal
+  const [isAddMealModalOpen, setIsAddMealModalOpen] = useState(false);
+  const [selectedDateForAdd, setSelectedDateForAdd] = useState<Date | null>(null); 
 
   // --- Data Fetching --- (Remains the same)
   const fetchPlannerData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    const startDate = format(currentWeekStart, 'yyyy-MM-dd');
-    const endDate = format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      setIsLoading(true);
+      setError(null);
+      const startDate = format(currentWeekStart, 'yyyy-MM-dd');
+      const endDate = format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
-    try {
-      const response = await fetch(`/api/planner?startDate=${startDate}&endDate=${endDate}`);
+      try {
+        const response = await fetch(`/api/planner?startDate=${startDate}&endDate=${endDate}`);
       if (!response.ok) throw new Error(`Failed to fetch planner data: ${response.statusText}`);
-      const data: PlannerApiResponseDay[] = await response.json();
+        const data: PlannerApiResponseDay[] = await response.json();
       const initialNotes: Record<string, string> = {};
       const dataForCalc = data.map(day => {
         const dayStr = day.date.substring(0, 10);
@@ -169,19 +174,50 @@ const MealPlannerPage = () => {
       setDailyNotes(initialNotes);
       setPlannerData(data);
       const calculatedMacros = calculateDailyMacros(dataForCalc);
-      setDailyMacros(calculatedMacros);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      setPlannerData([]);
-      setDailyMacros([]);
+        setDailyMacros(calculatedMacros);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setPlannerData([]);
+        setDailyMacros([]);
       setDailyNotes({});
-    } finally {
-      setIsLoading(false);
-    }
+      } finally {
+        setIsLoading(false);
+      }
 }, [currentWeekStart]);
 
   useEffect(() => { fetchPlannerData(); }, [fetchPlannerData]);
-  useEffect(() => { /* Fetch User Preferences */ }, []);
+
+  // --- Fetch User Preferences ---
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (sessionStatus === 'authenticated') {
+        _setPrefsLoading(true);
+        _setPrefsError(null);
+        try {
+          const response = await fetch('/api/user/preferences');
+          if (!response.ok) {
+            throw new Error(`Failed to fetch preferences: ${response.statusText}`);
+          }
+          const prefs = await response.json();
+          // API returns {} if no prefs found, handle this case
+          _setUserPreferences(prefs && Object.keys(prefs).length > 0 ? prefs : null);
+        } catch (err) {
+          console.error("Error fetching user preferences:", err);
+          _setPrefsError(err instanceof Error ? err.message : 'Could not load preferences.');
+          _setUserPreferences(null); // Ensure state is null on error
+        } finally {
+          _setPrefsLoading(false);
+        }
+      } else if (sessionStatus === 'unauthenticated') {
+        // Handle case where user is not logged in (optional: clear prefs or show message)
+         _setUserPreferences(null);
+        _setPrefsLoading(false);
+      }
+      // If sessionStatus is 'loading', wait for it to resolve
+    };
+
+    fetchUserPreferences();
+  }, [sessionStatus]); // Re-run when session status changes
 
   // --- Search --- (Remains the same)
   useEffect(() => { /* Debounce Search */ }, [searchQuery]);
@@ -200,8 +236,10 @@ const MealPlannerPage = () => {
   const daysInWeek = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
 
   // --- Modal Handlers --- (Remain the same)
-  const handleAddMealClick = (day: Date) => { setSelectedDateForMeal(day); setIsModalOpen(true); };
-  const handleCloseModalAndReset = () => { /* ... reset state ... */ };
+  const handleAddMealClick = (day: Date) => { 
+      setSelectedDateForAdd(day); 
+      setIsAddMealModalOpen(true); 
+  };
   const handleSelectItem = (_item: SearchResultItem) => { /* ... */ };
   const handleQuickItemNameChange = (_e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
   const handleConfirmAddMeal = async () => { /* ... */ };
@@ -214,6 +252,39 @@ const MealPlannerPage = () => {
   const handleCloseDetailsModal = () => { setIsDetailsModalOpen(false); setSelectedMealForDetails(null); };
   const handleNoteChange = (dateString: string, value: string) => { setDailyNotes(prev => ({ ...prev, [dateString]: value })); };
   const handleSaveNote = async (_dateString: string) => { /* ... */ };
+
+  // --- Add Meal Logic ---
+  const handleAddMeal = async (mealData: {
+    date: string;
+    mealType: MealType;
+    servings: number;
+    recipeId?: string;
+    customFoodEntryId?: string;
+  }) => {
+    try {
+      const response = await fetch('/api/planner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(mealData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})); // Try to parse error, default to empty obj
+        throw new Error(errorData.message || `Failed to add meal: ${response.statusText}`);
+      }
+
+      // Successfully added meal, refetch data for the current week
+      await fetchPlannerData(); 
+      // No need for toast here, modal handles it on success
+      // Close function is handled by the modal itself via onAddMeal prop completion
+    } catch (err) {
+      console.error("Error in handleAddMeal:", err);
+      // Rethrow the error so the modal can display it via toast
+      throw err;
+    }
+  };
 
   // --- JSX ---
   return (
@@ -235,8 +306,8 @@ const MealPlannerPage = () => {
                 "w-[280px] justify-center text-center font-normal", // Center text
                 !currentWeekStart && "text-muted-foreground"
               )}
-              disabled={isLoading || isGeneratingList}
-            >
+          disabled={isLoading || isGeneratingList}
+        >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {currentWeekStart ? (
                 <>
@@ -280,10 +351,10 @@ const MealPlannerPage = () => {
             const plannerDay = _plannerData.find(pd => pd.date.startsWith(dayString));
             const macros = dailyMacros.find(m => m.date.toISOString().startsWith(dayString));
             const goals = {
-                calories: userPreferences?.dailyCalorieGoal,
-                protein: userPreferences?.dailyProteinGoal,
-                carbs: userPreferences?.dailyCarbGoal,
-                fat: userPreferences?.dailyFatGoal,
+              calories: userPreferences?.dailyCalorieGoal,
+              protein: userPreferences?.dailyProteinGoal,
+              carbs: userPreferences?.dailyCarbGoal,
+              fat: userPreferences?.dailyFatGoal,
             };
             const currentNote = dailyNotes[dayString] ?? '';
             const isSavingThisNote = savingNoteForDate === dayString;
@@ -327,19 +398,19 @@ const MealPlannerPage = () => {
                               }
                               <p className={`font-medium truncate text-sm group-hover:text-blue-600 text-gray-800`} title={meal.recipe?.title ?? meal.customFoodEntry?.name}>{meal.recipe?.title ?? meal.customFoodEntry?.name ?? 'Unnamed Item'}</p>
                             </div>
-                          </div>
+                               </div>
                           <div className="flex items-center justify-between mt-0.5 pl-[2.25rem]">
                             <div className="flex items-center space-x-1">
                               {meal.mealTime && (<span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1 rounded">{meal.mealTime}</span>)}
                               <p className="text-[10px] font-medium capitalize text-gray-500">{meal.mealType.toLowerCase()}</p>
-                            </div>
-                            <div className="flex items-center space-x-1">
+                             </div>
+                               <div className="flex items-center space-x-1">
                               <button onClick={(e) => { e.stopPropagation(); handleDeleteMeal(meal.id); }} title="Delete Meal" className="p-0.5 text-red-600 hover:text-red-800 text-xs">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                              </button>
-                            </div>
-                          </div>
-                        </>
+                                 </button>
+                               </div>
+                             </div>
+                           </>
                       </div>
                     ))
                   ) : (
@@ -381,12 +452,12 @@ const MealPlannerPage = () => {
 
       {/* --- Modals --- */}
       {/* Add Meal Modal */}
-      {isModalOpen && selectedDateForMeal && (
-        <AlertDialog open={isModalOpen} onOpenChange={!isSubmitting ? handleCloseModalAndReset : undefined}>
+      {isAddMealModalOpen && selectedDateForAdd && (
+        <AlertDialog open={isAddMealModalOpen} onOpenChange={!isSubmitting ? handleCloseDetailsModal : undefined}>
           {/* ... Add Meal Modal Content ... */}
           <AlertDialogContent className="sm:max-w-[550px] max-h-[90vh] flex flex-col">
             <AlertDialogHeader>
-              <AlertDialogTitle>Add Meal for {format(selectedDateForMeal, 'MMM d, yyyy')}</AlertDialogTitle>
+              <AlertDialogTitle>Add Meal for {format(selectedDateForAdd, 'MMM d, yyyy')}</AlertDialogTitle>
               <AlertDialogDescription>Search for a recipe/food or add a quick item.</AlertDialogDescription>
             </AlertDialogHeader>
             <div className="flex-grow overflow-hidden flex flex-col space-y-4 pr-2">
@@ -399,8 +470,8 @@ const MealPlannerPage = () => {
                 {!_isSearching && searchResults.length === 0 && searchQuery.trim() !== '' && (<p className="text-gray-500 text-sm text-center">No results found.</p>)}
                 {searchResults.length > 0 && (
                   <ScrollArea className="h-full">
-                    <ul className="space-y-2">
-                      {searchResults.map((item) => (
+                <ul className="space-y-2">
+                  {searchResults.map((item) => (
                         <li key={item.id} onClick={() => !isSubmitting && handleSelectItem(item)} className={`p-2 rounded cursor-pointer flex items-center space-x-2 ${selectedItem?.id === item.id ? 'bg-blue-100' : 'hover:bg-gray-100'} ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           {/* --- UPDATED IMG to Image --- */}
                           {item.imageUrl ?
@@ -408,9 +479,9 @@ const MealPlannerPage = () => {
                             : <div className="w-8 h-8 rounded bg-gray-200 flex-shrink-0"></div>
                           }
                           <span className="text-sm font-medium">{item.name} ({item.type})</span>
-                        </li>
-                      ))}
-                    </ul>
+                    </li>
+                  ))}
+                </ul>
                   </ScrollArea>
                 )}
                 {!_isSearching && searchResults.length === 0 && searchQuery.trim() === '' && (<p className="text-gray-400 text-xs text-center pt-4">Type above to search your recipes and custom foods.</p>)}
@@ -419,7 +490,7 @@ const MealPlannerPage = () => {
               <div>
                 <Label htmlFor="quick-item-name" className="text-sm font-medium">Add Quick Item</Label>
                 <Input id="quick-item-name" placeholder="e.g., Apple, 2 Eggs, Leftovers..." value={quickItemName} onChange={handleQuickItemNameChange} className="mt-1" disabled={isSubmitting} />
-              </div>
+            </div>
               {(selectedItem || quickItemName.trim() !== '') && (
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -442,7 +513,7 @@ const MealPlannerPage = () => {
             </div>
             {submitError && (<p className="text-sm text-red-600 mt-2 text-center">{submitError}</p>)}
             <AlertDialogFooter className="mt-4 pt-4 border-t">
-              <AlertDialogCancel onClick={handleCloseModalAndReset} disabled={isSubmitting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={handleCloseDetailsModal} disabled={isSubmitting}>Cancel</AlertDialogCancel>
               {quickItemName.trim() !== '' && (<Button onClick={handleConfirmQuickAddItem} disabled={isSubmitting || !selectedMealType || quickItemName.trim() === ''} className="bg-green-600 hover:bg-green-700">{isSubmitting ? 'Adding...' : 'Add Quick Item'}</Button>)}
               {selectedItem && quickItemName.trim() === '' && (<AlertDialogAction onClick={handleConfirmAddMeal} disabled={isSubmitting || !selectedMealType || !selectedItem || quickItemName.trim() !== ''} className="bg-blue-600 hover:bg-blue-700">{isSubmitting ? 'Adding...' : 'Add Meal'}</AlertDialogAction>)}
               {!selectedItem && quickItemName.trim() === '' && ( <Button disabled className="bg-gray-400">Add Meal</Button> )}
@@ -457,7 +528,7 @@ const MealPlannerPage = () => {
           {/* ... Shopping List Modal Content ... */}
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Shopping List</h2>
+              <h2 className="text-xl font-bold">Shopping List</h2>
                 <button onClick={handleCloseShoppingListModal} className="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div className="overflow-y-auto flex-grow">
@@ -475,6 +546,14 @@ const MealPlannerPage = () => {
 
       {/* Select Meals Modal */}
       <SelectMealsForShoppingListModal isOpen={isSelectMealsModalOpen} onClose={() => setIsSelectMealsModalOpen(false)} plannerData={_plannerData} onConfirm={handleConfirmShoppingListSelection} />
+
+      {/* Add the new modal rendering here */}
+      <AddMealModal
+        isOpen={isAddMealModalOpen}
+        onClose={() => setIsAddMealModalOpen(false)}
+        onAddMeal={handleAddMeal} // Pass the function here
+        selectedDate={selectedDateForAdd} // Pass the selected date
+      />
 
     </div> // End container
   );

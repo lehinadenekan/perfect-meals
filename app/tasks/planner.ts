@@ -41,58 +41,58 @@
 // - [DONE] Replace emoji icons with SVG icons.
 // - [DONE] Make meal items clickable (placeholder action).
 
-// == REMAINING CORE TASKS == [TODO]
+// == REMAINING CORE TASKS == [TODO] -> Updated to reflect recent work
 
-// --- 1. Set/Edit User Macro Goals --- [TODO]
-//    - [TODO] Create UI component for goal setting form (e.g., `components/GoalSettingsForm.tsx`).
-//    - [TODO] Create a dedicated settings/profile page (e.g., `app/settings/page.tsx` or integrate into existing profile).
-//    - [TODO] Implement API endpoint `PUT /api/user/preferences` to handle saving goals.
-//          - Add necessary fields to `UserPreference` schema if not already present (calories, protein, carbs, fat). Run migration.
-//          - Implement the route handler with validation and database update logic.
-//    - [TODO] Connect the GoalSettingsForm component to the `PUT /api/user/preferences` endpoint.
-//    - [TODO] Ensure the meal planner page (`app/meal-planner/page.tsx`) fetches and reflects updated goals after saving (e.g., re-fetch or update state).
+// --- 1. Set/Edit User Macro Goals --- [DONE]
+//    - [DONE] Create UI component for goal setting form (e.g., `components/GoalSettingsForm.tsx`).
+//    - [DONE] Create a dedicated settings/profile page (e.g., `app/settings/page.tsx` or integrate into existing profile).
+//    - [DONE] Implement API endpoint `PUT /api/user/preferences` to handle saving goals.
+//          - [DONE] Add necessary fields to `UserPreference` schema if not already present (calories, protein, carbs, fat). Run migration.
+//          - [DONE] Implement the route handler with validation and database update logic.
+//    - [DONE] Connect the GoalSettingsForm component to the `PUT /api/user/preferences` endpoint.
+//    - [DONE] Ensure the meal planner page (`app/meal-planner/page.tsx`) fetches and reflects updated goals after saving (e.g., re-fetch or update state).
 
-// --- 2. Add Meals to Planner UI Flow --- [TODO]
-//    - [TODO] Create "Add Meal" modal component (e.g., `components/AddMealModal.tsx`).
-//          - Include search input.
-//          - Display search results (recipes/custom foods).
-//          - Allow selection of an item.
-//          - Include inputs/selects for Servings and Meal Type (Breakfast, Lunch, Dinner, Snack).
-//          - Include Submit/Cancel buttons.
-//    - [TODO] Implement search functionality within the modal.
-//          - Call the existing `/api/search` endpoint as the user types.
-//          - Display results clearly, distinguishing between recipes and custom foods.
-//    - [TODO] Implement submission logic in the modal.
-//          - Gather selected item (recipeId or customFoodEntryId), date (passed to modal), servings, meal type.
-//          - Call `POST /api/planner` with the gathered data.
-//          - Handle success (close modal, refresh planner data) and errors (display message).
-//    - [TODO] Trigger modal opening from the "+" button on day cards.
-//          - Pass the specific date of the day card to the modal.
-//    - [TODO] Ensure the planner UI updates visually after successfully adding a meal.
+// --- 2. Add Meals to Planner UI Flow --- [DONE]
+//    - [DONE] Create "Add Meal" modal component (e.g., `components/AddMealModal.tsx`).
+//          - [DONE] Include search input.
+//          - [DONE] Display search results (recipes/custom foods).
+//          - [DONE] Allow selection of an item.
+//          - [DONE] Include inputs/selects for Servings and Meal Type (Breakfast, Lunch, Dinner, Snack).
+//          - [DONE] Include Submit/Cancel buttons.
+//    - [DONE] Implement search functionality within the modal.
+//          - [DONE] Call the existing `/api/search` endpoint as the user types.
+//          - [DONE] Display results clearly, distinguishing between recipes and custom foods.
+//    - [DONE] Implement submission logic in the modal.
+//          - [DONE] Gather selected item (recipeId or customFoodEntryId), date (passed to modal), servings, meal type.
+//          - [DONE] Call `POST /api/planner` with the gathered data.
+//          - [DONE] Handle success (close modal, refresh planner data) and errors (display message).
+//    - [DONE] Trigger modal opening from the "+" button on day cards.
+//          - [DONE] Pass the specific date of the day card to the modal.
+//    - [DONE] Ensure the planner UI updates visually after successfully adding a meal.
 
-// --- 3. View Meal Details --- [TODO]
-//    - [TODO] Create "Meal Details" modal component (e.g., `components/MealDetailsModal.tsx`).
-//    - [TODO] Implement the actual logic within `handleViewMealDetails` in `app/meal-planner/page.tsx`.
-//          - Fetch full details if necessary (or ensure they are already available in the planner data).
-//          - Open the `MealDetailsModal` and pass the relevant meal data (recipe or custom food details).
-//    - [TODO] Populate the `MealDetailsModal` with data:
-//          - Recipe: Image, Title, Servings (from planner meal), Ingredients, Instructions, Full Nutrition Facts.
-//          - Custom Food: Name, Servings (from planner meal), Nutrition Facts.
+// --- 3. View Meal Details --- [DONE]
+//    - [DONE] Create "Meal Details" modal component (e.g., `components/MealDetailsModal.tsx`).
+//    - [DONE] Implement the actual logic within `handleViewMealDetails` in `app/meal-planner/page.tsx`.
+//          - [DONE] Fetch full details if necessary (or ensure they are already available in the planner data).
+//          - [DONE] Open the `MealDetailsModal` and pass the relevant meal data (recipe or custom food details).
+//    - [DONE] Populate the `MealDetailsModal` with data:
+//          - [DONE] Recipe: Image, Title, Servings (from planner meal), Ingredients, Instructions, Full Nutrition Facts.
+//          - [DONE] Custom Food: Name, Servings (from planner meal), Nutrition Facts.
 
-// --- 4. Shopping List Generation --- [TODO]
-//    - [TODO] Create utility function `generateShoppingList(plannerDays: PlannerApiResponseDay[], startDate: Date, endDate: Date)` (e.g., in `lib/shoppingListUtils.ts`).
-//          - Iterate through meals within the date range.
-//          - Aggregate ingredients from associated recipes (need recipe details including ingredients).
-//          - Adjust ingredient quantities based on planned servings vs. recipe base servings.
-//          - Combine identical ingredients (e.g., "2 cups flour" + "1 cup flour" = "3 cups flour"). Consider unit consistency/conversion.
-//    - [TODO] Create UI for Shopping List (e.g., `components/ShoppingListDisplay.tsx`).
-//          - Display the aggregated list of ingredients and quantities.
-//          - Potentially group by category (produce, dairy, etc.) - requires ingredient categorization.
-//          - Add checkboxes to mark items as acquired.
-//    - [TODO] Create a page or integrate into UI to trigger generation and display the list.
-//          - Add a button (e.g., "Generate Shopping List").
-//          - Potentially add a date range selector.
-//          - Fetch planner data for the range, call `generateShoppingList`, and display results in the UI component.
+// --- 4. Shopping List Generation --- [PARTIALLY DONE]
+//    - [IN PROGRESS] Create utility function `generateShoppingList(selectedMeals: PlannerMealData[])` (e.g., in `lib/shoppingListUtils.ts`).
+//          - [DONE] Iterate through selected meals.
+//          - [DONE] Aggregate ingredients from associated recipes (basic aggregation exists).
+//          - [TODO] Adjust ingredient quantities based on planned servings vs. recipe base servings.
+//          - [TODO] Combine identical ingredients (e.g., "2 cups flour" + "1 cup flour" = "3 cups flour"). Consider unit consistency/conversion.
+//    - [DONE] Create UI for Shopping List (e.g., `components/ShoppingListDisplay.tsx`).
+//          - [DONE] Display the aggregated list of ingredients and quantities.
+//          - [TODO] Potentially group by category (produce, dairy, etc.) - requires ingredient categorization.
+//          - [TODO] Add checkboxes to mark items as acquired.
+//    - [DONE] Create a page or integrate into UI to trigger generation and display the list.
+//          - [DONE] Add a button (e.g., "Generate Shopping List").
+//          - [DONE] Use SelectMeals modal instead of date range selector.
+//          - [DONE] Fetch planner data for the range, call `generateShoppingList`, and display results in the UI component.
 
 // == Nice-to-Have / Future Enhancements ==
 // - Drag-and-drop meals between days/meal types.

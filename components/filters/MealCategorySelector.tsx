@@ -16,6 +16,7 @@ const MEAL_CATEGORIES = [
   'Beverage',
   'Brunch',
   'Main Course',
+  'Drink',
 ] as const;
 
 // Prefix unused type alias

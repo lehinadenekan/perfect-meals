@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import GoalSettingsForm from '@/components/GoalSettingsForm'; // Adjust path if needed
+import GoalSettingsForm from '@/components/settings/GoalSettingsForm';
 import { useSession } from 'next-auth/react';
 
 const SettingsPage: React.FC = () => {
   const { status } = useSession();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Settings</h1>
 
       {status === 'loading' && (
         <p>Loading session...</p>

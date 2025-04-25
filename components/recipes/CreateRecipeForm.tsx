@@ -1,21 +1,20 @@
-// app/components/recipes/CreateRecipeForm.tsx
+// components/recipes/CreateRecipeForm.tsx
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useForm, useFieldArray, Controller, ControllerRenderProps } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, ControllerRenderProps, FieldError, FieldPath } from 'react-hook-form'; // Added FieldError and FieldPath
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label"; // Assuming this path is correct / file exists
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone, FileRejection } from 'react-dropzone';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react'; // --- Phase 5: Import loading icon ---
-// --- Phase 5: Import Select Components ---
+import { Loader2, Trash2, UploadCloud, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -23,28 +22,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// --- Phase 5: Import Alert Dialog Components ---
+// Removed Unused Alert Dialog Imports
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-// --- Phase 5: Updated Zod schema with enums ---
+// Zod schema definitions
 const DifficultyEnum = z.enum(["Easy", "Medium", "Hard"]);
-const CuisineTypeEnum = z.enum(["Italian", "Mexican", "Asian", "Indian", "American", "Mediterranean", "Other"]); // Example enums
+const CuisineTypeEnum = z.enum(["Italian", "Mexican", "Asian", "Indian", "American", "Mediterranean", "Other"]);
+const CookingStyleEnum = z.enum(["Air Fryer", "Bake", "BBQ", "Boil", "Instant Pot", "Microwave", "No-Cook", "Oven", "Roast", "Slow Cooker", "Steam", "Stovetop"]);
+const MealCategoryEnum = z.enum(["Appetizer", "Beverage", "Breakfast", "Brunch", "Dessert", "Dinner", "Drink", "Lunch", "Main Course", "Side Dish", "Snack"]);
 
 const createRecipeSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
     description: z.string().optional(),
     cookingTime: z.coerce.number({ invalid_type_error: 'Must be a number' }).positive('Must be positive').optional(),
     servings: z.coerce.number({ invalid_type_error: 'Must be a number' }).positive('Must be positive').optional(),
+    regionOfOrigin: z.string().optional(),
     ingredients: z.array(z.object({
         name: z.string().min(2, 'Required'),
         amount: z.coerce.number({ invalid_type_error: 'Num' }).positive('Pos'),
@@ -57,28 +56,44 @@ const createRecipeSchema = z.object({
     isVegan: z.boolean().optional(),
     isGlutenFree: z.boolean().optional(),
     isNutFree: z.boolean().optional(),
-    // --- Phase 5: Update schema for Selects ---
-    cuisineType: CuisineTypeEnum.optional().or(z.literal("")), // Allow optional or empty string initial value
-    difficulty: DifficultyEnum.optional().or(z.literal("")),   // Allow optional or empty string initial value
+    isPescatarian: z.boolean().optional(),
+    isLactoseFree: z.boolean().optional(),
+    isLowFodmap: z.boolean().optional(),
+    isFermented: z.boolean().optional(),
+    cuisineType: CuisineTypeEnum.optional().or(z.literal("")),
+    difficulty: DifficultyEnum.optional().or(z.literal("")),
+    cookingStyles: z.array(CookingStyleEnum).optional(),
+    mealCategories: z.array(MealCategoryEnum).optional(),
 });
 type CreateRecipeFormData = z.infer<typeof createRecipeSchema>;
 
-// --- Added RecipePayload Type Definition ---
+// RecipePayload Type Definition
 type RecipePayload = {
   title: string;
   description?: string;
   cookingTime?: number;
   servings?: number;
+  regionOfOrigin?: string;
   ingredients: { name: string; amount: number; unit: string }[];
   instructions: { description: string; stepNumber: number }[];
   isVegetarian?: boolean;
   isVegan?: boolean;
   isGlutenFree?: boolean;
   isNutFree?: boolean;
-  cuisineType?: string; // Or use z.infer<typeof CuisineTypeEnum> if API expects enum value
-  difficulty?: string;  // Or use z.infer<typeof DifficultyEnum> if API expects enum value
+  isPescatarian?: boolean;
+  isLactoseFree?: boolean;
+  isLowFodmap?: boolean;
+  isFermented?: boolean;
+  cuisineType?: string;
+  difficulty?: string;
   imageUrl?: string;
+  cookingStyles?: string[];
+  mealCategories?: string[];
 };
+
+// Define types for field array items to avoid direct indexing errors
+type IngredientField = CreateRecipeFormData['ingredients'][number];
+type InstructionField = CreateRecipeFormData['instructions'][number];
 
 export default function CreateRecipeForm() {
     const {
@@ -86,26 +101,37 @@ export default function CreateRecipeForm() {
         handleSubmit,
         control,
         formState: { errors, isSubmitting },
-        reset
+        reset,
+        watch,
+        setValue,
     } = useForm<CreateRecipeFormData>({
         resolver: zodResolver(createRecipeSchema),
         defaultValues: {
             title: '',
             description: '',
+            regionOfOrigin: '',
             ingredients: [{ name: '', amount: NaN, unit: '' }],
             instructions: [{ description: '' }],
             isVegetarian: false,
             isVegan: false,
             isGlutenFree: false,
             isNutFree: false,
-            cuisineType: '', // Default to empty string for Select placeholder
-            difficulty: '',  // Default to empty string for Select placeholder
+            isPescatarian: false,
+            isLactoseFree: false,
+            isLowFodmap: false,
+            isFermented: false,
+            cuisineType: '',
+            difficulty: '',
+            cookingStyles: [],
+            mealCategories: [],
         },
     });
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const router = useRouter();
+
+    // Removed Unused Watched Variables
 
     useEffect(() => {
         if (imageFile) {
@@ -119,7 +145,7 @@ export default function CreateRecipeForm() {
 
     const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
         if (fileRejections.length > 0) {
-            fileRejections.forEach(({ file, errors: dropzoneErrors }) => { // Renamed errors to dropzoneErrors
+            fileRejections.forEach(({ file, errors: dropzoneErrors }) => {
                 dropzoneErrors.forEach(err => {
                     let message = `Error with file ${file.name}: ${err.message}`;
                     if (err.code === 'file-too-large') {
@@ -157,7 +183,8 @@ export default function CreateRecipeForm() {
         multiple: false
     });
 
-    const clearImage = () => {
+    const clearImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
         setImageFile(null);
     };
 
@@ -201,36 +228,37 @@ export default function CreateRecipeForm() {
             ...inst, stepNumber: index + 1,
         }));
 
-        // --- Updated recipePayload to use RecipePayload type ---
         const recipePayload: RecipePayload = {
             title: data.title,
             description: data.description,
             cookingTime: data.cookingTime,
             servings: data.servings,
-            ingredients: data.ingredients, // Type matches structure from form data
-            instructions: instructionsWithSteps, // Type matches structure after mapping
+            regionOfOrigin: data.regionOfOrigin,
+            ingredients: data.ingredients,
+            instructions: instructionsWithSteps,
             isVegetarian: data.isVegetarian,
             isVegan: data.isVegan,
             isGlutenFree: data.isGlutenFree,
             isNutFree: data.isNutFree,
-            cuisineType: data.cuisineType || undefined, // Send undefined if empty string
-            difficulty: data.difficulty || undefined, // Send undefined if empty string
+            isPescatarian: data.isPescatarian,
+            isLactoseFree: data.isLactoseFree,
+            isLowFodmap: data.isLowFodmap,
+            isFermented: data.isFermented,
+            cuisineType: data.cuisineType || undefined,
+            difficulty: data.difficulty || undefined,
             imageUrl: uploadedImageUrl,
+            cookingStyles: data.cookingStyles,
+            mealCategories: data.mealCategories,
         };
 
-        // Clean up optional fields more reliably
-        // We need to cast to any here because we are dynamically deleting keys,
-        // which RecipePayload doesn't allow by default.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const payloadToSend: any = { ...recipePayload };
+        const payloadToSend: Record<string, any> = { ...recipePayload };
         Object.keys(payloadToSend).forEach(key => {
-             const K = key as keyof RecipePayload; // Type assertion
-             // Added check for NaN specifically for numeric fields
+             const K = key as keyof RecipePayload;
             if (payloadToSend[K] === undefined || payloadToSend[K] === null || payloadToSend[K] === '' || (typeof payloadToSend[K] === 'number' && isNaN(payloadToSend[K]))) {
                 delete payloadToSend[K];
             }
         });
-
 
         console.log('Submitting Recipe Payload:', JSON.stringify(payloadToSend, null, 2));
 
@@ -238,7 +266,7 @@ export default function CreateRecipeForm() {
             const response = await fetch('/api/recipes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadToSend), // Send the cleaned payload
+                body: JSON.stringify(payloadToSend),
             });
 
             if (!response.ok) {
@@ -246,8 +274,7 @@ export default function CreateRecipeForm() {
                 try {
                     const errorBody = await response.json();
                     errorMessage = errorBody.message || (errorBody.details ? JSON.stringify(errorBody.details) : errorMessage);
-                // --- Phase 5: Fix linter error (unused variable) ---
-                } catch (_parseError) { // Prefix with underscore
+                } catch (_parseError) {
                     errorMessage = response.statusText || 'Server error';
                 }
                 throw new Error(`Failed to create recipe: ${errorMessage} (Status: ${response.status})`);
@@ -268,274 +295,337 @@ export default function CreateRecipeForm() {
         }
     };
 
+    // Helper function for rendering error messages
+    const renderError = (field: keyof CreateRecipeFormData | `ingredients.${number}.${keyof IngredientField}` | `instructions.${number}.${keyof InstructionField}`) => {
+        let error: FieldError | undefined; // Use FieldError type
+        if (typeof field === 'string') {
+            const parts = field.split('.');
+            if (parts.length === 3 && (parts[0] === 'ingredients' || parts[0] === 'instructions')) {
+                 type FieldArrayKeys = 'ingredients' | 'instructions';
+                 type FieldKeys = keyof CreateRecipeFormData[FieldArrayKeys][number];
+                 const fieldArrayErrors = errors[parts[0] as FieldArrayKeys];
+                 if(fieldArrayErrors && typeof fieldArrayErrors === 'object' && !Array.isArray(fieldArrayErrors)) {
+                     // Access nested errors more safely
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const specificErrorArray = (fieldArrayErrors as any)[parseInt(parts[1])];
+                    if (specificErrorArray) {
+                         error = specificErrorArray[parts[2] as FieldKeys] as FieldError | undefined;
+                    }
+                 }
+            } else {
+                // Directly access the potential error message for the simple field
+                const simpleErrorObject = errors[field as keyof CreateRecipeFormData];
+                if (simpleErrorObject && typeof simpleErrorObject === 'object' && 'message' in simpleErrorObject && typeof simpleErrorObject.message === 'string') {
+                    // If it has a message, return it directly, bypassing the 'error' variable assignment here
+                     return <p className="text-red-500 text-xs mt-1">{simpleErrorObject.message}</p>;
+                }
+                 // If it's not a simple FieldError with a message, assign undefined
+                error = undefined;
+            }
+        }
+        // Existing return for array field errors or if simpleErrorObject had no message
+        return error ? (
+            <p className="text-red-500 text-xs mt-1">{error.message}</p>
+        ) : null;
+    };
+
+    // Helper for Select component rendering - Use FieldPath for the field name constraint
+    const renderSelect = (field: ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, placeholder: string, options: readonly string[]) => (
+        <Select
+            onValueChange={field.onChange}
+            value={String(field.value ?? "")}
+            disabled={isSubmitting}
+        >
+            <SelectTrigger>
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+                {options.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+
+    // Helper for Cooking Styles Checkbox Group
+    const handleCookingStyleChange = (style: z.infer<typeof CookingStyleEnum>, isChecked: boolean) => {
+        const currentStyles = watch('cookingStyles') || [];
+        const newStyles = isChecked
+            ? [...currentStyles, style]
+            : currentStyles.filter((s) => s !== style);
+        setValue('cookingStyles', newStyles, { shouldValidate: true });
+    };
+
+    // Helper for Meal Categories Checkbox Group
+    const handleMealCategoryChange = (category: z.infer<typeof MealCategoryEnum>, isChecked: boolean) => {
+        const currentCategories = watch('mealCategories') || [];
+        const newCategories = isChecked
+            ? [...currentCategories, category]
+            : currentCategories.filter((c) => c !== category);
+        setValue('mealCategories', newCategories, { shouldValidate: true });
+    };
+
+    // JSX rendering
     return (
-        // Note: Removed padding from form element itself, relying on page wrapper now
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl mx-auto">
-            {/* Removed h2 - assuming title is handled by the page component */}
-            {/* <h2 className="text-3xl font-bold text-gray-800 border-b pb-4">Create New Recipe</h2> */}
+        <Card className="w-full max-w-4xl mx-auto my-8">
+            <CardHeader>
+                <CardTitle>Create a New Recipe</CardTitle>
+                <CardDescription>Fill in the details below to add your recipe.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} id="recipe-form" className="space-y-8">
 
-            {/* --- Basic Info Section --- */}
-            <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
-                 <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Recipe Information</h3> {/* Section heading */}
-                <div>
-                    <Label htmlFor="title" className="text-base font-medium">Title</Label>
-                    <Input id="title" {...register('title')} placeholder="Recipe Title" className="bg-white" /> {/* Added bg-white */}
-                    {errors.title && <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>}
-                </div>
-                <div>
-                    <Label htmlFor="description" className="text-base font-medium">Description</Label>
-                    <Textarea id="description" {...register('description')} placeholder="A short description of the recipe..." className="bg-white" /> {/* Added bg-white */}
-                    {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="cookingTime" className="text-base font-medium">Cooking Time (minutes)</Label>
-                        <Input id="cookingTime" type="number" {...register('cookingTime')} placeholder="e.g., 30" className="bg-white" /> {/* Added bg-white */}
-                        {errors.cookingTime && <p className="text-sm text-red-600 mt-1">{errors.cookingTime.message}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor="servings" className="text-base font-medium">Servings</Label>
-                        <Input id="servings" type="number" {...register('servings')} placeholder="e.g., 4" className="bg-white" /> {/* Added bg-white */}
-                        {errors.servings && <p className="text-sm text-red-600 mt-1">{errors.servings.message}</p>}
-                    </div>
-                </div>
-                {/* --- Phase 5: Cuisine Type & Difficulty Selects --- */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                     <div>
-                        <Label htmlFor="cuisineType">Cuisine Type</Label>
-                        <Controller
-                            name="cuisineType"
-                            control={control}
-                            render={({ field }: { field: ControllerRenderProps<CreateRecipeFormData, 'cuisineType'> }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isSubmitting}>
-                                    <SelectTrigger id="cuisineType">
-                                        <SelectValue placeholder="Select cuisine type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
-                                        {CuisineTypeEnum.options.map(option => (
-                                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                        {errors.cuisineType && <p className="text-red-500 text-sm mt-1">{errors.cuisineType.message}</p>}
-                    </div>
-                    <div>
-                        <Label htmlFor="difficulty">Difficulty</Label>
-                         <Controller
-                            name="difficulty"
-                            control={control}
-                            render={({ field }: { field: ControllerRenderProps<CreateRecipeFormData, 'difficulty'> }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isSubmitting}>
-                                    <SelectTrigger id="difficulty">
-                                        <SelectValue placeholder="Select difficulty" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
-                                        {DifficultyEnum.options.map(option => (
-                                             <SelectItem key={option} value={option}>{option}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        />
-                        {errors.difficulty && <p className="text-red-500 text-sm mt-1">{errors.difficulty.message}</p>}
-                    </div>
-                </div>
-            </div>
-
-            {/* --- Dietary Flags Section --- */}
-             <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
-                 <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Dietary Information</h3> {/* Section heading */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                    {(['isVegetarian', 'isVegan', 'isGlutenFree', 'isNutFree'] as const).map((flag) => (
-                        <div key={flag} className="flex items-center space-x-2">
-                            <Checkbox id={flag} {...register(flag)} />
-                            <Label htmlFor={flag} className="font-normal capitalize">
-                                {flag.substring(2).replace(/([A-Z])/g, ' $1').trim()}
-                            </Label>
+                    {/* Section 1: Basic Details */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Basic Information</h3>
+                        <div>
+                            <Label htmlFor="title">Title *</Label>
+                            <Input id="title" {...register('title')} placeholder="e.g., Grandma's Apple Pie" disabled={isSubmitting} />
+                            {renderError('title')}
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* --- Image Upload Section --- */}
-             <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
-                <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Recipe Image (Optional)</h3> {/* Section heading */}
-                <div
-                    {...getRootProps()}
-                    // Added bg-gray-50 to dropzone for slight contrast
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 ease-in-out bg-gray-50 ${isDragActive ? 'border-blue-500 bg-blue-100' : 'border-gray-300 hover:border-gray-400'} ${imagePreviewUrl ? 'border-solid !border-gray-300 p-4' : ''}`}
-                    aria-label="Recipe image upload area"
-                >
-                    <input {...getInputProps()} />
-                    {imagePreviewUrl ? (
-                        <div className="relative group">
-                            <Image src={imagePreviewUrl} alt="Recipe preview" width={200} height={200} className="mx-auto rounded-md object-cover max-h-48 w-auto" />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-md">
-                                <Button type="button" variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); clearImage(); }} aria-label="Remove recipe image">
-                                    Remove Image
-                                </Button>
+                        <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" {...register('description')} placeholder="A brief description of your recipe..." disabled={isSubmitting} />
+                            {renderError('description')}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="cookingTime">Cooking Time (minutes)</Label>
+                                <Input id="cookingTime" type="number" {...register('cookingTime')} placeholder="e.g., 45" disabled={isSubmitting} />
+                                {renderError('cookingTime')}
+                            </div>
+                            <div>
+                                <Label htmlFor="servings">Servings</Label>
+                                <Input id="servings" type="number" {...register('servings')} placeholder="e.g., 4" disabled={isSubmitting} />
+                                {renderError('servings')}
                             </div>
                         </div>
-                    ) : isDragActive ? (
-                        <p className="text-blue-600">Drop the image here...</p>
-                    ) : (
-                         <div className="flex flex-col items-center justify-center space-y-2 text-gray-500">
-                            <p>Drag & drop image here, or click to select</p>
-                            <p className="text-xs">(Max 5MB, JPEG/PNG/WEBP/GIF)</p>
-                         </div>
-                    )}
-                </div>
-                {imageFile && !imagePreviewUrl && <p className="text-sm text-gray-600 mt-2 text-center">Selected: {imageFile.name}</p>}
-            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="cuisineType">Cuisine Type</Label>
+                                <Controller
+                                    name="cuisineType"
+                                    control={control}
+                                    render={({ field }) => renderSelect(field as ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, "Select Cuisine", CuisineTypeEnum.options)} // Added type assertion here
+                                />
+                                {renderError('cuisineType')}
+                            </div>
+                            <div>
+                                <Label htmlFor="difficulty">Difficulty</Label>
+                                <Controller
+                                    name="difficulty"
+                                    control={control}
+                                    render={({ field }) => renderSelect(field as ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, "Select Difficulty", DifficultyEnum.options)} // Added type assertion here
+                                />
+                                {renderError('difficulty')}
+                            </div>
+                            <div>
+                                <Label htmlFor="regionOfOrigin">Region of Origin</Label>
+                                <Input id="regionOfOrigin" {...register('regionOfOrigin')} placeholder="e.g., Sicily, Oaxaca, Sichuan" disabled={isSubmitting} />
+                                {renderError('regionOfOrigin')}
+                            </div>
+                        </div>
+                    </div>
 
-            {/* --- Ingredients Section --- */}
-             <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
-                 <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Ingredients</h3> {/* Section heading */}
-                 {ingredientFields.map((field: Record<"id", string>, index: number) => (
-                    // Removed bg-gray-50 from individual item row
-                    <div key={field.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-start p-3 border rounded-md">
-                        {/* Ingredient Name */}
-                        <div className="col-span-1">
-                            <Label htmlFor={`ingredients.${index}.name`} className="sr-only">Name</Label>
-                            {/* Updated className */}
-                            <Input id={`ingredients.${index}.name`} placeholder="Ingredient Name" {...register(`ingredients.${index}.name`)} className={`bg-white ${errors.ingredients?.[index]?.name ? 'border-red-500' : ''}`} />
-                            {errors.ingredients?.[index]?.name && <p className="text-sm text-red-600 mt-1">{errors.ingredients[index]?.name?.message}</p>}
+                    {/* Section 2: Dietary Information */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Dietary Information</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {([
+                                'isVegetarian', 'isVegan', 'isGlutenFree', 'isNutFree',
+                                'isPescatarian', 'isLactoseFree', 'isLowFodmap', 'isFermented'
+                            ] as const).map((flag) => (
+                                <div key={flag} className="flex items-center space-x-2">
+                                    <Controller
+                                        name={flag}
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Checkbox
+                                                id={flag}
+                                                checked={!!field.value} // Ensure value is boolean
+                                                onCheckedChange={field.onChange}
+                                                disabled={isSubmitting}
+                                            />
+                                        )}
+                                    />
+                                    <Label htmlFor={flag} className="cursor-pointer">
+                                        {flag.substring(2).replace(/([A-Z])/g, ' $1').trim()}
+                                    </Label>
+                                </div>
+                            ))}
                         </div>
-                        {/* Ingredient Amount */}
-                        <div>
-                            <Label htmlFor={`ingredients.${index}.amount`} className="sr-only">Amount</Label>
-                            {/* Updated className */}
-                            <Input id={`ingredients.${index}.amount`} type="number" step="any" placeholder="Amt" {...register(`ingredients.${index}.amount`)} className={`w-20 bg-white ${errors.ingredients?.[index]?.amount ? 'border-red-500' : ''}`} />
-                             {errors.ingredients?.[index]?.amount && <p className="text-sm text-red-600 mt-1">{errors.ingredients[index]?.amount?.message}</p>}
+                    </div>
+
+                    {/* Section: Cooking Styles */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Cooking Styles</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {CookingStyleEnum.options.map((style) => (
+                                <div key={style} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`style-${style}`}
+                                        checked={watch('cookingStyles')?.includes(style)}
+                                        onCheckedChange={(checked) => handleCookingStyleChange(style, !!checked)}
+                                        disabled={isSubmitting}
+                                    />
+                                    <Label htmlFor={`style-${style}`} className="cursor-pointer font-normal">{style}</Label>
+                                </div>
+                            ))}
                         </div>
-                        {/* Ingredient Unit */}
-                        <div>
-                            <Label htmlFor={`ingredients.${index}.unit`} className="sr-only">Unit</Label>
-                            {/* Updated className */}
-                            <Input id={`ingredients.${index}.unit`} placeholder="Unit" {...register(`ingredients.${index}.unit`)} className={`w-24 bg-white ${errors.ingredients?.[index]?.unit ? 'border-red-500' : ''}`} />
-                             {errors.ingredients?.[index]?.unit && <p className="text-sm text-red-600 mt-1">{errors.ingredients[index]?.unit?.message}</p>}
+                        {renderError('cookingStyles')}
+                    </div>
+
+                    {/* Section: Meal Categories */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Meal Categories</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {MealCategoryEnum.options.map((category) => (
+                                <div key={category} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`cat-${category}`}
+                                        checked={watch('mealCategories')?.includes(category)}
+                                        onCheckedChange={(checked) => handleMealCategoryChange(category, !!checked)}
+                                        disabled={isSubmitting}
+                                    />
+                                    <Label htmlFor={`cat-${category}`} className="cursor-pointer font-normal">{category}</Label>
+                                </div>
+                            ))}
                         </div>
-                        {/* --- Phase 5: Remove Button with Confirmation --- */}
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                        {renderError('mealCategories')}
+                    </div>
+
+                    {/* Section 3: Ingredients */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Ingredients *</h3>
+                        {ingredientFields.map((field, index) => (
+                            <div key={field.id} className="flex flex-col sm:flex-row items-start sm:items-end gap-2 p-3 border rounded-md bg-gray-50/50">
+                                <div className="grid grid-cols-3 gap-2 flex-grow w-full">
+                                    <div className="col-span-3 sm:col-span-1">
+                                        <Label htmlFor={`ingredients.${index}.amount`} className="text-xs">Amount *</Label>
+                                        <Input id={`ingredients.${index}.amount`} type="number" step="0.1" {...register(`ingredients.${index}.amount`)} placeholder="e.g., 1" disabled={isSubmitting} className="text-sm" />
+                                        {renderError(`ingredients.${index}.amount` as const)}
+                                    </div>
+                                    <div className="col-span-3 sm:col-span-1">
+                                        <Label htmlFor={`ingredients.${index}.unit`} className="text-xs">Unit *</Label>
+                                        <Input id={`ingredients.${index}.unit`} {...register(`ingredients.${index}.unit`)} placeholder="e.g., cup, tbsp" disabled={isSubmitting} className="text-sm" />
+                                        {renderError(`ingredients.${index}.unit` as const)}
+                                    </div>
+                                    <div className="col-span-3 sm:col-span-1">
+                                        <Label htmlFor={`ingredients.${index}.name`} className="text-xs">Name *</Label>
+                                        <Input id={`ingredients.${index}.name`} {...register(`ingredients.${index}.name`)} placeholder="e.g., All-purpose Flour" disabled={isSubmitting} className="text-sm" />
+                                        {renderError(`ingredients.${index}.name` as const)}
+                                    </div>
+                                </div>
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="sm"
-                                    disabled={ingredientFields.length <= 1}
-                                    aria-label={`Remove ingredient ${index + 1}`}
-                                    className="text-red-500 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    size="icon"
+                                    onClick={() => ingredientFields.length > 1 && removeIngredient(index)}
+                                    disabled={isSubmitting || ingredientFields.length <= 1}
+                                    className="mt-2 sm:mt-0 sm:mb-1 text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0"
+                                    aria-label="Remove ingredient"
                                 >
-                                    X
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently remove this ingredient.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={() => removeIngredient(index)}
-                                        className="bg-red-600 hover:bg-red-700"
-                                    >
-                                        Remove
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                            </div>
+                        ))}
+                         {renderError('ingredients')}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => appendIngredient({ name: '', amount: NaN, unit: '' })}
+                            disabled={isSubmitting}
+                        >
+                            + Add Ingredient
+                        </Button>
                     </div>
-                 ))}
-                 {/* Added bg-white to button */}
-                 <Button type="button" variant="outline" onClick={() => appendIngredient({ name: '', amount: NaN, unit: '' })} className="mt-2 bg-white">
-                    Add Ingredient
-                 </Button>
-                 {errors.ingredients?.root && <p className="text-sm text-red-600 mt-1">{errors.ingredients.root.message}</p>}
-                 {errors.ingredients && !errors.ingredients.root && errors.ingredients.message && <p className="text-sm text-red-600 mt-1">{errors.ingredients.message}</p>}
-            </div>
 
-            {/* --- Instructions Section --- */}
-             <div className="space-y-4 p-6 bg-white rounded-lg shadow"> {/* Added card styling */}
-                 <h3 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Instructions</h3> {/* Section heading */}
-                 {instructionFields.map((field: Record<"id", string>, index: number) => (
-                    // Removed bg-gray-50 from individual item row
-                    <div key={field.id} className="flex items-start space-x-3 p-3 border rounded-md">
-                        <span className="font-semibold text-gray-600 pt-2">{index + 1}.</span>
-                        <div className="flex-grow space-y-1">
-                            <Label htmlFor={`instructions.${index}.description`} className="sr-only">Instruction Step {index + 1}</Label>
-                            {/* Updated className */}
-                            <Textarea id={`instructions.${index}.description`} placeholder={`Step ${index + 1} details...`} {...register(`instructions.${index}.description`)} className={`bg-white ${errors.instructions?.[index]?.description ? 'border-red-500' : ''}`} rows={3} />
-                            {errors.instructions?.[index]?.description && <p className="text-sm text-red-600 mt-1">{errors.instructions[index]?.description?.message}</p>}
-                        </div>
-                        {/* --- Phase 5: Remove Button with Confirmation --- */}
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                    {/* Section 4: Instructions */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Instructions *</h3>
+                        {instructionFields.map((field, index) => (
+                            <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-gray-50/50">
+                                <div className="flex-grow space-y-1">
+                                    <Label htmlFor={`instructions.${index}.description`} className="font-medium">Step {index + 1}</Label>
+                                    <Textarea
+                                        id={`instructions.${index}.description`}
+                                        {...register(`instructions.${index}.description`)}
+                                        placeholder="Describe this step..."
+                                        rows={3}
+                                        disabled={isSubmitting}
+                                        className="text-sm"
+                                    />
+                                    {renderError(`instructions.${index}.description` as const)}
+                                </div>
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="sm"
-                                    disabled={instructionFields.length <= 1}
-                                    aria-label={`Remove instruction step ${index + 1}`}
-                                    className="text-red-500 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                                    size="icon"
+                                    onClick={() => instructionFields.length > 1 && removeInstruction(index)}
+                                    disabled={isSubmitting || instructionFields.length <= 1}
+                                    className="mt-5 text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0"
+                                    aria-label="Remove instruction"
                                 >
-                                    X
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
-                            </AlertDialogTrigger>
-                             <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently remove this instruction step.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={() => removeInstruction(index)}
-                                         className="bg-red-600 hover:bg-red-700"
-                                    >
-                                        Remove
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                            </div>
+                        ))}
+                        {renderError('instructions')}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => appendInstruction({ description: '' })}
+                            disabled={isSubmitting}
+                        >
+                            + Add Step
+                        </Button>
                     </div>
-                 ))}
-                 {/* Added bg-white to button */}
-                 <Button type="button" variant="outline" onClick={() => appendInstruction({ description: '' })} className="mt-2 bg-white">
-                    Add Step
-                 </Button>
-                 {errors.instructions?.root && <p className="text-sm text-red-600 mt-1">{errors.instructions.root.message}</p>}
-                 {errors.instructions && !errors.instructions.root && errors.instructions.message && <p className="text-sm text-red-600 mt-1">{errors.instructions.message}</p>}
-            </div>
 
-            {/* --- Submission Button --- */}
-            {/* Added wrapper div for alignment/spacing if needed */}
-            <div className="pt-6 flex justify-end">
-                 {/* --- Phase 5: Submit Button with Loading Indicator --- */}
-                <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full md:w-auto" /* Kept original width classes */
-                    size="lg"
-                >
+                    {/* Section 5: Image Upload */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium border-b pb-2">Recipe Image</h3>
+                        <div
+                            {...getRootProps()}
+                            className={`p-6 border-2 border-dashed rounded-md cursor-pointer transition-colors ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50/50'}`}
+                        >
+                            <input {...getInputProps()} />
+                            <div className="text-center">
+                                <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
+                                {isDragActive ? (
+                                    <p className="mt-2 text-sm text-blue-600">Drop the image here...</p>
+                                ) : (
+                                    <p className="mt-2 text-sm text-gray-600">Drag & drop an image here, or click to select</p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WEBP up to 5MB</p>
+                            </div>
+                        </div>
+                        {imagePreviewUrl && (
+                            <div className="mt-4 relative w-48 h-32 border rounded-md overflow-hidden">
+                                <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="cover" />
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6 rounded-full p-1"
+                                    onClick={clearImage}
+                                    aria-label="Remove image"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                </form>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+                <Button type="submit" form="recipe-form" disabled={isSubmitting} className="bg-yellow-500 hover:bg-yellow-600 text-black">
                     {isSubmitting ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating Recipe...
-                        </>
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
                     ) : (
                         'Create Recipe'
                     )}
                 </Button>
-            </div>
-        </form>
+            </CardFooter>
+        </Card>
     );
 }

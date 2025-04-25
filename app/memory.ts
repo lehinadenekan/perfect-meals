@@ -22,35 +22,55 @@
 // Supporting APIs:
 // - GET /api/search/planner-items: Searches Recipe titles and user's CustomFoodEntry names (case-insensitive).
 // - CRUD APIs implemented for UserPreference and CustomFoodEntry.
+// - GET /api/user/preferences: Fetches current user's macro goals.
+// - PUT /api/user/preferences: Updates user's macro goals.
 //
 // Utilities (lib/):
 // - calculateDailyMacros(plannerDays): Calculates daily totals (Calories estimated 4-4-9, P, C, F).
-// - generateShoppingList(plannerDays): Aggregates ingredients from planned Recipes, adjusting for servings.
+// - generateShoppingList(selectedMeals): Aggregates ingredients from selected Recipes, adjusts for servings (no unit conversion yet).
 //
 // Frontend (app/meal-planner/page.tsx):
-// - Displays weekly calendar view with Previous/Next week navigation.
+// - Displays weekly calendar view with Previous/Next week navigation & date picker.
 // - Fetches planner data on load/week change.
-// - Renders daily cards showing calculated macro totals (Cal, P, C, F).
-// - Lists planned meals within each day card, showing meal type and name.
-// - 'Add Meal' Modal:
-//   - Search input with debounced API call to GET /api/search/planner-items.
-//   - Displays search results (Recipe/CustomFood) with selection.
-//   - Form inputs for Meal Type and Servings appear after selection.
-//   - 'Add Meal' button POSTs to /api/planner, handles loading/error state, refreshes data on success.
-// - Inline Editing: Pencil icon allows editing 'servings' inline; Save button PUTs to /api/planner/meal/:mealId.
-// - Meal Completion: Checkbox toggles 'isCompleted' status via PUT to /api/planner/meal/:mealId; applies line-through style.
-// - Shopping List: 'Generate' button calls utility, displays aggregated list in a modal.
+// - Fetches user macro preferences on load/session change.
+// - Renders daily cards showing calculated macro totals vs goals with progress bars (Cal, P, C, F).
+// - Lists planned meals within each day card, showing meal type, optional time, image, and name.
+// - 'Add Meal' Button (+): Opens AddMealModal for the specific day.
+//   - AddMealModal:
+//     - Search input calls `/api/search` (recipes/custom foods) with debounce.
+//     - Displays search results, allows selection.
+//     - Form inputs for Meal Type and Servings.
+//     - 'Add Meal' button POSTs to `/api/planner`, handles loading/error, refreshes data on success.
+// - Meal Card Click: Opens MealDetailsModal.
+//   - MealDetailsModal:
+//     - Displays full recipe details (ingredients, instructions, image, base servings) or custom food info.
+//     - Displays nutrition info adjusted for planned servings (for recipes).
+//     - Allows editing Servings, Meal Type, and Meal Time.
+//     - 'Save Changes' button PUTs updates to `/api/planner/meal/:mealId`, handles loading/error, refreshes data on success.
+// - Meal Deletion: Trash icon on meal card DELETEs via `/api/planner/meal/:mealId`.
+// - Meal Completion: Checkbox (TODO: This was mentioned but isn't visible in recent code snippets, might have been removed or needs re-implementation).
+// - Daily Notes: Textarea allows adding/editing notes per day, saves on blur (PUT to `/api/planner/day/:dayId/notes` - assumed endpoint).
+// - Shopping List: 'Generate' button opens a modal to select meals, then calls utility, displays aggregated list in ShoppingListDisplay modal.
+//
+// Settings Page (app/settings/page.tsx):
+// - Renders GoalSettingsForm component.
+//   - GoalSettingsForm:
+//     - Fetches current preferences via GET `/api/user/preferences`.
+//     - Provides inputs for daily calorie, protein, carb, fat goals.
+//     - Submits changes via PUT `/api/user/preferences`.
 
 // --- Current Status ---
-// - Core planner features are functionally implemented (Backend APIs, Frontend UI/Interaction).
-// - Initial page load error (Internal Server Error) appears resolved after server restart.
-// - Search API authentication error fixed (changed from `auth()` to `getServerSession(authOptions)`).
-// - Prisma query error in GET /api/planner (using include and select simultaneously) resolved.
-
+// - Core planner features are functionally implemented (Backend APIs, Frontend UI/Interaction for adding, viewing, editing, deleting meals).
+// - Macro goal setting and display is complete.
+// - Basic shopping list generation is implemented (requires better aggregation/unit handling).
+// - Addressed numerous previous bugs (Search auth, Prisma query errors, modal rendering issues).
+// - The `Meal Completion` checkbox functionality mentioned previously seems to be missing from the current UI elements shown.
+//
 // --- Potential Next Steps / TODOs ---
-// - Display Macro Goals: Fetch UserPreference and display goals vs. calculated totals on planner page.
+// - Shopping List Improvements: Implement unit conversion and better ingredient parsing.
+// - Re-implement Meal Completion Checkbox?: Decide if needed and add UI/logic.
 // - UI Refinements: Improve loading states, error display (e.g., toasts instead of alerts), potentially add drag-and-drop for meals.
-// - NutritionFacts Model: Consider adding a dedicated 'calories' field (requires schema change, migration, update calculation logic).
+// - NutritionFacts Model: Consider adding a dedicated 'calories' field.
 // - Recipe Display: Show macros on RecipeCard / Recipe Detail pages.
 
 // Project Overview: This project is a comprehensive web application serving as both a directory for traditional recipes and a powerful recipe management tool.
@@ -98,7 +118,7 @@
 // │   ├── <route_group>/     # Directories defining application pages/sections (e.g., meal-planner/, my-recipes/)
 // │   ├── @modal/            # Next.js Parallel Route for modals
 // │   ├── layout.tsx         # Root application layout
-// │   ├── page.tsx           # Homepage component (/)
+// │   ├── page.tsx           # Homepage component (/)```
 // │   ├── globals.css        # Global styles
 // │   ├── providers.tsx      # Context provider setup
 // │   └── memory.ts          # This file (Project overview)
@@ -255,6 +275,33 @@
 //   - Excludes recipes created by the logged-in user (`authorId`).
 //   - **Default Sorting:** Sorts recipes by `createdAt: 'desc'` by default. This means the initial, unfiltered view on the homepage effectively shows the newest recipes first, which are presented as "Featured".
 //   - Includes related data in the response: `ingredients`, `instructions`, `categories`, `tags`, `nutritionFacts`.
+
+// --- Recent Updates (Create Recipe Form -) ---
+// UI/UX Overhaul (`components/recipes/CreateRecipeForm.tsx`):
+//   - Removed distracting yellow background.
+//   - Replaced basic form structure with Shadcn `Card` components (`CardHeader`, `CardContent`, `CardFooter`).
+//   - Improved layout using Tailwind grids (`grid-cols-2`, `grid-cols-4`) and spacing (`space-y-*`) for better organization.
+//   - Added clear section headings (`h3`) for Basic Info, Dietary, Ingredients, Instructions, etc.
+//   - Standardized input styling using default Shadcn component styles.
+//   - Optimized layout for dynamic Ingredient and Instruction rows using flex/grid.
+//   - Enhanced image upload dropzone styling (border, background, icon).
+//   - Moved submit button to `CardFooter` for conventional placement.
+// Added Filter Fields (`components/recipes/CreateRecipeForm.tsx`):
+//   - Integrated fields corresponding to homepage filters to allow recipe categorization on creation.
+//   - Added `regionOfOrigin` text input.
+//   - Added `isPescatarian`, `isLactoseFree`, `isLowFodmap`, `isFermented` boolean checkboxes to Dietary Information.
+//   - Added checkbox groups for `cookingStyles` (mapped from `CookingStyleEnum`).
+//   - Added checkbox groups for `mealCategories` (mapped from `MealCategoryEnum`).
+//   - Updated Zod schema, `RecipePayload` type, React Hook Form defaults, and submission payload logic to handle new fields.
+//   - Implemented specific helper functions (`handleCookingStyleChange`, `handleMealCategoryChange`) to manage checkbox group state.
+// Added 'Drink' Category:
+//   - Added 'Drink' option to `MealCategoryEnum` in `components/recipes/CreateRecipeForm.tsx`.
+//   - Added 'Drink' option to `MEAL_CATEGORIES` array in `components/filters/MealCategorySelector.tsx`.
+// Bug Fixes & Cleanup:
+//   - Resolved runtime error in `CreateRecipeForm` caused by empty string value in `Select.Item` (removed invalid `SelectItem`).
+//   - Fixed incorrect import path for `CreateRecipeForm` in `app/create-recipe/page.tsx`.
+//   - Removed non-functional back button from `app/create-recipe/page.tsx`.
+//   - Addressed frontend update visibility issues related to server restarts and corrected component imports.
 
 // --- Updated Navbar Logic (`components/Navbar.tsx`) ---
 //   - Uses `LoginPromptModal` to gate access to "My Collection", "Add Recipe", and "Meal Planner" links/buttons for logged-out users.

@@ -20,46 +20,39 @@ const updatePreferencesSchema = z.object({
   // regions: z.array(z.string()).optional(),
   // cookingStyles: z.array(z.string()).optional(),
   // mealCategories: z.array(z.string()).optional(),
-});
+}).strict(); // Use strict to prevent extra fields
 
 // GET /api/user/preferences
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
 
-  if (!userEmail) {
+  if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userEmail = session.user.email;
+
   try {
-    const userPreferences = await prisma.userPreference.findUnique({
-      where: {
-        userEmail: userEmail,
-      },
+    const preferences = await prisma.userPreference.findUnique({
+      where: { userEmail: userEmail },
     });
 
-    return NextResponse.json({
-      success: true,
-      // Return default structure including macro goals if not found
-      preferences: userPreferences || {
-        userEmail: userEmail,
-        dietTypes: [],
-        excludedFoods: [],
-        regions: [],
-        cookingStyles: [],
-        mealCategories: [],
-        dailyProteinGoal: null, // Default added
-        dailyCarbGoal: null,    // Default added
-        dailyFatGoal: null,     // Default added
-        dailyCalorieGoal: null  // Default added
-      },
-    });
+    // If preferences don't exist, return null or an empty object 
+    // consistent with how the frontend might expect it.
+    if (!preferences) {
+      // Option 1: Return 404 (perhaps less user-friendly for frontend)
+      // return NextResponse.json({ error: 'Preferences not found' }, { status: 404 });
+      // Option 2: Return null (frontend needs to handle null)
+      // return NextResponse.json(null, { status: 200 });
+      // Option 3: Return an empty object (frontend can use default values)
+       return NextResponse.json({}, { status: 200 });
+    }
+
+    return NextResponse.json(preferences, { status: 200 });
+
   } catch (error) {
-    console.error('Error fetching preferences:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch preferences' },
-      { status: 500 }
-    );
+    console.error("Error fetching user preferences:", error);
+    return NextResponse.json({ error: 'Failed to fetch preferences' }, { status: 500 });
   }
 }
 
@@ -188,29 +181,45 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userEmail = session.user.email;
+
   try {
     const body = await request.json();
-    const parsedBody = updatePreferencesSchema.safeParse(body);
+    const validation = updatePreferencesSchema.safeParse(body);
 
-    if (!parsedBody.success) {
-      return NextResponse.json({ error: 'Invalid input', details: parsedBody.error.errors }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Invalid input', details: validation.error.errors }, { status: 400 });
     }
 
-    const dataToUpdate = parsedBody.data;
+    const dataToUpsert = validation.data;
 
-    const updatedPreferences = await prisma.userPreference.upsert({
-      where: { userEmail: session.user.email },
-      update: dataToUpdate,
+    // Remove keys with undefined values, but keep nulls (as user might want to clear a goal)
+    Object.keys(dataToUpsert).forEach(key => {
+      if (dataToUpsert[key as keyof typeof dataToUpsert] === undefined) {
+        delete dataToUpsert[key as keyof typeof dataToUpsert];
+      }
+    });
+
+    const upsertedPreference = await prisma.userPreference.upsert({
+      where: { userEmail: userEmail },
+      update: dataToUpsert,
       create: {
-        userEmail: session.user.email,
-        ...dataToUpdate, // Spread validated data for creation
+        userEmail: userEmail,
+        ...dataToUpsert,
+        // Set defaults for other fields if needed during creation
+        // Example: dietTypes: [], excludedFoods: [], etc. 
+        // Ensure all required fields for create are present
       },
     });
 
-    return NextResponse.json(updatedPreferences);
+    return NextResponse.json(upsertedPreference, { status: 200 });
+
   } catch (error) {
-    console.error('Failed to update user preferences:', error);
-    // Check for specific Prisma errors if needed
+    console.error("Error updating user preferences:", error);
+    if (error instanceof z.ZodError) { // Catch Zod validation errors specifically if needed
+        return NextResponse.json({ error: 'Invalid input format', details: error.errors }, { status: 400 });
+    }
+    // Generic error for other issues (DB connection, etc.)
     return NextResponse.json({ error: 'Failed to update preferences' }, { status: 500 });
   }
 }
