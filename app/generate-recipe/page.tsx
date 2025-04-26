@@ -271,7 +271,7 @@ export default function GenerateRecipePage() {
       <Card>
         <CardHeader>
           <CardTitle>Your Ingredients & Preferences</CardTitle>
-          <CardDescription>Tell the AI what you have and what kind of recipe you'd like.</CardDescription>
+          <CardDescription>Enter the ingredients you have and the kind of recipe you'd like to generate recipe ideas.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleFormSubmit} className="space-y-6">

@@ -65,10 +65,14 @@
 // - Basic shopping list generation is implemented (requires better aggregation/unit handling).
 // - Addressed numerous previous bugs (Search auth, Prisma query errors, modal rendering issues).
 // - Resolved multiple pre-commit hook failures (linting/type errors) after implementing planner features.
+// - Fixed TS error related to missing/incorrect type imports for GeneratedRecipe, IngredientObject, NutritionInfo in AI generation API.
 // - Successfully committed and pushed latest planner features (Commit: 6adc3904).
+// - Refactored AI recipe generation page from `app/generate-recipe-ai/` to `app/generate-recipe/` (Commit: 344779d1).
+// - Updated Navbar link text from "Generate with AI" to "Generate Recipe".
 // - The `Meal Completion` checkbox functionality mentioned previously seems to be missing from the current UI elements shown.
 //
 // --- Potential Next Steps / TODOs ---
+// - Implement Dark/Light Mode Toggle (see `app/tasks/darklight.ts` for detailed steps).
 // - Shopping List Improvements: Implement unit conversion and better ingredient parsing.
 // - Re-implement Meal Completion Checkbox?: Decide if needed and add UI/logic.
 // - UI Refinements: Improve loading states, error display, potentially add drag-and-drop for meals.
