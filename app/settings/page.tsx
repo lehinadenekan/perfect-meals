@@ -17,8 +17,8 @@ export default function SettingsPage() {
   const { status } = useSession();
 
   return (
-    <div className="container mx-auto max-w-2xl py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+    <div className="container mx-auto max-w-2xl py-10 px-4 dark:bg-gray-950 dark:text-gray-100">
+      <h1 className="text-3xl font-bold mb-8 dark:text-white">Settings</h1>
 
       <Card>
         <CardHeader>
@@ -29,8 +29,8 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-base">Theme</Label>
-            <p className="text-sm text-muted-foreground mb-2">
+            <Label className="text-base dark:text-gray-100">Theme</Label>
+            <p className="text-sm text-muted-foreground dark:text-gray-400 mb-2">
               Select the theme for the application.
             </p>
             <ThemeToggle />

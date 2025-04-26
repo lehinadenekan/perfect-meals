@@ -42,7 +42,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Recipe Ideas</title>
       </head>
-      <body className="bg-[#ffc800]"> {/* Note: This base bg color might need adjustment for dark mode later */}
+      <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

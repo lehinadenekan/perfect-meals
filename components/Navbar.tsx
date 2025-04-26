@@ -59,7 +59,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     await onSearch(trimmedSearchTerm);
   };
 
-  // --- User Dropdown Menu Component ---
+  // --- User Dropdown Menu Component --- (Adding dark mode styles)
   const UserMenu = () => (
     <div className="relative">
       <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2">
@@ -72,12 +72,12 @@ const Navbar = ({ onSearch }: NavbarProps) => {
              className="h-8 w-8 rounded-full"
            />
         ) : (
-          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <User size={20} className="text-gray-600" />
+          <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+            <User size={20} className="text-gray-600 dark:text-gray-300" />
           </div>
         )}
-        <span className="hidden md:inline text-sm font-medium text-gray-700">{session?.user?.name || 'Account'}</span>
-        <ChevronDown size={16} className="text-gray-500" />
+        <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-200">{session?.user?.name || 'Account'}</span>
+        <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" />
       </button>
 
       {isUserDropdownOpen && (
@@ -110,7 +110,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     </div>
   );
 
-  // --- My Collection Dropdown ---
+  // --- My Collection Dropdown --- (Adding dark mode styles)
   const CollectionDropdown = () => (
     <div className="relative" ref={collectionDropdownRef}>
        <button
@@ -121,33 +121,33 @@ const Navbar = ({ onSearch }: NavbarProps) => {
              setIsPromptModalOpen(true);
            }
          }}
-         className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
+         className="px-3 py-2 rounded-md hover:bg-yellow-500/20 dark:hover:bg-gray-700 transition-colors text-black dark:text-gray-100 flex items-center gap-1.5 text-sm font-medium"
          aria-haspopup="true"
          aria-expanded={isCollectionDropdownOpen}
        >
          <Bookmark size={16} />
          <span className="hidden sm:inline">My Collection</span>
-         <ChevronDown size={16} className={`transition-transform ${isCollectionDropdownOpen ? 'rotate-180' : ''}`} />
+         <ChevronDown size={16} className={`transition-transform text-gray-500 dark:text-gray-400 ${isCollectionDropdownOpen ? 'rotate-180' : ''}`} />
        </button>
        {isCollectionDropdownOpen && (
-          <div className="absolute top-full left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+          <div className="absolute top-full left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 z-50">
             <div className="py-1" role="menu" aria-orientation="vertical">
               <Link href="/my-recipes" passHref legacyBehavior>
                 <a
                   onClick={() => setIsCollectionDropdownOpen(false)}
-                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   role="menuitem"
                 >
-                   <List size={16} className="text-gray-500"/> My Recipes
+                   <List size={16} className="text-gray-500 dark:text-gray-400"/> My Recipes
                 </a>
                </Link>
                <Link href="/recently-viewed" passHref legacyBehavior>
                 <a
                   onClick={() => setIsCollectionDropdownOpen(false)}
-                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   role="menuitem"
                 >
-                   <History size={16} className="text-gray-500"/> Recently Viewed
+                   <History size={16} className="text-gray-500 dark:text-gray-400"/> Recently Viewed
                 </a>
                </Link>
             </div>
@@ -156,7 +156,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     </div>
   );
 
-  // --- Add Recipe Dropdown ---
+  // --- Add Recipe Dropdown --- (Adding dark mode styles)
   const AddRecipeDropdown = () => (
     <div className="relative" ref={addRecipeDropdownRef}>
       <button
@@ -167,42 +167,42 @@ const Navbar = ({ onSearch }: NavbarProps) => {
             setIsPromptModalOpen(true);
           }
         }}
-        className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
+        className="px-3 py-2 rounded-md hover:bg-yellow-500/20 dark:hover:bg-gray-700 transition-colors text-black dark:text-gray-100 flex items-center gap-1.5 text-sm font-medium"
         aria-haspopup="true"
         aria-expanded={isAddRecipeDropdownOpen}
       >
         <PlusCircle size={16} />
         <span className="hidden sm:inline">Add Recipe</span>
-        <ChevronDown size={16} className={`transition-transform ${isAddRecipeDropdownOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`transition-transform text-gray-500 dark:text-gray-400 ${isAddRecipeDropdownOpen ? 'rotate-180' : ''}`} />
       </button>
       {isAddRecipeDropdownOpen && (
-         <div className="absolute top-full left-0 mt-2 w-52 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+         <div className="absolute top-full left-0 mt-2 w-52 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 z-50">
            <div className="py-1" role="menu" aria-orientation="vertical">
              <Link href="/create-recipe" passHref legacyBehavior>
                <a
                  onClick={() => setIsAddRecipeDropdownOpen(false)}
-                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                  role="menuitem"
                >
-                 <FilePlus2 size={16} className="text-gray-500"/> Create from Scratch
+                 <FilePlus2 size={16} className="text-gray-500 dark:text-gray-400"/> Create from Scratch
                </a>
               </Link>
              <Link href="/import-recipe" passHref legacyBehavior>
                <a
                  onClick={() => setIsAddRecipeDropdownOpen(false)}
-                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                  role="menuitem"
                >
-                 <UploadCloud size={16} className="text-gray-500"/> Import Recipe
+                 <UploadCloud size={16} className="text-gray-500 dark:text-gray-400"/> Import Recipe
                </a>
               </Link>
              <Link href="/generate-recipe" passHref legacyBehavior>
                <a
                  onClick={() => setIsAddRecipeDropdownOpen(false)}
-                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                  role="menuitem"
                >
-                 <Sparkles size={16} className="text-gray-500"/> Generate Recipe
+                 <Sparkles size={16} className="text-gray-500 dark:text-gray-400"/> Generate Recipe
                </a>
               </Link>
            </div>
@@ -214,34 +214,26 @@ const Navbar = ({ onSearch }: NavbarProps) => {
 
   return (
     <>
-      <nav className="w-full bg-[#ffc800] p-4 sticky top-0 z-40 shadow-sm">
+      <nav className="w-full bg-[#ffc800] dark:bg-gray-900 p-4 sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto flex flex-wrap justify-between items-center gap-4">
 
           {/* Left Side: Logo/Brand (Optional) & Navigation Links */}
            <div className="flex items-center gap-1 md:gap-2">
               {/* Render Discover Link */}
               <Link href="/" passHref legacyBehavior>
-                 <a className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium">
+                 <a className="px-3 py-2 rounded-md hover:bg-yellow-500/20 dark:hover:bg-gray-700 transition-colors text-black dark:text-gray-100 flex items-center gap-1.5 text-sm font-medium">
                    <Compass size={16} />
                    <span className="hidden sm:inline">Discover</span>
                  </a>
               </Link>
 
-              {/* Conditionally render Collection Dropdown if logged in */}
-              {/* {session && <CollectionDropdown />} */}
+              {/* Conditionally render Collection Dropdown */}
               <CollectionDropdown />
 
-              {/* Conditionally render Add Recipe Dropdown if logged in */}
-              {/* {session && <AddRecipeDropdown />} */}
+              {/* Conditionally render Add Recipe Dropdown */}
               <AddRecipeDropdown />
 
               {/* Render Meal Planner Link/Button */}
-              {/* <Link href="/meal-planner" passHref legacyBehavior>
-                 <a className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium">
-                   <CalendarDays size={16} />
-                   <span className="hidden sm:inline">Meal Planner</span>
-                 </a>
-              </Link> */}
               <button
                 onClick={() => {
                   if (session) {
@@ -250,7 +242,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
                     setIsPromptModalOpen(true);
                   }
                 }}
-                className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium"
+                className="px-3 py-2 rounded-md hover:bg-yellow-500/20 dark:hover:bg-gray-700 transition-colors text-black dark:text-gray-100 flex items-center gap-1.5 text-sm font-medium"
               >
                 <CalendarDays size={16} />
                 <span className="hidden sm:inline">Meal Planner</span>
@@ -261,7 +253,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
            <div className="flex-grow md:flex-grow-0 order-last w-full md:w-auto md:order-none">
              <form onSubmit={handleSearch} className="relative">
                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                 <Search className="h-5 w-5 text-gray-400" />
+                 <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                </div>
                <input
                  type="text"
@@ -270,7 +262,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
                    setSearchTerm(e.target.value);
                  }}
                  placeholder="Search recipes..."
-                 className="w-full lg:w-[400px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent shadow-sm transition-all duration-200 hover:border-yellow-400 placeholder-gray-500 text-sm"
+                 className="w-full lg:w-[400px] pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-600 focus:border-transparent dark:focus:border-transparent shadow-sm transition-all duration-200 hover:border-yellow-400 dark:hover:border-yellow-600 placeholder-gray-500 dark:placeholder-gray-400 text-sm"
                  aria-label="Search for recipes"
                />
              </form>
@@ -279,13 +271,13 @@ const Navbar = ({ onSearch }: NavbarProps) => {
            {/* Right Side: User Actions */}
            <div className="flex items-center gap-4">
              {status === 'loading' ? (
-               <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+               <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div> // Dark mode pulse
              ) : session ? (
                  <UserMenu />
              ) : (
                <button
                  onClick={() => setIsAuthModalOpen(true)}
-                 className="px-4 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black text-sm font-medium"
+                 className="px-4 py-2 rounded-md hover:bg-yellow-500/20 dark:hover:bg-gray-700 transition-colors text-black dark:text-gray-100 text-sm font-medium"
                >
                  Log In / Sign Up
                </button>
@@ -294,6 +286,7 @@ const Navbar = ({ onSearch }: NavbarProps) => {
         </div>
       </nav>
 
+      {/* Modals likely need dark mode styling too, but keeping focus on Navbar for now */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -311,4 +304,4 @@ const Navbar = ({ onSearch }: NavbarProps) => {
   );
 };
 
-export default Navbar; 
+export default Navbar;
