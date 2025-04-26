@@ -64,12 +64,14 @@
 // - Macro goal setting and display is complete.
 // - Basic shopping list generation is implemented (requires better aggregation/unit handling).
 // - Addressed numerous previous bugs (Search auth, Prisma query errors, modal rendering issues).
+// - Resolved multiple pre-commit hook failures (linting/type errors) after implementing planner features.
+// - Successfully committed and pushed latest planner features (Commit: 6adc3904).
 // - The `Meal Completion` checkbox functionality mentioned previously seems to be missing from the current UI elements shown.
 //
 // --- Potential Next Steps / TODOs ---
 // - Shopping List Improvements: Implement unit conversion and better ingredient parsing.
 // - Re-implement Meal Completion Checkbox?: Decide if needed and add UI/logic.
-// - UI Refinements: Improve loading states, error display (e.g., toasts instead of alerts), potentially add drag-and-drop for meals.
+// - UI Refinements: Improve loading states, error display, potentially add drag-and-drop for meals.
 // - NutritionFacts Model: Consider adding a dedicated 'calories' field.
 // - Recipe Display: Show macros on RecipeCard / Recipe Detail pages.
 
