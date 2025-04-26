@@ -265,7 +265,7 @@ export default function GenerateRecipePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl space-y-8">
-      <h1 className="text-3xl font-bold text-center">Generate Recipe Ideas with AI</h1>
+      <h1 className="text-3xl font-bold text-center">Generate Recipe Ideas</h1>
 
       {/* Form Card */}
       <Card>
@@ -313,7 +313,7 @@ export default function GenerateRecipePage() {
             {/* Excluded Ingredients Input (New Section) */}
             <div>
               <Label htmlFor="excluded-ingredients-input" className="text-lg font-medium">Exclude Ingredients <span className="text-muted-foreground text-xs">(Optional)</span></Label>
-              <p className="text-sm text-muted-foreground mb-2">List ingredients you want the AI to avoid.</p>
+              <p className="text-sm text-muted-foreground mb-2">List ingredients you want to avoid.</p>
               <div className="flex items-center border rounded-md p-1">
                  <Input
                     id="excluded-ingredients-input"
