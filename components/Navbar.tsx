@@ -9,7 +9,7 @@ import AuthModal from './AuthModal';
 import LoginPromptModal from './LoginPromptModal';
 import {
   Search, User, Settings, LogOut, Bookmark, PlusCircle, CalendarDays, Compass, ChevronDown, List, History,
-  FilePlus2, UploadCloud, Sparkles
+  FilePlus2, UploadCloud, Sparkles, UserCircle
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -20,7 +20,6 @@ const Navbar = ({ onSearch }: NavbarProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isCollectionDropdownOpen, setIsCollectionDropdownOpen] = useState(false);
   const [isAddRecipeDropdownOpen, setIsAddRecipeDropdownOpen] = useState(false);
@@ -53,13 +52,6 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     };
   }, [userDropdownRef, collectionDropdownRef, addRecipeDropdownRef]);
 
-  // Reset image error state when session changes or user logs out
-  React.useEffect(() => {
-    if (status !== 'loading') {
-      setImageError(false);
-    }
-  }, [session, status]);
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedSearchTerm = searchTerm.trim();
@@ -69,66 +61,52 @@ const Navbar = ({ onSearch }: NavbarProps) => {
 
   // --- User Dropdown Menu Component ---
   const UserMenu = () => (
-    <div className="relative" ref={userDropdownRef}>
-       <button
-         className="flex items-center gap-2 cursor-pointer"
-         onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-         aria-label="User menu"
-       >
-         {session?.user?.image && !imageError ? (
-           <div className="relative w-8 h-8 rounded-full overflow-hidden">
-             <Image
-               src={session.user.image}
-               alt="Profile"
-               className="object-cover"
-               fill
-               sizes="32px"
-               onError={() => setImageError(true)}
-             />
-           </div>
-         ) : (
-           <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-             <User size={18} />
-           </div>
-         )}
-         <span className="text-black hidden md:inline">{session?.user?.name}</span>
-       </button>
+    <div className="relative">
+      <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2">
+        {session?.user?.image ? (
+          <Image
+             src={session.user.image}
+             alt="User profile"
+             width={32}
+             height={32}
+             className="h-8 w-8 rounded-full"
+           />
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+            <User size={20} className="text-gray-600" />
+          </div>
+        )}
+        <span className="hidden md:inline text-sm font-medium text-gray-700">{session?.user?.name || 'Account'}</span>
+        <ChevronDown size={16} className="text-gray-500" />
+      </button>
 
-       {isUserDropdownOpen && (
-          <div className="absolute top-full right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-             <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button">
-               <Link href="/profile" passHref legacyBehavior>
-                 <a
-                   onClick={() => setIsUserDropdownOpen(false)}
-                   className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                   role="menuitem"
-                 >
-                   <User size={16} className="text-gray-500"/> Profile
-                 </a>
-               </Link>
-               <Link href="/settings" passHref legacyBehavior>
-                 <a
-                   onClick={() => setIsUserDropdownOpen(false)}
-                   className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                   role="menuitem"
-                 >
-                   <Settings size={16} className="text-gray-500"/> Settings
-                 </a>
-               </Link>
-               <hr className="my-1" />
-               <button
-                 onClick={() => {
-                   signOut();
-                   setIsUserDropdownOpen(false);
-                 }}
-                 className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                 role="menuitem"
-               >
-                 <LogOut size={16} className="text-gray-500"/> Sign Out
-               </button>
-             </div>
-           </div>
-       )}
+      {isUserDropdownOpen && (
+        <div
+          ref={userDropdownRef}
+          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 ring-1 ring-black dark:ring-gray-700 ring-opacity-5"
+        >
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={() => setIsUserDropdownOpen(false)}
+          >
+            <UserCircle size={16} className="text-gray-500 dark:text-gray-400"/> Profile
+          </Link>
+          <Link
+            href="/settings"
+            className="flex items-center gap-2 cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={() => setIsUserDropdownOpen(false)}
+          >
+            <Settings size={16} className="text-gray-500 dark:text-gray-400"/> Settings
+          </Link>
+          <button
+            onClick={() => { signOut({ callbackUrl: '/' }); setIsUserDropdownOpen(false); }}
+            className="flex items-center gap-2 cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <LogOut size={16} className="text-gray-500 dark:text-gray-400"/> Sign Out
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -218,13 +196,13 @@ const Navbar = ({ onSearch }: NavbarProps) => {
                  <UploadCloud size={16} className="text-gray-500"/> Import Recipe
                </a>
               </Link>
-             <Link href="/generate-recipe-ai" passHref legacyBehavior>
+             <Link href="/generate-recipe" passHref legacyBehavior>
                <a
                  onClick={() => setIsAddRecipeDropdownOpen(false)}
                  className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                  role="menuitem"
                >
-                 <Sparkles size={16} className="text-gray-500"/> Generate with AI
+                 <Sparkles size={16} className="text-gray-500"/> Generate Recipe
                </a>
               </Link>
            </div>
