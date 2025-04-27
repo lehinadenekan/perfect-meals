@@ -69,9 +69,15 @@
 // - Successfully committed and pushed latest planner features (Commit: 6adc3904).
 // - Refactored AI recipe generation page from `app/generate-recipe-ai/` to `app/generate-recipe/` (Commit: 344779d1).
 // - Updated Navbar link text from "Generate with AI" to "Generate Recipe".
+// - Implemented basic Dark/Light Mode toggle using `next-themes`:
+//   - Added ThemeProvider to root layout.
+//   - Created ThemeToggle component on Settings page.
+//   - Applied initial dark styles to layout, navbar, cards, settings page.
+//   - Fixed syntax error (misplaced backticks) in OpenAI constructor call in `/api/generate-recipe`.
 // - The `Meal Completion` checkbox functionality mentioned previously seems to be missing from the current UI elements shown.
 //
 // --- Potential Next Steps / TODOs ---
+// - Continue applying dark mode styles (`dark:` variants) to remaining components (Task 9).
 // - Implement Dark/Light Mode Toggle (see `app/tasks/darklight.ts` for detailed steps).
 // - Shopping List Improvements: Implement unit conversion and better ingredient parsing.
 // - Re-implement Meal Completion Checkbox?: Decide if needed and add UI/logic.

@@ -214,8 +214,8 @@ const Navbar = ({ onSearch }: NavbarProps) => {
 
   return (
     <>
-      <nav className="w-full bg-[#ffc800] dark:bg-gray-900 p-4 sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto flex flex-wrap justify-between items-center gap-4">
+      <nav className="bg-yellow-400 shadow-md sticky top-0 z-50 dark:bg-black">
+        <div className="container mx-auto px-4 flex items-center justify-between h-16">
 
           {/* Left Side: Logo/Brand (Optional) & Navigation Links */}
            <div className="flex items-center gap-1 md:gap-2">

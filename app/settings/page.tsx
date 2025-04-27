@@ -20,7 +20,7 @@ export default function SettingsPage() {
     <div className="container mx-auto max-w-2xl py-10 px-4 dark:bg-gray-950 dark:text-gray-100">
       <h1 className="text-3xl font-bold mb-8 dark:text-white">Settings</h1>
 
-      <Card>
+      <Card className="bg-yellow-400 dark:bg-card">
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>
@@ -49,11 +49,17 @@ export default function SettingsPage() {
       )}
 
       {status === 'authenticated' && (
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Macro Goals</h2>
-          <p className="mb-4 text-muted-foreground">Set your daily calorie and macronutrient targets.</p>
-          <GoalSettingsForm />
-          {/* Add other settings sections here later */}
+        <section className="mt-8">
+          <Card className="bg-yellow-400 dark:bg-card">
+            <CardHeader>
+              <CardTitle>Macro Goals</CardTitle>
+              <CardDescription>Set your daily calorie and macronutrient targets.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GoalSettingsForm />
+              {/* Add other settings sections here later */}
+            </CardContent>
+          </Card>
         </section>
       )}
     </div>

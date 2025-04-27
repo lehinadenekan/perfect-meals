@@ -32,7 +32,7 @@ const TypewriterHeader = () => {
 
   return (
     <div className="relative min-h-[4rem] md:min-h-[5rem] flex items-center justify-center">
-      <h1 className="text-4xl md:text-6xl font-bold text-black">
+      <h1 className="text-4xl md:text-6xl font-bold text-black dark:text-white">
         {text || '\u00A0'}
       </h1>
     </div>

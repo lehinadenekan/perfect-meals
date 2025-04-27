@@ -30,14 +30,14 @@ export function ThemeToggle() {
         Dark
       </Button>
       {/* Optional: Add system theme button */}
-      {/* <Button
+      <Button
         variant={theme === 'system' ? 'secondary' : 'ghost'} // Highlight if system is active
         size="sm"
         onClick={() => setTheme('system')}
         aria-label="Switch to system theme"
       >
         System
-      </Button> */}
+      </Button>
     </div>
   )
 } 
