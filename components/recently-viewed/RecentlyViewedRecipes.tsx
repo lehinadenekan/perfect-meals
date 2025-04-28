@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import RecipeCard from '../recipe/RecipeCard';
-import RecipeDetailModal from '../recipe/RecipeDetailModal'; // Import modal
+// import RecipeDetailModal from '../recipe/RecipeDetailModal'; // Removed import
 import { getRecentlyViewed } from '@/lib/utils/recentlyViewed';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import { Recipe } from '@/lib/types/recipe'; // Import the actual Recipe type RecipeCard uses
@@ -10,7 +10,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline'; // Correct import f
 
 // In components/recently-viewed/RecentlyViewedRecipes.tsx
 interface RecentlyViewedRecipesProps {
-  onRecipeSelect?: (recipe: Recipe) => void; // Make optional with ?
+  // onRecipeSelect?: (recipe: Recipe) => void; // Removed prop
   onAlbumUpdate: () => void;
   onBack: () => void;
 }
@@ -19,7 +19,7 @@ interface RecentlyViewedRecipesProps {
 type RecentlyViewedRecipe = Recipe & { isFavourite?: boolean };
 
 export default function RecentlyViewedRecipes({
-  onRecipeSelect: _onRecipeSelect,
+  // onRecipeSelect: _onRecipeSelect, // Removed parameter
   onAlbumUpdate: _onAlbumUpdate,
   onBack
 }: RecentlyViewedRecipesProps) {
@@ -27,9 +27,9 @@ export default function RecentlyViewedRecipes({
   const [recipes, setRecipes] = useState<RecentlyViewedRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- State for Modal Control ---
-  const [selectedRecipe, setSelectedRecipe] = useState<RecentlyViewedRecipe | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // --- Removed State for Modal Control ---
+  // const [selectedRecipe, setSelectedRecipe] = useState<RecentlyViewedRecipe | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     // Fetch from localStorage on mount
@@ -48,24 +48,23 @@ export default function RecentlyViewedRecipes({
           : recipe
       )
     );
-    // Update selected recipe in modal if it's the one changed
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
+    // Removed update logic for selectedRecipe in modal
+    // if (selectedRecipe && selectedRecipe.id === recipeId) {
+    //   setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
+    // }
   };
 
-  // --- Modal Handlers ---
-  const handleOpenModal = (recipe: Recipe) => { // Accept base Recipe type
-    // Find the latest version from local state to get current favourite status (if known)
-    const currentRecipeData = recipes.find(r => r.id === recipe.id);
-    setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined }); // Set selected, favourite status might be unknown initially
-    setIsModalOpen(true);
-  };
+  // --- Removed Modal Handlers ---
+  // const handleOpenModal = (recipe: Recipe) => {
+  //   const currentRecipeData = recipes.find(r => r.id === recipe.id);
+  //   setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined }); 
+  //   setIsModalOpen(true);
+  // };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
-  };
+  // const handleCloseModal = () => {
+  //   setIsModalOpen(false);
+  //   setSelectedRecipe(null);
+  // };
 
   return (
     <>
@@ -88,10 +87,10 @@ export default function RecentlyViewedRecipes({
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {recipes.map((recipeData) => (
-              <div key={recipeData.id}>
+              <div key={recipeData.id} className="w-72">
                 <RecipeCard
                   recipe={recipeData}
-                  onSelect={handleOpenModal}
+                  // onSelect={handleOpenModal} // Removed prop
                   onFavouriteChange={handleFavouriteChange}
                   // Note: onAlbumUpdate prop is not passed to RecipeCard here
                   // as RecipeCard now handles the modal internally.
@@ -102,14 +101,15 @@ export default function RecentlyViewedRecipes({
         )}
       </div>
 
-      {selectedRecipe && (
+      {/* Removed RecipeDetailModal rendering */}
+      {/* {selectedRecipe && (
         <RecipeDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe as Recipe}
           onFavouriteChange={handleFavouriteChange}
         />
-      )}
+      )} */}
     </>
   );
 }

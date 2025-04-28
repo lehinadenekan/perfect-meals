@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // Added useState back
+import React, { useState } from 'react';
 import { Recipe } from '@/lib/types/recipe';
 import Image from 'next/image';
 import { GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -9,27 +9,23 @@ import DietaryInfo from './DietaryInfo';
 import { DietaryFeedback } from './DietaryFeedback';
 import FavoriteButton from '../shared/FavouriteButton';
 import AddToAlbumButton from '../albums/AddToAlbumButton';
-import AddToAlbumModal from '../albums/AddToAlbumModal'; // Import the modal
+import AddToAlbumModal from '../albums/AddToAlbumModal';
+import { Clock, BarChart, User, Import } from 'lucide-react';
+import Link from 'next/link';
 
 interface RecipeCardProps {
   recipe: Recipe & { isFavourite?: boolean };
   onFlagClick?: () => void;
-  onSelect: (recipe: Recipe) => void;
   onFavouriteChange: (recipeId: string, newIsFavorite: boolean) => void;
-  // Removed onAddToAlbumClick prop
-  // If the parent needs to refresh when an album is updated via the modal,
-  // you might need to add back an `onAlbumUpdate` prop later.
 }
 
 export default function RecipeCard({
   recipe,
   onFlagClick,
-  onSelect,
   onFavouriteChange,
-  // Removed onAddToAlbumClick from destructuring
 }: RecipeCardProps) {
   const { data: session } = useSession();
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // --- Analyze Dietary ---
   const dietaryAnalysis = (recipe.ingredients && Array.isArray(recipe.ingredients))
@@ -54,7 +50,6 @@ export default function RecipeCard({
     if (!session) {
       toast.error("Log In to manage albums");
     } else {
-      // Open the modal internally
       setIsModalOpen(true);
     }
   };
@@ -62,51 +57,89 @@ export default function RecipeCard({
   // --- Prepare image source ---
   const imageSrc = recipe.imageUrl || '/images/default-recipe.jpg';
 
-  return (
-    <> {/* Wrap in Fragment to render modal alongside card */}
-      <div
-        className="bg-white rounded-lg shadow-md overflow-hidden w-[240px] h-[555px] transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer"
-        // Prevent modal close when clicking card background if modal is open
-        onClick={isModalOpen ? (e) => e.stopPropagation() : () => onSelect(recipe)}
-      >
-        {/* --- Image Component --- */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200">
-          <Image
-            key={imageSrc}
-            src={imageSrc}
-            alt={recipe.title}
-            width={240}
-            height={180}
-            className="w-full h-full"
-            style={{ objectFit: 'cover' }}
-            priority={false}
-            onError={(e) => {
-               console.error(`Failed to load image for ${recipe.title}: ${imageSrc}`, e);
-             }}
-          />
-        </div>
+  // Function to determine appropriate source icon
+  const renderSourceIcon = () => {
+    if (recipe.source === 'USER_CREATED') {
+      return (
+        <span title="Created by user">
+          <User size={16} className="mr-1.5 text-blue-600 flex-shrink-0" aria-label="Created by user" />
+        </span>
+      );
+    } else if (recipe.source === 'USER_IMPORTED') {
+      return (
+        <span title="Imported by user">
+          <Import size={16} className="mr-1.5 text-green-600 flex-shrink-0" aria-label="Imported by user" />
+        </span>
+      );
+    } else {
+      return null; // No icon for ADMIN or other sources
+    }
+  };
 
-        {/* --- Card Content --- */}
-        <div className="p-4 flex flex-col h-[calc(555px-180px)]">
-          <div className="flex-grow flex flex-col justify-between">
-            {/* Title and Description */}
+  return (
+    <>
+      <Link href={`/recipes/${recipe.id}`} passHref legacyBehavior>
+        <a
+          className="block bg-white rounded-lg shadow-md overflow-hidden w-full transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer group"
+          onClick={(e) => {
+            if (isModalOpen) e.stopPropagation();
+          }}
+        >
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200">
+            <Image
+              key={imageSrc}
+              src={imageSrc}
+              alt={recipe.title}
+              layout="fill"
+              objectFit="cover"
+              className="transition-opacity duration-300 group-hover:opacity-90"
+              priority={false}
+              onError={(e) => {
+                console.error(`Failed to load image for ${recipe.title}: ${imageSrc}`, e);
+                (e.target as HTMLImageElement).src = '/images/default-recipe.jpg';
+              }}
+            />
+            {onFavouriteChange && (
+              <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                <FavoriteButton
+                  recipeId={recipe.id}
+                  initialIsFavourite={!!recipe.isFavourite}
+                  onSuccess={onFavouriteChange}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 flex flex-col">
             <div className="mb-2">
-              <h3 className="font-semibold text-lg break-words line-clamp-2 mb-1 dark:text-black">
-                {recipe.title}
+              <h3 className="font-semibold text-lg break-words line-clamp-2 mb-1 flex items-center">
+                {renderSourceIcon()}
+                <span className="truncate" title={recipe.title}>{recipe.title}</span>
               </h3>
-              <p className="text-sm text-gray-600 line-clamp-2 break-words dark:text-black" title={recipe.description}>
+              <p className="text-sm text-gray-600 line-clamp-2 break-words" title={recipe.description}>
                 {recipe.description}
               </p>
             </div>
 
-            {/* Dietary Info */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
+              {recipe.cookingTime && (
+                <span className="flex items-center">
+                  <Clock size={12} className="mr-1" /> {recipe.cookingTime} min
+                </span>
+              )}
+              {recipe.difficulty && (
+                <span className="flex items-center">
+                  <BarChart size={12} className="mr-1" /> {recipe.difficulty}
+                </span>
+              )}
+            </div>
+
             <div className="mb-2">
               <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
             </div>
 
-            {/* Nutrition */}
             <div className="mb-2">
-              <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-black">
+              <div className="flex flex-col space-y-1 text-sm text-gray-600">
                 <div className="flex items-center space-x-2 whitespace-nowrap">
                   <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
                   <span>Carbs: {recipe.nutritionFacts?.carbs != null ? `${recipe.nutritionFacts.carbs}g` : 'N/A'}</span>
@@ -122,46 +155,33 @@ export default function RecipeCard({
               </div>
             </div>
 
-            {/* Region */}
             <div className="mb-2">
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-black">{recipe.regionOfOrigin || 'N/A'}</span>
+                <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'N/A'}</span>
+              </div>
+            </div>
+
+            <div
+              className="flex items-center justify-between w-full h-[32px] mt-auto pt-2 border-t border-gray-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center whitespace-nowrap">
+                 {onFlagClick && <DietaryFeedback onFlagClick={onFlagClick} />}
+              </div>
+              <div className="flex items-center space-x-1 relative">
+                 {session && <AddToAlbumButton onClick={handleAddToAlbumButtonClick} />}
               </div>
             </div>
           </div>
+        </a>
+      </Link>
 
-          {/* --- Actions Footer --- */}
-          <div
-            className="flex items-center justify-between w-full h-[32px] mt-auto pt-2 border-t border-gray-100"
-            onClick={(e) => e.stopPropagation()} // Prevent card click when clicking actions
-          >
-            <div className="flex items-center whitespace-nowrap">
-              <DietaryFeedback onFlagClick={onFlagClick} />
-            </div>
-            <div className="flex items-center space-x-1 relative">
-              <FavoriteButton
-                recipeId={recipe.id}
-                initialIsFavourite={recipe.isFavourite}
-                onSuccess={onFavouriteChange}
-              />
-              <AddToAlbumButton
-                onClick={handleAddToAlbumButtonClick} // This now opens the modal internally
-                title={!session ? "Log In to manage albums" : "Add to album"}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* --- Render Modal Conditionally --- */}
-      {session && ( // Only render modal if logged in
+      {session && (
           <AddToAlbumModal
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)} // Function to close the modal
-            recipeId={recipe.id} // Pass the current recipe ID
-            // Add onAlbumUpdate prop here if needed later:
-            // onAlbumUpdate={() => onAlbumUpdate?.()}
+            onClose={() => setIsModalOpen(false)}
+            recipeId={recipe.id}
           />
       )}
     </>

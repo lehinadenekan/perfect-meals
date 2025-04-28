@@ -69,21 +69,21 @@
 // - Successfully committed and pushed latest planner features (Commit: 6adc3904).
 // - Refactored AI recipe generation page from `app/generate-recipe-ai/` to `app/generate-recipe/` (Commit: 344779d1).
 // - Updated Navbar link text from "Generate with AI" to "Generate Recipe".
-// - Implemented basic Dark/Light Mode toggle using `next-themes`:
-//   - Added ThemeProvider to root layout.
-//   - Created ThemeToggle component on Settings page.
-//   - Applied initial dark styles to layout, navbar, cards, settings page.
-//   - Fixed syntax error (misplaced backticks) in OpenAI constructor call in `/api/generate-recipe`.
+// - REMOVED Dark/Light Mode implementation: Previously used `next-themes`, ThemeProvider, and ThemeToggle. Removed package, config, and all `dark:` variants.
+// - Applied consistent yellow background (`bg-[#ffc800]`) to `body` and `main` elements in root layout (`app/layout.tsx`).
+// - Fixed background overrides on `/profile` and `/import-recipe` pages to use the global yellow background.
+// - Removed card borders/shadows on `/import-recipe` and formerly on `/settings` to blend with the yellow background.
+// - Simplified `/settings` page: removed "Appearance" card and "Macro Goals" form/card entirely.
+// - Fixed syntax error (misplaced backticks) in OpenAI constructor call in `/api/generate-recipe`.
 // - The `Meal Completion` checkbox functionality mentioned previously seems to be missing from the current UI elements shown.
 //
 // --- Potential Next Steps / TODOs ---
-// - Continue applying dark mode styles (`dark:` variants) to remaining components (Task 9).
-// - Implement Dark/Light Mode Toggle (see `app/tasks/darklight.ts` for detailed steps).
 // - Shopping List Improvements: Implement unit conversion and better ingredient parsing.
 // - Re-implement Meal Completion Checkbox?: Decide if needed and add UI/logic.
 // - UI Refinements: Improve loading states, error display, potentially add drag-and-drop for meals.
 // - NutritionFacts Model: Consider adding a dedicated 'calories' field.
 // - Recipe Display: Show macros on RecipeCard / Recipe Detail pages.
+// - Profile Page Enhancements: Re-add or implement functionality for managing cooking preferences, allergies, dietary restrictions, favorite cuisines (currently only shows placeholders).
 
 // Project Overview: This project is a comprehensive web application serving as both a directory for traditional recipes and a powerful recipe management tool.
 //   Core Purpose: To provide users with a platform to discover, create, import, generate, and manage recipes effectively.

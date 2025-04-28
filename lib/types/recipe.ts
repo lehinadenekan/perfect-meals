@@ -1,3 +1,5 @@
+export type RecipeSource = 'ADMIN' | 'USER_CREATED' | 'USER_IMPORTED';
+
 export interface Ingredient {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ export interface Recipe {
   id: string;
   title: string;
   description?: string;
+  source: RecipeSource;
   cookingTime: number;
   servings: number;
   difficulty: string;

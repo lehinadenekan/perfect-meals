@@ -2,22 +2,17 @@
 
 import React, { useState, useEffect } from 'react'
 // Revert to using the frontend Recipe type
-import { Recipe } from '@/lib/types/recipe'; 
+import { Recipe } from '@/lib/types/recipe';
 import RecipeCard from './RecipeCard'
-import RecipeDetailModal from './RecipeDetailModal'
 
 // Revert prop type
 interface RecipeListProps {
-  recipes: (Recipe & { isFavourite?: boolean })[]; 
+  recipes: (Recipe & { isFavourite?: boolean })[];
 }
 
 export default function RecipeList({ recipes: initialRecipes }: RecipeListProps) {
   // Revert state type
   const [recipes, setRecipes] = useState(initialRecipes);
-
-  // Revert modal state type
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setRecipes(initialRecipes);
@@ -31,30 +26,13 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
           : recipe
       )
     );
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      // Ensure the update here matches the Recipe type
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
-  };
-
-  // Revert handleOpenModal parameter type
-  const handleOpenModal = (recipe: Recipe) => { 
-    const currentRecipeData = recipes.find(r => r.id === recipe.id) || recipe;
-    // Ensure selectedRecipe state matches Recipe type
-    setSelectedRecipe(currentRecipeData);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
   };
 
   // Revert filter logic check if needed (assuming FrontendRecipeType has these fields)
   const [filters, setFilters] = useState({
     vegetarian: false,
     vegan: false,
-    cuisine: '' 
+    cuisine: ''
   })
 
   const filteredRecipes = recipes.filter(recipe => {
@@ -101,29 +79,21 @@ export default function RecipeList({ recipes: initialRecipes }: RecipeListProps)
         </label>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map(recipe => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe} // Should now match RecipeCard's expected prop type
-              onSelect={handleOpenModal} // Parameter type matches again
-              onFavouriteChange={handleFavouriteChange}
-            />
+            <div key={recipe.id} className="w-72">
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                onFavouriteChange={handleFavouriteChange}
+              />
+            </div>
           ))
         ) : (
           <p>No recipes found</p>
         )}
       </div>
-
-      {selectedRecipe && (
-        <RecipeDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          recipe={selectedRecipe} // Should now match RecipeDetailModal's expected prop type
-          onFavouriteChange={handleFavouriteChange}
-        />
-      )}
     </>
   )
 } 

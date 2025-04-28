@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RecipeCard from '@/components/recipe/RecipeCard';
-import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
+// import RecipeDetailModal from '@/components/recipe/RecipeDetailModal'; // Removed import
 import { Recipe } from '@/lib/types/recipe';
 
 interface SearchResult extends Omit<Recipe, 'description' | 'imageUrl'> {
@@ -19,8 +19,9 @@ function SearchResults() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedRecipe, setSelectedRecipe] = useState<SearchResult | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Removed modal state
+  // const [selectedRecipe, setSelectedRecipe] = useState<SearchResult | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -49,25 +50,25 @@ function SearchResults() {
   const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setResults(currentResults =>
       currentResults.map(recipe =>
-        recipe.id === recipeId
-          ? { ...recipe, isFavourite: newIsFavourite }
-          : recipe
+        recipe.id === recipeId ? { ...recipe, isFavourite: newIsFavourite } : recipe
       )
     );
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
+    // Removed update logic for selectedRecipe
+    // if (selectedRecipe && selectedRecipe.id === recipeId) {
+    //   setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
+    // }
   };
 
-  const handleOpenModal = (recipe: SearchResult) => {
-    setSelectedRecipe(recipe);
-    setIsModalOpen(true);
-  };
+  // Removed modal handlers
+  // const handleOpenModal = (recipe: SearchResult) => {
+  //   setSelectedRecipe(recipe);
+  //   setIsModalOpen(true);
+  // };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
-  };
+  // const handleCloseModal = () => {
+  //   setIsModalOpen(false);
+  //   setSelectedRecipe(null);
+  // };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
@@ -78,29 +79,33 @@ function SearchResults() {
         Search results for &quot;{query}&quot;
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Apply similar grid/width styling as other pages */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
         {results.length > 0 ? (
           results.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              onSelect={handleOpenModal}
-              onFavouriteChange={handleFavouriteChange}
-            />
+            <div key={recipe.id} className="w-72"> {/* Added wrapper div with w-72 */}
+              <RecipeCard
+                key={recipe.id} // key should ideally be on the wrapper
+                recipe={recipe}
+                // onSelect={handleOpenModal} // Removed prop
+                onFavouriteChange={handleFavouriteChange}
+              />
+            </div>
           ))
         ) : (
           !loading && <div>No recipes found for &quot;{query}&quot;.</div>
         )}
       </div>
 
-      {selectedRecipe && (
+      {/* Removed modal rendering */}
+      {/* {selectedRecipe && (
         <RecipeDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
           onFavouriteChange={handleFavouriteChange}
         />
-      )}
+      )} */}
     </>
   );
 }

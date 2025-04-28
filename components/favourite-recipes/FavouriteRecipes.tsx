@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation'; // Added if needed, e.g., for create recipe nav
 import toast from 'react-hot-toast';
@@ -9,12 +9,10 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import RecipeCard from '@/components/recipe/RecipeCard';
-import FlagSubmission from '@/components/recipe/FlagSubmission';
 import { Recipe } from '@/lib/types/recipe'; // Ensure this type uses 'isFavourite' if necessary
 import AlbumManager from '@/components/albums/AlbumManager';
 import AlbumDetailsView from '@/components/albums/AlbumDetailsView';
 import MyRecipesView from '@/components/my-recipes/MyRecipesView';
-import RecipeDetailModal from '@/components/recipe/RecipeDetailModal';
 
 // Define the type for the fetched favourite recipe, ensuring it includes isFavourite
 type FavouriteRecipe = Recipe & { isFavourite?: boolean }; // Allow optional for consistency
@@ -43,15 +41,8 @@ export default function FavouriteRecipes({ // Keeping original name
   const { status } = useSession(); // Get session data
   const [favouriteRecipes, setFavouriteRecipes] = useState<FavouriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [flaggedRecipe, setFlaggedRecipe] = useState<FavouriteRecipe | null>(null);
-  // Default to 'allFavourites', but maybe change based on where user came from?
   const [viewMode, setViewMode] = useState<ViewMode>('allFavourites');
   const [selectedAlbum, setSelectedAlbum] = useState<FetchedAlbum | null>(null);
-
-  // --- State for Modal Control ---
-  const [selectedRecipe, setSelectedRecipe] = useState<FavouriteRecipe | null>(null);
-  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch favourites when component mounts or session status changes
   useEffect(() => {
@@ -149,81 +140,20 @@ export default function FavouriteRecipes({ // Keeping original name
     router.push('/create-recipe');
   };
 
-  // --- Callback for Favourite Changes (e.g., from RecipeCard or Modal) ---
   const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     let updatedRecipes = favouriteRecipes;
     if (!newIsFavourite) {
-      // Remove from favourites list locally
       updatedRecipes = favouriteRecipes.filter(recipe => recipe.id !== recipeId);
       setFavouriteRecipes(updatedRecipes);
-
-      // If the removed recipe was open in the modal, close it
-      if (selectedRecipe && selectedRecipe.id === recipeId) {
-        handleCloseModal();
-      }
-      // Adjust index if item before current index was removed
-      else if (currentIndex !== null) {
-        const originalIndex = favouriteRecipes.findIndex(r => r.id === recipeId);
-        if (originalIndex !== -1 && originalIndex < currentIndex) {
-          setCurrentIndex(currentIndex - 1);
-        }
-      }
       toast.success("Removed from favourites");
     } else {
-      // Add to favourites (or update status if needed) - less likely in this specific view
       updatedRecipes = favouriteRecipes.map(recipe =>
         recipe.id === recipeId ? { ...recipe, isFavourite: true } : recipe
       );
-      // If adding, maybe fetch the recipe details if not fully present?
-      // For now, just update state, assuming recipe object is sufficient
       setFavouriteRecipes(updatedRecipes);
-       toast.success("Added to favourites");
+      toast.success("Added to favourites");
     }
   };
-
-  // --- Modal Handlers ---
-  const handleOpenModal = (recipe: Recipe) => {
-    // Find the recipe in the current state to ensure we have isFavourite status
-    const recipeFromState = favouriteRecipes.find(r => r.id === recipe.id);
-    if (recipeFromState) {
-      const index = favouriteRecipes.indexOf(recipeFromState);
-      setSelectedRecipe(recipeFromState);
-      setCurrentIndex(index);
-      setIsModalOpen(true);
-    } else {
-      // Fallback: If somehow not found, open with basic data + assume favourite
-      console.warn("Recipe not found in local favourites state, opening modal with basic data.");
-      setSelectedRecipe({ ...recipe, isFavourite: true });
-      setCurrentIndex(null); // Can't guarantee index
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
-    setCurrentIndex(null);
-  };
-
-  // --- Modal Navigation Handlers ---
-  const goToPreviousRecipe = () => {
-    if (currentIndex !== null && currentIndex > 0) {
-      const newIndex = currentIndex - 1;
-      setSelectedRecipe(favouriteRecipes[newIndex]);
-      setCurrentIndex(newIndex);
-    }
-  };
-
-  const goToNextRecipe = () => {
-    if (currentIndex !== null && currentIndex < favouriteRecipes.length - 1) {
-      const newIndex = currentIndex + 1;
-      setSelectedRecipe(favouriteRecipes[newIndex]);
-      setCurrentIndex(newIndex);
-    }
-  };
-
-  const canGoPrevious = currentIndex !== null && currentIndex > 0;
-  const canGoNext = currentIndex !== null && currentIndex < favouriteRecipes.length - 1;
 
   // --- Main Render ---
   return (
@@ -290,36 +220,32 @@ export default function FavouriteRecipes({ // Keeping original name
         )}
 
         {/* Content Area based on View Mode */}
-        <div className="mt-6 w-full">
+        <div className="mt-8">
           {/* All Favourites View */}
           {viewMode === 'allFavourites' && (
-            favouriteRecipes.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-lg text-gray-800">
-                  You haven&apos;t saved any recipes as favourites yet.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
-                {favouriteRecipes.map(recipe => (
-                  <div key={recipe.id}>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+              {favouriteRecipes.length > 0 ? (
+                favouriteRecipes.map((recipe) => (
+                  <div key={recipe.id} className="w-72">
                     <RecipeCard
                       recipe={recipe}
-                      onFlagClick={() => setFlaggedRecipe(recipe)}
-                      onSelect={handleOpenModal}
                       onFavouriteChange={handleFavouriteChange}
                     />
                   </div>
-                ))}
-              </div>
-            )
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-500 py-8">
+                  You haven&apos;t added any favourite recipes yet.
+                </p>
+              )}
+            </div>
           )}
 
-          {/* All Albums View */}
+          {/* Albums View */}
           {viewMode === 'allAlbums' && (
             <AlbumManager
-              refreshTrigger={albumRefreshTrigger}
               onViewAlbum={handleViewAlbumDetails}
+              refreshTrigger={albumRefreshTrigger}
             />
           )}
 
@@ -327,10 +253,7 @@ export default function FavouriteRecipes({ // Keeping original name
           {viewMode === 'albumDetails' && selectedAlbum && (
             <AlbumDetailsView
               album={selectedAlbum}
-              onBack={() => { // Go back to all albums view
-                  setViewMode('allAlbums');
-                  setSelectedAlbum(null);
-              }}
+              onBack={() => setViewMode('allAlbums')}
               onAlbumUpdate={onAlbumUpdate}
             />
           )}
@@ -341,29 +264,6 @@ export default function FavouriteRecipes({ // Keeping original name
           )}
         </div>
       </div>
-
-      {/* Modals */}
-      {/* Flag Submission Modal */}
-      {flaggedRecipe && (
-        <FlagSubmission
-          recipe={flaggedRecipe}
-          onBack={() => setFlaggedRecipe(null)}
-        />
-      )}
-
-      {/* Recipe Detail Modal */}
-      {selectedRecipe && isModalOpen && (
-        <RecipeDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          recipe={selectedRecipe} // Pass the selected recipe with status
-          onFavouriteChange={handleFavouriteChange} // Pass correct handler
-          onGoToPrevious={goToPreviousRecipe}
-          onGoToNext={goToNextRecipe}
-          canGoPrevious={canGoPrevious}
-          canGoNext={canGoNext}
-        />
-      )}
     </div>
   );
 }

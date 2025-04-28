@@ -9,7 +9,6 @@ import { FavouritesProvider } from './context/FavouritesContext';
 import Navbar from '@/components/Navbar';
 // --- Import useRouter ---
 import { useRouter } from 'next/navigation';
-import { ThemeProvider } from "@/components/theme-provider"; // Import ThemeProvider
 
 // --- Remove Placeholder Search Handler if unused, keep if needed ---
 // const placeholderOnSearch = async (term: string) => { console.log(`Search triggered for: ${term} - Placeholder`); };
@@ -34,7 +33,7 @@ export default function RootLayout({
 
 
   return (
-    <html lang="en" suppressHydrationWarning> {/* Add suppressHydrationWarning */}
+    <html lang="en" suppressHydrationWarning> {/* Remove suppressHydrationWarning if only used for next-themes */}
       <head>
         {/* Keep existing head elements */}
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1744468975179679"
@@ -42,26 +41,19 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Recipe Ideas</title>
       </head>
-      <body className="bg-yellow-400 text-foreground dark:bg-gray-950">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Providers>
-             {/* --- Pass the actual handleHomeClick function --- */}
-             <Navbar onSearch={handleSearch} />
+      <body className="bg-[#ffc800] text-foreground">
+        <Providers>
+           {/* --- Pass the actual handleHomeClick function --- */}
+           <Navbar onSearch={handleSearch} />
 
-             <FavouritesProvider>
-               <main className="flex-grow">
-                  {children}
-                  {modal}
-               </main>
-               <Toaster />
-             </FavouritesProvider>
-          </Providers>
-        </ThemeProvider>
+           <FavouritesProvider>
+             <main className="flex-grow bg-[#ffc800]">
+                {children}
+                {modal}
+             </main>
+             <Toaster />
+           </FavouritesProvider>
+        </Providers>
       </body>
     </html>
   );

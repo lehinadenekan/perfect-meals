@@ -4,7 +4,7 @@ import HomePageClient from '../components/HomePageClient'; // Import the new cli
 // This page component now only sets up the Suspense boundary
 export default function Home() {
   return (
-    <main className="min-h-screen dark:bg-black">
+    <main className="min-h-screen bg-[#ffc800]">
       {/* Navbar might need to be outside Suspense if it doesn't use client hooks,
           or moved inside HomePageClient if it does (like handling search input)
           Assuming Navbar is relatively static or handles its own state/client needs.

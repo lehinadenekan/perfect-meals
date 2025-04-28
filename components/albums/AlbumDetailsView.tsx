@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RecipeCard from '../recipe/RecipeCard';
-import RecipeDetailModal from '../recipe/RecipeDetailModal';
+// import RecipeDetailModal from '../recipe/RecipeDetailModal'; // Removed import
 // Import necessary Prisma types
 import type { Album as PrismaAlbum, RecipeToAlbum, Recipe as PrismaRecipe } from '@prisma/client';
 import { Recipe as FrontendRecipe } from '@/lib/types/recipe'; // Import frontend Recipe type
@@ -50,9 +50,9 @@ export default function AlbumDetailsView({
   // Local state uses the frontend Recipe type, plus isFavourite
   const [recipes, setRecipes] = useState<(FrontendRecipe & { isFavourite?: boolean })[]>([]);
 
-  // --- State for Modal Control ---
-  const [selectedRecipe, setSelectedRecipe] = useState<(FrontendRecipe & { isFavourite?: boolean }) | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // --- Removed State for Modal Control ---
+  // const [selectedRecipe, setSelectedRecipe] = useState<(FrontendRecipe & { isFavourite?: boolean }) | null>(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Sync local state when the album prop changes
   useEffect(() => {
@@ -100,27 +100,26 @@ export default function AlbumDetailsView({
   const handleFavouriteChange = (recipeId: string, newIsFavourite: boolean) => {
     setRecipes(currentRecipes =>
       currentRecipes.map(recipe =>
-        recipe.id === recipeId
-          ? { ...recipe, isFavourite: newIsFavourite }
-          : recipe
+        recipe.id === recipeId ? { ...recipe, isFavourite: newIsFavourite } : recipe
       )
     );
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
+    // Removed update logic for selectedRecipe
+    // if (selectedRecipe && selectedRecipe.id === recipeId) {
+    //   setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
+    // }
   };
 
-  // --- Modal Handlers ---
-  const handleOpenModal = (recipe: FrontendRecipe) => {
-    const currentRecipeData = recipes.find(r => r.id === recipe.id);
-    setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined });
-    setIsModalOpen(true);
-  };
+  // --- Removed Modal Handlers ---
+  // const handleOpenModal = (recipe: FrontendRecipe) => {
+  //   const currentRecipeData = recipes.find(r => r.id === recipe.id);
+  //   setSelectedRecipe(currentRecipeData || { ...recipe, isFavourite: undefined });
+  //   setIsModalOpen(true);
+  // };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
-  };
+  // const handleCloseModal = () => {
+  //   setIsModalOpen(false);
+  //   setSelectedRecipe(null);
+  // };
 
   return (
     <>
@@ -146,10 +145,10 @@ export default function AlbumDetailsView({
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {recipes.map((recipe) => (
-              <div key={recipe.id} className="w-full flex justify-center">
+              <div key={recipe.id} className="w-72"> {/* Changed w-full flex justify-center to w-72 */}
                 <RecipeCard
                   recipe={recipe}
-                  onSelect={handleOpenModal}
+                  // onSelect={handleOpenModal} // Removed prop
                   onFavouriteChange={handleFavouriteChange}
                 />
               </div>
@@ -158,15 +157,15 @@ export default function AlbumDetailsView({
         )}
       </div>
 
-      {/* Render Modal Conditionally */}
-      {selectedRecipe && (
+      {/* Removed Modal Rendering */}
+      {/* {selectedRecipe && (
         <RecipeDetailModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           recipe={selectedRecipe} // Pass selected recipe (FrontendRecipe type)
           onFavouriteChange={handleFavouriteChange}
         />
-      )}
+      )} */}
     </>
   );
 } 

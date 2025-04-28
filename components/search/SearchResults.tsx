@@ -3,7 +3,6 @@ import { Recipe } from '@/lib/types/recipe';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 import RecipeCard from '../recipe/RecipeCard';
-import RecipeDetailModal from '../recipe/RecipeDetailModal';
 
 interface SearchResultsProps {
   searchTerm: string;
@@ -24,9 +23,6 @@ export default function SearchResults({
 }: SearchResultsProps) {
   const [recipes, setRecipes] = useState(initialRecipes);
 
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   useEffect(() => {
     setRecipes(initialRecipes);
   }, [initialRecipes]);
@@ -39,20 +35,6 @@ export default function SearchResults({
           : recipe
       )
     );
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
-  };
-
-  const handleOpenModal = (recipe: Recipe) => {
-    const currentRecipeData = recipes.find(r => r.id === recipe.id) || recipe;
-    setSelectedRecipe(currentRecipeData);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
   };
 
   return (
@@ -94,12 +76,13 @@ export default function SearchResults({
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
               {recipes.map(recipe => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  onSelect={handleOpenModal}
-                  onFavouriteChange={handleFavouriteChange}
-                />
+                <div key={recipe.id} className="w-72">
+                  <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    onFavouriteChange={handleFavouriteChange}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -116,15 +99,6 @@ export default function SearchResults({
           )}
         </div>
       </div>
-
-      {selectedRecipe && (
-        <RecipeDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          recipe={selectedRecipe}
-          onFavouriteChange={handleFavouriteChange}
-        />
-      )}
     </>
   );
 } 

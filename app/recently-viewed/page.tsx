@@ -36,7 +36,7 @@ export default function RecentlyViewedPage() {
     // Use a consistent main layout structure
     // The outer <main> tag might be redundant if the root layout already provides one,
     // but keeping it for now based on original structure. Review if layout issues arise.
-    <main className="min-h-screen dark:bg-black">
+    <main className="min-h-screen bg-[#ffc800]">
       {/* Navbar rendering removed */}
 
       {/* Container for the main content */}

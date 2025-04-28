@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
 import { Recipe } from '@/lib/types/recipe';
 import RecipeCard from './RecipeCard';
-import RecipeDetailModal from './RecipeDetailModal';
 import { Spinner } from '../ui/spinner';
 
 type DietaryPreference =
@@ -35,9 +34,6 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDiets, setSelectedDiets] = useState<DietaryPreference[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const [selectedRecipe, setSelectedRecipe] = useState<RecipeSearchResult | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const dietaryOptions: DietaryOption[] = [
     {
@@ -150,19 +146,6 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
           : recipe
       )
     );
-    if (selectedRecipe && selectedRecipe.id === recipeId) {
-      setSelectedRecipe(prev => prev ? { ...prev, isFavourite: newIsFavourite } : null);
-    }
-  };
-
-  const handleOpenModal = (recipe: RecipeSearchResult) => {
-    setSelectedRecipe(recipe);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedRecipe(null);
   };
 
   return (
@@ -232,27 +215,19 @@ export const RecipeSearch: React.FC<RecipeSearchProps> = ({ onSearchResults }) =
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
             {recipes.map(recipe => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                onSelect={handleOpenModal}
-                onFavouriteChange={handleFavouriteChange}
-              />
+              <div key={recipe.id} className="w-72">
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onFavouriteChange={handleFavouriteChange}
+                />
+              </div>
             ))}
           </div>
         </div>
       </div>
-
-      {selectedRecipe && (
-        <RecipeDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          recipe={selectedRecipe}
-          onFavouriteChange={handleFavouriteChange}
-        />
-      )}
     </>
   );
 } 
