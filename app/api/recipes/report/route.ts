@@ -18,8 +18,8 @@ export async function POST(request: Request) {
 
     // Send email using Resend
     await resend.emails.send({
-      from: 'Perfect Meals <reports@perfect-meals.com>',
-      to: process.env.ADMIN_EMAIL || 'admin@perfect-meals.com',
+      from: 'Recipe Ideas Feedback <admin@recipe-ideas.online>',
+      to: process.env.ADMIN_EMAIL || 'admin@recipe-ideas.online',
       subject: `Recipe Report: ${recipeTitle}`,
       html: `
         <h2>Recipe Report</h2>

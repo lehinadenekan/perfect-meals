@@ -54,6 +54,9 @@ import "yet-another-react-lightbox/styles.css";
 // import Zoom from "yet-another-react-lightbox/plugins/zoom";
 // import "yet-another-react-lightbox/plugins/zoom.css";
 
+// Import Clock icon from lucide-react
+import { Clock } from 'lucide-react';
+
 // Helper function to format minutes into hours/minutes string
 const formatMinutes = (totalMinutes: number | null | undefined): string => {
   if (totalMinutes == null || totalMinutes <= 0) { return 'N/A'; }
@@ -230,23 +233,23 @@ export default function RecipeDetailModal({
           // If lightbox is not open, let the Dialog handle closing itself (do nothing here)
         }
       } else if (!lightboxOpen) { // Only handle arrow keys if lightbox is NOT open
-          if (event.key === 'ArrowLeft') {
-              if (canGoPrevious && onGoToPrevious) onGoToPrevious();
-          } else if (event.key === 'ArrowRight') {
-              if (canGoNext && onGoToNext) onGoToNext();
-          }
+        if (event.key === 'ArrowLeft') {
+          if (canGoPrevious && onGoToPrevious) onGoToPrevious();
+        } else if (event.key === 'ArrowRight') {
+          if (canGoNext && onGoToNext) onGoToNext();
+        }
       }
     };
 
-      // Modify this line to add the listener in the capture phase
-      window.addEventListener('keydown', handleKeyDown, true); // <-- Add 'true' here
+    // Modify this line to add the listener in the capture phase
+    window.addEventListener('keydown', handleKeyDown, true); // <-- Add 'true' here
 
-      // Cleanup function must also specify capture phase
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown, true); // <-- Add 'true' here
-      };
-      // Dependencies remain the same
-    }, [isOpen, lightboxOpen, canGoPrevious, canGoNext, onGoToPrevious, onGoToNext]);
+    // Cleanup function must also specify capture phase
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true); // <-- Add 'true' here
+    };
+    // Dependencies remain the same
+  }, [isOpen, lightboxOpen, canGoPrevious, canGoNext, onGoToPrevious, onGoToNext]);
 
   // Cleanup timers on modal close
   useEffect(() => {
@@ -310,7 +313,7 @@ export default function RecipeDetailModal({
   const handleShare = async () => { if (!recipeToDisplay?.id) { toast.error('Cannot share recipe, ID is missing.'); return; } const url = `${window.location.origin}/recipes/${recipeToDisplay.id}`; try { await navigator.clipboard.writeText(url); toast.success('Recipe link copied!'); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (err) { console.error('Failed to copy URL: ', err); toast.error('Failed to copy link.'); } };
 
   // Timer Functions
-  const playTimer = (stepNumber: number) => { const description = recipeToDisplay?.instructions?.find(i => i.stepNumber === stepNumber)?.description || ''; const existingTimer = timerStates[stepNumber]; if (existingTimer?.isActive || (existingTimer && existingTimer.remainingTime <= 0)) return; if (existingTimer?.intervalId) clearInterval(existingTimer.intervalId); let durationToUse: number; let isNewTimer = false; if (existingTimer && existingTimer.remainingTime > 0 && existingTimer.initialDuration > 0) { durationToUse = existingTimer.remainingTime; } else { let initialDurationForStep: number | null | undefined = existingTimer?.initialDuration; if (!initialDurationForStep || initialDurationForStep <= 0) { initialDurationForStep = parseDuration(description); } if (!initialDurationForStep || initialDurationForStep <= 0) { setTimerStates(prev => ({ ...prev, [stepNumber]: { ...prev[stepNumber], isActive: false, intervalId: null } })); return; } durationToUse = initialDurationForStep; isNewTimer = true; } const intervalId = setInterval(() => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs || !cs.isActive || cs.intervalId !== intervalId) { if(intervalId) clearInterval(intervalId); return prev; } const nr = cs.remainingTime - 1; if (nr <= 0) { clearInterval(intervalId); return { ...prev, [stepNumber]: { ...cs, isActive: false, remainingTime: 0, intervalId: null } }; } return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); }, 1000); setTimerStates(prev => ({ ...prev, [stepNumber]: { ...(prev[stepNumber] || {}), isActive: true, remainingTime: durationToUse, intervalId: intervalId, ...(isNewTimer && { initialDuration: durationToUse }) } })); };
+  const playTimer = (stepNumber: number) => { const description = recipeToDisplay?.instructions?.find(i => i.stepNumber === stepNumber)?.description || ''; const existingTimer = timerStates[stepNumber]; if (existingTimer?.isActive || (existingTimer && existingTimer.remainingTime <= 0)) return; if (existingTimer?.intervalId) clearInterval(existingTimer.intervalId); let durationToUse: number; let isNewTimer = false; if (existingTimer && existingTimer.remainingTime > 0 && existingTimer.initialDuration > 0) { durationToUse = existingTimer.remainingTime; } else { let initialDurationForStep: number | null | undefined = existingTimer?.initialDuration; if (!initialDurationForStep || initialDurationForStep <= 0) { initialDurationForStep = parseDuration(description); } if (!initialDurationForStep || initialDurationForStep <= 0) { setTimerStates(prev => ({ ...prev, [stepNumber]: { ...prev[stepNumber], isActive: false, intervalId: null } })); return; } durationToUse = initialDurationForStep; isNewTimer = true; } const intervalId = setInterval(() => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs || !cs.isActive || cs.intervalId !== intervalId) { if (intervalId) clearInterval(intervalId); return prev; } const nr = cs.remainingTime - 1; if (nr <= 0) { clearInterval(intervalId); return { ...prev, [stepNumber]: { ...cs, isActive: false, remainingTime: 0, intervalId: null } }; } return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); }, 1000); setTimerStates(prev => ({ ...prev, [stepNumber]: { ...(prev[stepNumber] || {}), isActive: true, remainingTime: durationToUse, intervalId: intervalId, ...(isNewTimer && { initialDuration: durationToUse }) } })); };
   const pauseTimer = (stepNumber: number) => { const timer = timerStates[stepNumber]; if (timer?.isActive && timer.intervalId) { clearInterval(timer.intervalId); setTimerStates(prev => ({ ...prev, [stepNumber]: { ...prev[stepNumber], isActive: false, intervalId: null } })); } };
   const rewindTimer = (stepNumber: number) => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs || cs.remainingTime <= 0) return prev; const nr = Math.max(0, cs.remainingTime - REWIND_AMOUNT); return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); };
   const fastForwardTimer = (stepNumber: number) => { setTimerStates(prev => { const cs = prev[stepNumber]; if (!cs) return prev; const nr = cs.remainingTime + FAST_FORWARD_AMOUNT; return { ...prev, [stepNumber]: { ...cs, remainingTime: nr } }; }); };
@@ -319,17 +322,17 @@ export default function RecipeDetailModal({
   const downloadFile = (content: string, filename: string, mimeType: string) => { const blob = new Blob([content], { type: mimeType }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); };
   const formatRecipeText = (recipeData: RecipeDetailData | InitialRecipeData): string => { let text = `${recipeData.title}\n\n`; text += `Description: ${recipeData.description || 'N/A'}\n`; text += `Cooking Time: ${formatMinutes(recipeData.cookingTime)}\n`; text += `Servings: ${recipeData.servings || 'N/A'}\n\n`; text += `Ingredients:\n`; recipeData.ingredients?.forEach(ing => text += `- ${ing.amount || ''} ${ing.unit || ''} ${ing.name}${ing.notes ? ` (${ing.notes})` : ''}\n`); text += `\nInstructions:\n`; (recipeData.instructions?.sort((a, b) => a.stepNumber - b.stepNumber) || []).forEach(ins => text += `${ins.stepNumber}. ${ins.description}\n`); if (recipeData.notes && recipeData.notes.length > 0) { text += `\nNotes:\n`; recipeData.notes.forEach(note => text += `- ${note}\n`); } return text; };
   const formatRecipeMarkdown = (recipeData: RecipeDetailData | InitialRecipeData): string => { let md = `# ${recipeData.title}\n\n`; md += `*Cooking Time: ${formatMinutes(recipeData.cookingTime)} | Servings: ${recipeData.servings || 'N/A'}*\n\n`; md += `${recipeData.description || ''}\n\n`; md += `## Ingredients\n`; recipeData.ingredients?.forEach(ing => md += `- **${ing.amount || ''} ${ing.unit || ''}** ${ing.name}${ing.notes ? ` (${ing.notes})` : ''}\n`); md += `\n## Instructions\n`; (recipeData.instructions?.sort((a, b) => a.stepNumber - b.stepNumber) || []).forEach(ins => md += `${ins.stepNumber}. ${ins.description}\n`); if (recipeData.notes && recipeData.notes.length > 0) { md += `\n## Notes\n`; recipeData.notes.forEach(note => md += `- ${note}\n`); } return md; };
-  const handleExportTxt = () => { if(recipeToDisplay) downloadFile(formatRecipeText(recipeToDisplay), `${recipeToDisplay.title}.txt`, 'text/plain;charset=utf-8'); };
-  const handleExportMd = () => { if(recipeToDisplay) downloadFile(formatRecipeMarkdown(recipeToDisplay), `${recipeToDisplay.title}.md`, 'text/markdown;charset=utf-8'); };
-  const handleExportPdf = async () => { if(recipeToDisplay && window){ const { jsPDF } = await import('jspdf'); const doc = new jsPDF(); doc.text(formatRecipeText(recipeToDisplay), 10, 10); doc.save(`${recipeToDisplay.title}.pdf`); } };
+  const handleExportTxt = () => { if (recipeToDisplay) downloadFile(formatRecipeText(recipeToDisplay), `${recipeToDisplay.title}.txt`, 'text/plain;charset=utf-8'); };
+  const handleExportMd = () => { if (recipeToDisplay) downloadFile(formatRecipeMarkdown(recipeToDisplay), `${recipeToDisplay.title}.md`, 'text/markdown;charset=utf-8'); };
+  const handleExportPdf = async () => { if (recipeToDisplay && window) { const { jsPDF } = await import('jspdf'); const doc = new jsPDF(); doc.text(formatRecipeText(recipeToDisplay), 10, 10); doc.save(`${recipeToDisplay.title}.pdf`); } };
 
   // --- Render ---
   return (
     <>
       {/* Print Options Modal */}
-      {showPrintOptions && ( <Dialog open={showPrintOptions} onClose={() => setShowPrintOptions(false)} className="relative z-[60]"> <div className="fixed inset-0 bg-black/30" aria-hidden="true" /> <div className="fixed inset-0 flex items-center justify-center p-4"> <Dialog.Panel className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl"> <Dialog.Title className="text-lg font-medium text-gray-900">Print Options</Dialog.Title> <Dialog.Description className="mt-1 text-sm text-gray-500">Choose what to include.</Dialog.Description> <div className="mt-4 space-y-3"> <div className="flex items-center space-x-2"><Checkbox id="printIncludeImage" checked={printOptions.includeImage} onCheckedChange={(checked) => setPrintOptions(prev => ({ ...prev, includeImage: !!checked }))}/><label htmlFor="printIncludeImage" className="text-sm font-medium">Include Image</label></div> <div className="flex items-center space-x-2"><Checkbox id="printIncludeNotes" checked={printOptions.includeNotes} onCheckedChange={(checked) => setPrintOptions(prev => ({ ...prev, includeNotes: !!checked }))}/><label htmlFor="printIncludeNotes" className="text-sm font-medium">Include Notes</label></div> </div> <div className="mt-6 flex justify-end space-x-3"> <Button variant="outline" onClick={() => setShowPrintOptions(false)}>Cancel</Button> <Button onClick={handleConfirmPrint}>Print Now</Button> </div> </Dialog.Panel> </div> </Dialog> )}
+      {showPrintOptions && (<Dialog open={showPrintOptions} onClose={() => setShowPrintOptions(false)} className="relative z-[60]"> <div className="fixed inset-0 bg-black/30" aria-hidden="true" /> <div className="fixed inset-0 flex items-center justify-center p-4"> <Dialog.Panel className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl"> <Dialog.Title className="text-lg font-medium text-gray-900">Print Options</Dialog.Title> <Dialog.Description className="mt-1 text-sm text-gray-500">Choose what to include.</Dialog.Description> <div className="mt-4 space-y-3"> <div className="flex items-center space-x-2"><Checkbox id="printIncludeImage" checked={printOptions.includeImage} onCheckedChange={(checked) => setPrintOptions(prev => ({ ...prev, includeImage: !!checked }))} /><label htmlFor="printIncludeImage" className="text-sm font-medium">Include Image</label></div> <div className="flex items-center space-x-2"><Checkbox id="printIncludeNotes" checked={printOptions.includeNotes} onCheckedChange={(checked) => setPrintOptions(prev => ({ ...prev, includeNotes: !!checked }))} /><label htmlFor="printIncludeNotes" className="text-sm font-medium">Include Notes</label></div> </div> <div className="mt-6 flex justify-end space-x-3"> <Button variant="outline" onClick={() => setShowPrintOptions(false)}>Cancel</Button> <Button onClick={handleConfirmPrint}>Print Now</Button> </div> </Dialog.Panel> </div> </Dialog>)}
       {/* Flag Submission Modal */}
-      {showFlagModal && initialRecipe && ( <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center"> <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4"> <FlagSubmission recipe={initialRecipe} onBack={() => setShowFlagModal(false)} /> </div> </div> )}
+      {showFlagModal && initialRecipe && (<div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center"> <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4"> <FlagSubmission recipe={initialRecipe} onBack={() => setShowFlagModal(false)} /> </div> </div>)}
 
       {/* Wrap Transition.Root in a div to hold print classes */}
       <div className={printRootClasses}>
@@ -351,260 +354,254 @@ export default function RecipeDetailModal({
 
                     {/* Image Section */}
                     <div id="recipe-modal-image-container" className="relative w-full aspect-video min-h-[200px] print-image-container overflow-hidden rounded-t-lg bg-gray-200">
-                      {(recipeToDisplay?.imageUrl) ? ( <Image key={recipeToDisplay.id || recipeToDisplay.imageUrl} src={recipeToDisplay.imageUrl} alt={recipeToDisplay.title ?? 'Recipe Image'} fill style={{ objectFit: 'cover' }} priority onError={(e) => { console.error(`Image Error: Failed loading image for "${recipeToDisplay.title}". Src: ${recipeToDisplay.imageUrl}`, e); const target = e.target as HTMLImageElement; target.style.opacity = '0'; target.style.pointerEvents = 'none'; }}/> ) : ( <div className="absolute inset-0 bg-gray-300 flex items-center justify-center rounded-t-lg"><span className="text-gray-500">No Image</span></div> )}
-                      {recipeToDisplay?.imageUrl && ( <h2 className="absolute bottom-4 left-4 text-2xl font-bold text-white drop-shadow-md pointer-events-none">{recipeToDisplay.title ?? 'Loading...'}</h2> )}
+                      {(recipeToDisplay?.imageUrl) ? (<Image key={recipeToDisplay.id || recipeToDisplay.imageUrl} src={recipeToDisplay.imageUrl} alt={recipeToDisplay.title ?? 'Recipe Image'} fill style={{ objectFit: 'cover' }} priority onError={(e) => { console.error(`Image Error: Failed loading image for "${recipeToDisplay.title}". Src: ${recipeToDisplay.imageUrl}`, e); const target = e.target as HTMLImageElement; target.style.opacity = '0'; target.style.pointerEvents = 'none'; }} />) : (<div className="absolute inset-0 bg-gray-300 flex items-center justify-center rounded-t-lg"><span className="text-gray-500">No Image</span></div>)}
+                      {recipeToDisplay?.imageUrl && (<h2 className="absolute bottom-4 left-4 text-2xl font-bold text-white drop-shadow-md pointer-events-none">{recipeToDisplay.title ?? 'Loading...'}</h2>)}
                     </div>
 
                     {/* Content Wrapper */}
                     <div id="recipe-modal-text-content" ref={modalContentRef}> {/* Added ref here */}
-                      {isLoadingDetails && ( <div className="p-6 text-center"><LoadingSpinner /><p className="mt-2 text-gray-500">Loading details...</p></div> )}
-                      {detailError && !isLoadingDetails && ( <div className="p-6 text-center text-red-600 bg-red-50 rounded-b-lg"> Error loading details: {detailError}</div> )}
+                      {isLoadingDetails && (<div className="p-6 text-center"><LoadingSpinner /><p className="mt-2 text-gray-500">Loading details...</p></div>)}
+                      {detailError && !isLoadingDetails && (<div className="p-6 text-center text-red-600 bg-red-50 rounded-b-lg"> Error loading details: {detailError}</div>)}
 
                       {!isLoadingDetails && !detailError && recipeToDisplay && (
-                          <div className="p-6">
-                            {/* Meta Info and Actions */}
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
-                              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                <div className="flex items-center"><ClockIcon className="h-5 w-5 mr-1.5"/><span>{formatMinutes(recipeToDisplay.cookingTime)}</span></div>
-                                <div className="flex items-center"> <button onClick={() => setServingMultiplier(prev => Math.max(0.1, prev - (1 / (recipeToDisplay.servings || 1))))} disabled={!recipeToDisplay.servings || (recipeToDisplay.servings * servingMultiplier <= 1)} className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 pdf-hide" aria-label="Decrease servings"><span className="text-xs">-</span></button> <UserIcon className="h-5 w-5 mx-1"/><span >{recipeToDisplay.servings ? Math.round(recipeToDisplay.servings * servingMultiplier) : 'N/A'} servings</span> <button onClick={() => setServingMultiplier(prev => prev + (1 / (recipeToDisplay.servings || 1)))} disabled={!recipeToDisplay.servings} className="p-1 rounded-full hover:bg-gray-100 pdf-hide" aria-label="Increase servings"><span className="text-xs">+</span></button> </div>
-                                <div className="flex items-center"><BeakerIcon className="h-5 w-5 mr-1.5"/><span>{recipeToDisplay.difficulty ?? 'N/A'}</span></div>
-                              </div>
-                              <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
-                                {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite} />}
-                                <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print Recipe"><PrinterIcon className="h-5 w-5" /></button>
-                                <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5"/></Menu.Button></div> <Transition enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
-                                      <Menu.Items as="div" className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                        <div className="px-1 py-1">
-                                          <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item>
-                                          <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item>
-                                          <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item>
-                                        </div>
-                                      </Menu.Items>
-                                    </Transition> </Menu>
-                                <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share Recipe"><ShareIcon className="h-5 w-5" />{copied && <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">Copied!</span>}</button>
-                                <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
-                                {isAuthor && (<> <button onClick={() => { /* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit Recipe"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => { /* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete Recipe"><TrashIcon className="h-5 w-5" /></button> </>)}
-                              </div>
+                        <div className="p-6">
+                          {/* Meta Info and Actions */}
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-y-2 mb-4">
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center"><ClockIcon className="h-5 w-5 mr-1.5" /><span>{formatMinutes(recipeToDisplay.cookingTime)}</span></div>
+                              <div className="flex items-center"> <button onClick={() => setServingMultiplier(prev => Math.max(0.1, prev - (1 / (recipeToDisplay.servings || 1))))} disabled={!recipeToDisplay.servings || (recipeToDisplay.servings * servingMultiplier <= 1)} className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 pdf-hide" aria-label="Decrease servings"><span className="text-xs">-</span></button> <UserIcon className="h-5 w-5 mx-1" /><span >{recipeToDisplay.servings ? Math.round(recipeToDisplay.servings * servingMultiplier) : 'N/A'} servings</span> <button onClick={() => setServingMultiplier(prev => prev + (1 / (recipeToDisplay.servings || 1)))} disabled={!recipeToDisplay.servings} className="p-1 rounded-full hover:bg-gray-100 pdf-hide" aria-label="Increase servings"><span className="text-xs">+</span></button> </div>
+                              <div className="flex items-center"><BeakerIcon className="h-5 w-5 mr-1.5" /><span>{recipeToDisplay.difficulty ?? 'N/A'}</span></div>
                             </div>
-                            <p className="text-gray-600 mb-6">{recipeToDisplay.description ?? 'No description available.'}</p>
-                            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                              {/* Ingredients */}
-                              <div>
-                                <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
-                                {recipeToDisplay.ingredients && recipeToDisplay.ingredients.length > 0 ? (
-                                  <div className="space-y-3">
-                                    {recipeToDisplay.ingredients.map((ing, index) => {
-                                      const originalAmount = ing.amount;
-                                      const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
-                                      const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
-                                      const ingredientIdentifier = ing.id || `${ing.name}-${index}`;
-                                      const checkboxId = `ingredient-checkbox-${ingredientIdentifier}`;
-                                      return (
-                                        <div key={ingredientIdentifier} className="flex items-start space-x-3">
-                                          <Checkbox id={checkboxId} checked={selectedIngredients.has(ingredientIdentifier)} onCheckedChange={() => handleIngredientToggle(ingredientIdentifier)} className="mt-1" aria-labelledby={`${checkboxId}-label`} />
-                                          <label htmlFor={checkboxId} id={`${checkboxId}-label`} className="flex-1 text-gray-700 cursor-pointer"> <span className="font-medium">{displayAmount}</span> <span className="ml-1">{ing.unit || ''}</span> <span className="ml-2">{ing.name}</span> {ing.notes && <span className="text-gray-500 text-sm ml-1 italic">({ing.notes})</span>} </label>
-                                        </div>
-                                      );
-                                    })}
-                                    <div className="mt-6 border-t pt-4">
-                                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                                        <Button onClick={handleBuyOnAmazon} disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} className="flex-1 flex items-center justify-center gap-2">
-                                          {isGeneratingLink ? ( <><LoadingSpinner className="h-5 w-5" />Checking Amazon...</> ) : ( <><ShoppingCartIcon className="h-5 w-5"/>Shop on Amazon</> )}
-                                        </Button>
-                                        <Button variant="secondary" onClick={handleShopWithinstacart} disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} className="flex-1 flex items-center justify-center gap-2">
-                                          {isGeneratinginstacartLink ? ( <><LoadingSpinner className="h-5 w-5" />Checking instacart...</> ) : ( <><ShoppingBagIcon className="h-5 w-5"/>Shop via instacart</> )}
-                                        </Button>
-                                      </div>
-                                      <p className="text-xs text-gray-500 mt-3 text-center px-4">Shop ingredients via Amazon or instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.</p>
-                                    </div>
+                            <div className="hidden md:flex items-center gap-1 md:gap-2 recipe-modal-print-hide">
+                              {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite} />}
+                              <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print Recipe"><PrinterIcon className="h-5 w-5" /></button>
+                              <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5" /></Menu.Button></div> <Transition enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
+                                <Menu.Items as="div" className="absolute right-0 mt-2 w-40 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                  <div className="px-1 py-1">
+                                    <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text (.txt)</button>)}</Menu.Item>
+                                    <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown (.md)</button>)}</Menu.Item>
+                                    <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF (.pdf)</button>)}</Menu.Item>
                                   </div>
-                                ) : (<p className="text-gray-500">No ingredients listed.</p>)}
-                              </div>
-                              {/* Instructions */}
-                              <div className="space-y-4">
-                                <h3 className="text-xl font-semibold text-gray-900">Instructions</h3>
-                                {(recipeToDisplay.instructions && recipeToDisplay.instructions.length > 0) ? (
-                                  recipeToDisplay.instructions.sort((a, b) => a.stepNumber - b.stepNumber).map((instruction, index) => {
-                                    const duration = parseDuration(instruction.description);
-                                    const timer = timerStates[instruction.stepNumber] || { isActive: false, remainingTime: duration || 0, intervalId: null, initialDuration: duration || 0 };
-                                    const isTimerFinished = duration !== null && timer.remainingTime <= 0 && !timer.isActive;
-
-                                    return (
-                                      <div key={instruction.id || index} className="flex flex-col sm:flex-row sm:items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0">
-                                        {/* Instruction Text & Timer */}
-                                        <div className="flex-1">
-                                          <div className="flex items-center mb-1">
-                                            <span className="text-lg font-bold mr-2 text-gray-800">{instruction.stepNumber}.</span>
-                                            {duration !== null && (
-                                              <div className="flex items-center space-x-1 ml-auto">
-                                                <span className={clsx("text-sm font-mono", { 'text-green-600 font-semibold': isTimerFinished })}>{formatTime(timer.remainingTime)}</span>
-                                                <button onClick={() => timer.isActive ? pauseTimer(instruction.stepNumber) : playTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700">{timer.isActive ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}</button>
-                                                <button onClick={() => rewindTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700"><BackwardIcon className="h-4 w-4" /></button>
-                                                <button onClick={() => fastForwardTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700"><ForwardIcon className="h-4 w-4" /></button>
-                                              </div>
-                                            )}
-                                          </div>
-                                          <p className="text-gray-700 text-sm print-text-black">{instruction.description}</p>
-                                        </div>
-
-                                        {/* Conditionally render the Image */}
-                                        {instruction.imageUrl && (
-                                          <div className="w-full sm:w-1/3 md:w-1/4 flex-shrink-0 mt-2 sm:mt-0 print-image-container">
-                                            {/* Wrap Image in a button */}
-                                            <button
-                                                type="button"
-                                                className="block w-full h-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md overflow-hidden"
-                                                onClick={() => {
-                                                  // Find the index of this specific image within the filtered list
-                                                  const currentImageIndex = instructionsWithImages.findIndex(imgInstruction => imgInstruction.id === instruction.id);
-                                                  if (currentImageIndex !== -1) {
-                                                    setPhotoIndex(currentImageIndex);
-                                                    setLightboxOpen(true);
-                                                  }
-                                                }}
-                                                aria-label={`View larger image for step ${instruction.stepNumber}`}
-                                            >
-                                                <Image
-                                                    src={instruction.imageUrl}
-                                                    alt={`Step ${instruction.stepNumber} image for ${recipeToDisplay.title}`}
-                                                    width={200}
-                                                    height={150}
-                                                    className="rounded-md object-cover w-full h-auto print-max-width pointer-events-none"
-                                                    priority={index < 3}
-                                                    onError={(e) => { console.error("Error loading instruction image:", instruction.imageUrl, e); (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                />
-                                            </button>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })
-                                ) : (
-                                  <p className="text-gray-500">No instructions available.</p>
-                                )}
-                              </div>
-                            </div>
-                            {/* Nutrition */}
-                            <div className="mt-8">
-                              <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4"> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Calories</div><div className="text-xl font-semibold">{recipeToDisplay.calories ?? 'N/A'}</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Protein</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.protein?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Carbs</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.carbs?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Fat</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.fat?.toFixed(1) ?? 'N/A'}g</div></div> </div>
-                            </div>
-                            {/* Notes */}
-                            {recipeToDisplay.notes && recipeToDisplay.notes.length > 0 && (
-                              <div className="mt-8 recipe-modal-notes">
-                                <h3 className="text-lg font-semibold mb-4">Notes</h3>
-                                <div className="bg-blue-50 p-4 rounded-lg">
-                                  <ul className="list-disc list-outside space-y-2 text-gray-700 text-sm pl-5">
-                                    {recipeToDisplay.notes.map((note, index) => (<li key={index}>{note}</li>))}
-                                  </ul>
-                                </div>
-                              </div>
-                            )}
-                            {/* NEW: Dietary & Health Information Section */}
-                            {(fodmapSentences.length > 0 || nutrientSentences.length > 0 || antiInflammatorySentences.length > 0 || fermentationSentences.length > 0 || fodmapModTipsSentences.length > 0) && (
-                              <div className="mt-8 print-break-inside-avoid">
-                                <h3 className="text-lg font-semibold mb-4 text-gray-900 print:text-black">Dietary & Health Information</h3>
-                                <Accordion type="single" collapsible className="w-full space-y-2">
-                                  {/* 1. Anti-inflammatory Properties - Conditionally Render */}
-                                  {antiInflammatorySentences.length > 0 && (
-                                    <AccordionItem value="anti-inflammatory" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger
-                                        className="text-base hover:no-underline py-3 print:py-1"
-                                      >
-                                        Anti-inflammatory Properties
-                                      </AccordionTrigger>
-                                      <AccordionContent className="pt-1 pb-3">
-                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {antiInflammatorySentences.map((sentence, index) => ( <li key={`anti-${index}`}>{sentence}</li> ))}
-                                        </ul>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  )}
-
-                                  {/* 2. Fermentation Details - Conditionally Render */}
-                                  {fermentationSentences.length > 0 && (
-                                    <AccordionItem value="fermentation" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger
-                                        className="text-base hover:no-underline py-3 print:py-1"
-                                      >
-                                        Fermentation Details
-                                      </AccordionTrigger>
-                                      <AccordionContent className="pt-1 pb-3">
-                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {fermentationSentences.map((sentence, index) => ( <li key={`ferment-${index}`}>{sentence}</li> ))}
-                                        </ul>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  )}
-
-                                  {/* 3. FODMAP Info - Conditionally Render */}
-                                  {fodmapSentences.length > 0 && (
-                                    <AccordionItem value="fodmap" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger
-                                        className="text-base hover:no-underline py-3 print:py-1"
-                                      >
-                                        FODMAP Information
-                                      </AccordionTrigger>
-                                      <AccordionContent className="pt-1 pb-3">
-                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {fodmapSentences.map((sentence, index) => ( <li key={`fodmap-${index}`}>{sentence}</li> ))}
-                                        </ul>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  )}
-
-                                  {/* 4. Key Nutrients - Conditionally Render */}
-                                  {nutrientSentences.length > 0 && (
-                                    <AccordionItem value="nutrients" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger
-                                        className="text-base hover:no-underline py-3 print:py-1"
-                                      >
-                                        Key Nutrients
-                                      </AccordionTrigger>
-                                      <AccordionContent className="pt-1 pb-3">
-                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {nutrientSentences.map((sentence, index) => ( <li key={`nutrient-${index}`}>{sentence}</li> ))}
-                                        </ul>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  )}
-
-                                  {/* 5. Low-FODMAP Tips - Conditionally Render */}
-                                  {fodmapModTipsSentences.length > 0 && (
-                                    <AccordionItem value="fodmap-mod-tips" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
-                                      <AccordionTrigger
-                                        className="text-base hover:no-underline py-3 print:py-1"
-                                      >
-                                        Low-FODMAP Tips
-                                      </AccordionTrigger>
-                                      <AccordionContent className="pt-1 pb-3">
-                                        <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
-                                          {fodmapModTipsSentences.map((sentence, index) => ( <li key={`fodmap-mod-${index}`}>{sentence}</li> ))}
-                                        </ul>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  )}
-                                </Accordion>
-                              </div>
-                            )}
-                            {/* Mobile Action Buttons */}
-                            <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
-                               {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite}/>}
-                              <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print"><PrinterIcon className="h-5 w-5"/></button>
-                              <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5"/></Menu.Button></div> <Transition enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
-                                    <Menu.Items as="div" className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                      <div className="px-1 py-1">
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item>
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item>
-                                        <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item>
-                                      </div>
-                                    </Menu.Items>
-                                  </Transition> </Menu>
-                              <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share"><ShareIcon className="h-5 w-5"/></button>
-                              <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5"/></button>
-                              {isAuthor && (<> <button onClick={() => {/* Edit */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit"><PencilSquareIcon className="h-5 w-5"/></button> <button onClick={() => {/* Delete */}} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete"><TrashIcon className="h-5 w-5"/></button> </>)}
+                                </Menu.Items>
+                              </Transition> </Menu>
+                              <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share Recipe"><ShareIcon className="h-5 w-5" />{copied && <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs bg-gray-700 text-white px-1 py-0.5 rounded">Copied!</span>}</button>
+                              <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
+                              {isAuthor && (<> <button onClick={() => { /* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit Recipe"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => { /* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete Recipe"><TrashIcon className="h-5 w-5" /></button> </>)}
                             </div>
                           </div>
+                          <p className="text-gray-600 mb-6">{recipeToDisplay.description ?? 'No description available.'}</p>
+                          <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            {/* Ingredients */}
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">Ingredients</h3>
+                              {recipeToDisplay.ingredients && recipeToDisplay.ingredients.length > 0 ? (
+                                <div className="space-y-3">
+                                  {recipeToDisplay.ingredients.map((ing, index) => {
+                                    const originalAmount = ing.amount;
+                                    const adjustedAmountValue = !isNaN(Number(originalAmount)) ? (Number(originalAmount) * servingMultiplier) : null;
+                                    const displayAmount = adjustedAmountValue !== null ? (Number.isInteger(adjustedAmountValue) ? adjustedAmountValue : adjustedAmountValue.toFixed(1)) : '';
+                                    const ingredientIdentifier = ing.id || `${ing.name}-${index}`;
+                                    const checkboxId = `ingredient-checkbox-${ingredientIdentifier}`;
+                                    return (
+                                      <div key={ingredientIdentifier} className="flex items-start space-x-3">
+                                        <Checkbox id={checkboxId} checked={selectedIngredients.has(ingredientIdentifier)} onCheckedChange={() => handleIngredientToggle(ingredientIdentifier)} className="mt-1" aria-labelledby={`${checkboxId}-label`} />
+                                        <label htmlFor={checkboxId} id={`${checkboxId}-label`} className="flex-1 text-gray-700 cursor-pointer"> <span className="font-medium">{displayAmount}</span> <span className="ml-1">{ing.unit || ''}</span> <span className="ml-2">{ing.name}</span> {ing.notes && <span className="text-gray-500 text-sm ml-1 italic">({ing.notes})</span>} </label>
+                                      </div>
+                                    );
+                                  })}
+                                  <div className="mt-6 border-t pt-4">
+                                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                                      <Button onClick={handleBuyOnAmazon} disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} className="flex-1 flex items-center justify-center gap-2">
+                                        {isGeneratingLink ? (<><LoadingSpinner className="h-5 w-5" />Checking Amazon...</>) : (<><ShoppingCartIcon className="h-5 w-5" />Shop on Amazon</>)}
+                                      </Button>
+                                      <Button variant="secondary" onClick={handleShopWithinstacart} disabled={selectedIngredients.size === 0 || isGeneratingLink || isGeneratinginstacartLink} className="flex-1 flex items-center justify-center gap-2">
+                                        {isGeneratinginstacartLink ? (<><LoadingSpinner className="h-5 w-5" />Checking instacart...</>) : (<><ShoppingBagIcon className="h-5 w-5" />Shop via instacart</>)}
+                                      </Button>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-3 text-center px-4">Shop ingredients via Amazon or instacart (opens new tab). As an Amazon Associate and potentially other affiliate programs, we may earn from qualifying purchases.</p>
+                                  </div>
+                                </div>
+                              ) : (<p className="text-gray-500">No ingredients listed.</p>)}
+                            </div>
+                            {/* Instructions */}
+                            <div className="space-y-4">
+                              <h3 className="text-xl font-semibold text-gray-900">Instructions</h3>
+                              {(recipeToDisplay.instructions && recipeToDisplay.instructions.length > 0) ? (
+                                recipeToDisplay.instructions.sort((a, b) => a.stepNumber - b.stepNumber).map((instruction, index) => {
+                                  const timerDuration = parseDuration(instruction.description);
+                                  const timerState = timerStates[instruction.stepNumber];
+                                  const hasImage = !!instruction.imageUrl;
+                                  const imageIndex = instructionsWithImages.findIndex(i => i.imageUrl === instruction.imageUrl);
+
+                                  return (
+                                    <div key={instruction.id || index} className="flex flex-col sm:flex-row sm:items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0">
+                                      {/* Instruction Text & Timer */}
+                                      <div className="flex-1">
+                                        <div className="flex items-center mb-1">
+                                          <span className="text-lg font-bold mr-2 text-gray-800">{instruction.stepNumber}.</span>
+                                          {timerDuration !== null && (
+                                            <div className="flex items-center space-x-1 ml-auto">
+                                              <Clock size={14} className="text-gray-500 flex-shrink-0" />
+                                              <span className={clsx("text-sm font-mono", { 'text-green-600 font-semibold': timerState?.remainingTime <= 0 && timerState?.isActive })}>{formatTime(timerState?.remainingTime ?? timerDuration)}</span>
+                                              <button onClick={() => timerState?.isActive ? pauseTimer(instruction.stepNumber) : playTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700">{timerState?.isActive ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}</button>
+                                              <button onClick={() => rewindTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700"><BackwardIcon className="h-4 w-4" /></button>
+                                              <button onClick={() => fastForwardTimer(instruction.stepNumber)} className="p-1 text-gray-500 hover:text-gray-700"><ForwardIcon className="h-4 w-4" /></button>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="prose prose-sm max-w-none">
+                                          <p className="whitespace-pre-wrap break-words">
+                                            {instruction.description}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {/* Conditionally render the Image */}
+                                      {hasImage && (
+                                        <div className="w-full sm:w-1/3 md:w-1/4 flex-shrink-0 mt-2 sm:mt-0 print-image-container">
+                                          {/* Wrap Image in a button */}
+                                          <button onClick={() => { setPhotoIndex(imageIndex); setLightboxOpen(true); }} className="block w-full h-32 relative rounded overflow-hidden cursor-pointer">
+                                            {instruction.imageUrl && (
+                                              <Image
+                                                src={instruction.imageUrl}
+                                                alt={`Instruction ${instruction.stepNumber}`}
+                                                layout="fill"
+                                                objectFit="cover"
+                                                className="transition-transform duration-300 group-hover:scale-105"
+                                              />
+                                            )}
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <p className="text-gray-500">No instructions available.</p>
+                              )}
+                            </div>
+                          </div>
+                          {/* Nutrition */}
+                          <div className="mt-8">
+                            <h3 className="text-lg font-semibold mb-4">Nutritional Information</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4"> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Calories</div><div className="text-xl font-semibold">{recipeToDisplay.calories ?? 'N/A'}</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Protein</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.protein?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Carbs</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.carbs?.toFixed(1) ?? 'N/A'}g</div></div> <div className="bg-gray-50 p-4 rounded-lg"><div className="text-sm text-gray-500">Fat</div><div className="text-xl font-semibold">{recipeToDisplay.nutritionFacts?.fat?.toFixed(1) ?? 'N/A'}g</div></div> </div>
+                          </div>
+                          {/* Notes */}
+                          {recipeToDisplay.notes && recipeToDisplay.notes.length > 0 && (
+                            <div className="mt-8 recipe-modal-notes">
+                              <h3 className="text-lg font-semibold mb-4">Notes</h3>
+                              <div className="bg-blue-50 p-4 rounded-lg">
+                                <ul className="list-disc list-outside space-y-2 text-gray-700 text-sm pl-5">
+                                  {recipeToDisplay.notes.map((note, index) => (<li key={index}>{note}</li>))}
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                          {/* NEW: Dietary & Health Information Section */}
+                          {(fodmapSentences.length > 0 || nutrientSentences.length > 0 || antiInflammatorySentences.length > 0 || fermentationSentences.length > 0 || fodmapModTipsSentences.length > 0) && (
+                            <div className="mt-8 print-break-inside-avoid">
+                              <h3 className="text-lg font-semibold mb-4 text-gray-900 print:text-black">Dietary & Health Information</h3>
+                              <Accordion type="single" collapsible className="w-full space-y-2">
+                                {/* 1. Anti-inflammatory Properties - Conditionally Render */}
+                                {antiInflammatorySentences.length > 0 && (
+                                  <AccordionItem value="anti-inflammatory" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                    <AccordionTrigger
+                                      className="text-base hover:no-underline py-3 print:py-1"
+                                    >
+                                      Anti-inflammatory Properties
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 pb-3">
+                                      <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                        {antiInflammatorySentences.map((sentence, index) => (<li key={`anti-${index}`}>{sentence}</li>))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
+                                {/* 2. Fermentation Details - Conditionally Render */}
+                                {fermentationSentences.length > 0 && (
+                                  <AccordionItem value="fermentation" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                    <AccordionTrigger
+                                      className="text-base hover:no-underline py-3 print:py-1"
+                                    >
+                                      Fermentation Details
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 pb-3">
+                                      <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                        {fermentationSentences.map((sentence, index) => (<li key={`ferment-${index}`}>{sentence}</li>))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
+                                {/* 3. FODMAP Info - Conditionally Render */}
+                                {fodmapSentences.length > 0 && (
+                                  <AccordionItem value="fodmap" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                    <AccordionTrigger
+                                      className="text-base hover:no-underline py-3 print:py-1"
+                                    >
+                                      FODMAP Information
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 pb-3">
+                                      <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                        {fodmapSentences.map((sentence, index) => (<li key={`fodmap-${index}`}>{sentence}</li>))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
+                                {/* 4. Key Nutrients - Conditionally Render */}
+                                {nutrientSentences.length > 0 && (
+                                  <AccordionItem value="nutrients" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                    <AccordionTrigger
+                                      className="text-base hover:no-underline py-3 print:py-1"
+                                    >
+                                      Key Nutrients
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 pb-3">
+                                      <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                        {nutrientSentences.map((sentence, index) => (<li key={`nutrient-${index}`}>{sentence}</li>))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+
+                                {/* 5. Low-FODMAP Tips - Conditionally Render */}
+                                {fodmapModTipsSentences.length > 0 && (
+                                  <AccordionItem value="fodmap-mod-tips" className="border border-gray-200 rounded-md px-4 print:border-none print:px-0">
+                                    <AccordionTrigger
+                                      className="text-base hover:no-underline py-3 print:py-1"
+                                    >
+                                      Low-FODMAP Tips
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 pb-3">
+                                      <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700 print:text-black">
+                                        {fodmapModTipsSentences.map((sentence, index) => (<li key={`fodmap-mod-${index}`}>{sentence}</li>))}
+                                      </ul>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                )}
+                              </Accordion>
+                            </div>
+                          )}
+                          {/* Mobile Action Buttons */}
+                          <div className="flex md:hidden justify-around items-center mt-8 pt-4 border-t border-gray-200 recipe-modal-print-hide">
+                            {recipeToDisplay.id && <FavoriteButton recipeId={recipeToDisplay.id} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-500" onSuccess={onFavouriteChange} initialIsFavourite={initialIsFavourite} />}
+                            <button onClick={handleInitiatePrint} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Print"><PrinterIcon className="h-5 w-5" /></button>
+                            <Menu as="div" className="relative inline-block text-left"> <div><Menu.Button className="inline-flex justify-center items-center w-full rounded-md p-1 text-gray-600 hover:bg-gray-100" title="Export"><ArrowDownTrayIcon className="h-5 w-5" /></Menu.Button></div> <Transition enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
+                              <Menu.Items as="div" className="absolute bottom-full right-0 mb-2 w-40 origin-bottom-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div className="px-1 py-1">
+                                  <Menu.Item>{({ active }) => (<button onClick={handleExportTxt} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Text</button>)}</Menu.Item>
+                                  <Menu.Item>{({ active }) => (<button onClick={handleExportMd} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>Markdown</button>)}</Menu.Item>
+                                  <Menu.Item>{({ active }) => (<button onClick={handleExportPdf} className={`${active ? 'bg-gray-100' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-700`}>PDF</button>)}</Menu.Item>
+                                </div>
+                              </Menu.Items>
+                            </Transition> </Menu>
+                            <button onClick={handleShare} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 relative" title="Share"><ShareIcon className="h-5 w-5" /></button>
+                            <button onClick={() => setShowFlagModal(true)} className="p-1 rounded-md text-gray-600 hover:bg-gray-100" title="Flag Issue"><FlagIcon className="h-5 w-5" /></button>
+                            {isAuthor && (<> <button onClick={() => {/* Edit */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600" title="Edit"><PencilSquareIcon className="h-5 w-5" /></button> <button onClick={() => {/* Delete */ }} className="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-red-600" title="Delete"><TrashIcon className="h-5 w-5" /></button> </>)}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </Dialog.Panel>
@@ -617,12 +614,12 @@ export default function RecipeDetailModal({
 
       {/* Add the Lightbox component here */}
       <Lightbox
-          open={lightboxOpen}
-          close={() => setLightboxOpen(false)}
-          slides={lightboxSlides}
-          index={photoIndex}
-          // Optional plugins:
-          // plugins={[Thumbnails, Zoom]}
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={lightboxSlides}
+        index={photoIndex}
+      // Optional plugins:
+      // plugins={[Thumbnails, Zoom]}
       />
     </>
   );

@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { analyzeDietary } from '@/lib/utils/dietary-classification';
 import DietaryInfo from './DietaryInfo';
-import { DietaryFeedback } from './DietaryFeedback';
 import FavoriteButton from '../shared/FavouriteButton';
 import AddToAlbumButton from '../albums/AddToAlbumButton';
 import AddToAlbumModal from '../albums/AddToAlbumModal';
@@ -15,13 +14,11 @@ import Link from 'next/link';
 
 interface RecipeCardProps {
   recipe: Recipe & { isFavourite?: boolean };
-  onFlagClick?: () => void;
   onFavouriteChange: (recipeId: string, newIsFavorite: boolean) => void;
 }
 
 export default function RecipeCard({
   recipe,
-  onFlagClick,
   onFavouriteChange,
 }: RecipeCardProps) {
   const { data: session } = useSession();
@@ -80,7 +77,7 @@ export default function RecipeCard({
     <>
       <Link href={`/recipes/${recipe.id}`} passHref legacyBehavior>
         <a
-          className="block bg-white rounded-lg shadow-md overflow-hidden w-full transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer group"
+          className="block bg-white rounded-lg shadow-md overflow-hidden w-full transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px] cursor-pointer group min-h-[600px] flex flex-col"
           onClick={(e) => {
             if (isModalOpen) e.stopPropagation();
           }}
@@ -99,18 +96,9 @@ export default function RecipeCard({
                 (e.target as HTMLImageElement).src = '/images/default-recipe.jpg';
               }}
             />
-            {onFavouriteChange && (
-              <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
-                <FavoriteButton
-                  recipeId={recipe.id}
-                  initialIsFavourite={!!recipe.isFavourite}
-                  onSuccess={onFavouriteChange}
-                />
-              </div>
-            )}
           </div>
 
-          <div className="p-4 flex flex-col">
+          <div className="p-4 flex flex-col flex-grow">
             <div className="mb-2">
               <h3 className="font-semibold text-lg break-words line-clamp-2 mb-1 flex items-center">
                 {renderSourceIcon()}
@@ -166,11 +154,17 @@ export default function RecipeCard({
               className="flex items-center justify-between w-full h-[32px] mt-auto pt-2 border-t border-gray-100"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center whitespace-nowrap">
-                 {onFlagClick && <DietaryFeedback onFlagClick={onFlagClick} />}
+              <div className="flex items-center">
+                {onFavouriteChange && (
+                  <FavoriteButton
+                    recipeId={recipe.id}
+                    initialIsFavourite={!!recipe.isFavourite}
+                    onSuccess={onFavouriteChange}
+                  />
+                )}
               </div>
               <div className="flex items-center space-x-1 relative">
-                 {session && <AddToAlbumButton onClick={handleAddToAlbumButtonClick} />}
+                {session && <AddToAlbumButton onClick={handleAddToAlbumButtonClick} />}
               </div>
             </div>
           </div>
@@ -178,11 +172,11 @@ export default function RecipeCard({
       </Link>
 
       {session && (
-          <AddToAlbumModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            recipeId={recipe.id}
-          />
+        <AddToAlbumModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          recipeId={recipe.id}
+        />
       )}
     </>
   );
