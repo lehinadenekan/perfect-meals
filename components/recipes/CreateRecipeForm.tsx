@@ -36,7 +36,7 @@ import {
 const DifficultyEnum = z.enum(["Easy", "Medium", "Hard"]);
 const CuisineTypeEnum = z.enum(["Italian", "Mexican", "Asian", "Indian", "American", "Mediterranean", "Other"]);
 const CookingStyleEnum = z.enum(["Air Fryer", "Bake", "BBQ", "Boil", "Instant Pot", "Microwave", "No-Cook", "Oven", "Roast", "Slow Cooker", "Steam", "Stovetop"]);
-const MealCategoryEnum = z.enum(["Appetizer", "Beverage", "Breakfast", "Brunch", "Dessert", "Dinner", "Drink", "Lunch", "Main Course", "Side Dish", "Snack"]);
+const MealCategoryEnum = z.enum(["Main", "Dessert", "Drink"]);
 
 const createRecipeSchema = z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -359,11 +359,19 @@ export default function CreateRecipeForm() {
     // Helper for Meal Categories Checkbox Group
     const handleMealCategoryChange = (category: z.infer<typeof MealCategoryEnum>, isChecked: boolean) => {
         const currentCategories = watch('mealCategories') || [];
-        const newCategories = isChecked
-            ? [...currentCategories, category]
-            : currentCategories.filter((c) => c !== category);
-        setValue('mealCategories', newCategories, { shouldValidate: true });
+        let updatedCategories:
+          | z.infer<typeof MealCategoryEnum>[]
+          | undefined = [];
+        if (isChecked) {
+          updatedCategories = [...currentCategories, category];
+        } else {
+          updatedCategories = currentCategories.filter((c) => c !== category);
+        }
+        setValue('mealCategories', updatedCategories);
     };
+
+    // Explicitly define the options to render
+    const mealCategoryOptions: z.infer<typeof MealCategoryEnum>[] = ["Main", "Dessert", "Drink"];
 
     // JSX rendering
     return (
@@ -479,15 +487,15 @@ export default function CreateRecipeForm() {
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium border-b pb-2">Meal Categories</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {MealCategoryEnum.options.map((category) => (
+                            {mealCategoryOptions.map((category) => (
                                 <div key={category} className="flex items-center space-x-2">
                                     <Checkbox
-                                        id={`cat-${category}`}
-                                        checked={watch('mealCategories')?.includes(category)}
+                                        id={`mealCategory-${category}`}
+                                        checked={(watch('mealCategories') || []).includes(category)}
                                         onCheckedChange={(checked) => handleMealCategoryChange(category, !!checked)}
                                         disabled={isSubmitting}
                                     />
-                                    <Label htmlFor={`cat-${category}`} className="cursor-pointer font-normal">{category}</Label>
+                                    <Label htmlFor={`mealCategory-${category}`} className="cursor-pointer font-normal">{category}</Label>
                                 </div>
                             ))}
                         </div>

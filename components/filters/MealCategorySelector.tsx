@@ -6,21 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 // Define possible meal categories
 const MEAL_CATEGORIES = [
-  'Breakfast',
-  'Lunch',
-  'Dinner',
-  'Snack',
+  'Main', 
   'Dessert',
-  'Appetizer',
-  'Side Dish',
-  'Beverage',
-  'Brunch',
-  'Main Course',
-  'Drink',
+  'Beverage'
+  // Removed old categories
 ] as const;
 
-// Prefix unused type alias
-type _MealCategory = typeof MEAL_CATEGORIES[number]; // Or simply string
+// Removed unused type alias
+// type _MealCategory = typeof MEAL_CATEGORIES[number]; // Or simply string
 
 interface MealCategorySelectorProps {
   selectedCategories: string[];

@@ -47,22 +47,16 @@ function checkPescatarian(ingredients: { name: string }[], isVegetarian: boolean
   return hasFishOrSeafood && !hasOtherMeat;
 }
 
-// Helper to map seed type to category name (adjust if needed)
-function mapTypeToCategory(type: string): string {
-  // Simple mapping, could be more complex
-  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-}
-
 // --- Main Seeding Logic ---
 async function main() {
   console.log('Starting seed...');
 
   // Create a default admin user if it doesn't exist
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@perfect-meals.com' },
+    where: { email: 'admin@recipe-ideas.online' },
     update: {},
     create: {
-      email: 'admin@perfect-meals.com',
+      email: 'admin@recipe-ideas.online',
       name: 'Admin',
     },
   });
@@ -109,7 +103,13 @@ async function main() {
   for (const recipeData of seedRecipes) {
     console.log(`Processing recipe: ${recipeData.title}`);
     try {
-      const categoryName = mapTypeToCategory(recipeData.type);
+      // Determine the correct category name based on the type
+      // Assuming Category names are title-cased: 'Main', 'Dessert', 'Beverage'
+      const categoryNameToConnect = recipeData.type === 'MAIN' ? 'Main' : 
+                                   recipeData.type === 'DESSERT' ? 'Dessert' : 
+                                   recipeData.type === 'BEVERAGE' ? 'Beverage' :
+                                   'Main'; // Default fallback, adjust if needed
+
       const isRecipeVegetarian = recipeData.isVegetarian ?? false;
       const isRecipePescatarian = checkPescatarian(recipeData.ingredients, isRecipeVegetarian);
       // NOTE: Still reading recipeData.continent & regionOfOrigin to find the Cuisine relation
@@ -129,6 +129,7 @@ async function main() {
           continent: recipeData.continent,
           imageUrl: recipeData.imageUrl,
           calories: recipeData.calories,
+          cookingStyles: recipeData.cookingStyles ?? [],
           isVegetarian: isRecipeVegetarian,
           isVegan: recipeData.isVegan ?? false,
           isGlutenFree: recipeData.isGlutenFree ?? false,
@@ -197,8 +198,8 @@ async function main() {
           categories: {
             set: [],
             connectOrCreate: {
-              where: { name: categoryName },
-              create: { name: categoryName },
+              where: { name: categoryNameToConnect },
+              create: { name: categoryNameToConnect },
             },
           },
           // --- Cuisines (Update) --- Keep set:[] before connect
@@ -219,6 +220,7 @@ async function main() {
           continent: recipeData.continent,
           imageUrl: recipeData.imageUrl,
           calories: recipeData.calories,
+          cookingStyles: recipeData.cookingStyles ?? [],
           isVegetarian: isRecipeVegetarian,
           isVegan: recipeData.isVegan ?? false,
           isGlutenFree: recipeData.isGlutenFree ?? false,
@@ -271,8 +273,8 @@ async function main() {
           // --- Categories (Create) ---
           categories: {
             connectOrCreate: {
-              where: { name: categoryName },
-              create: { name: categoryName },
+              where: { name: categoryNameToConnect },
+              create: { name: categoryNameToConnect },
             },
           },
            // --- Cuisines (Create) ---

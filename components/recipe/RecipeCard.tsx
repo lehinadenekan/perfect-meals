@@ -126,6 +126,22 @@ export default function RecipeCard({
               <DietaryInfo analysis={dietaryAnalysis} recipe={recipe} />
             </div>
 
+            {recipe.cookingStyles && recipe.cookingStyles.length > 0 && (
+              <div className="mb-3 pt-1">
+                <h4 className="text-xs font-medium text-gray-700 mb-1">Cooking Styles:</h4>
+                <div className="flex flex-wrap gap-1">
+                  {recipe.cookingStyles.map((style: string) => (
+                    <span
+                      key={style}
+                      className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
+                    >
+                      {style}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mb-2">
               <div className="flex flex-col space-y-1 text-sm text-gray-600">
                 <div className="flex items-center space-x-2 whitespace-nowrap">

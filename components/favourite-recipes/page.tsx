@@ -21,11 +21,11 @@ export default function FavoritesPage() {
     router.push('/'); // Navigate to the home page
   }, [router]);
 
-  // Placeholder search handler for Navbar if needed on this page
-  const handleSearch = useCallback(async (term: string) => {
-    // Redirect to home page with search query
-    router.push(`/?q=${encodeURIComponent(term)}`);
-  }, [router]);
+  // Placeholder search handler for Navbar if needed on this page (REMOVING)
+  // const handleSearch = useCallback(async (term: string) => {
+  //   // Redirect to home page with search query
+  //   router.push(`/?q=${encodeURIComponent(term)}`);
+  // }, [router]);
 
   return (
     // Use a consistent main layout structure, perhaps similar to app/page.tsx
@@ -33,7 +33,7 @@ export default function FavoritesPage() {
       {/* Include the Navbar */}
       <Navbar
         // onHomeClick={() => router.push('/')} // REMOVED: Redundant, Navbar has Discover link
-        onSearch={handleSearch}
+        // onSearch={handleSearch} // REMOVED
         // Add other props Navbar might need (e.g., session status if handled there)
       />
 

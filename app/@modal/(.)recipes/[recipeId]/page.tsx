@@ -84,7 +84,7 @@ export default function RecipeModalPage({ params }: { params: { recipeId: string
           type: ('type' in fetchedRecipe && typeof fetchedRecipe.type === 'string') ? fetchedRecipe.type : 'main',
           cuisineId: ('cuisineId' in fetchedRecipe && typeof fetchedRecipe.cuisineId === 'string') ? fetchedRecipe.cuisineId : '',
           authenticity: ('authenticity' in fetchedRecipe && typeof fetchedRecipe.authenticity === 'string') ? fetchedRecipe.authenticity : 'unknown',
-          cookingMethods: ('cookingMethods' in fetchedRecipe && Array.isArray(fetchedRecipe.cookingMethods)) ? fetchedRecipe.cookingMethods : [],
+          cookingStyles: ('cookingStyles' in fetchedRecipe && Array.isArray(fetchedRecipe.cookingStyles)) ? fetchedRecipe.cookingStyles : [],
           spiceLevel: ('spiceLevel' in fetchedRecipe && typeof fetchedRecipe.spiceLevel === 'string') ? fetchedRecipe.spiceLevel : 'medium',
           subCuisineType: ('subCuisineType' in fetchedRecipe && typeof fetchedRecipe.subCuisineType === 'string') ? fetchedRecipe.subCuisineType : undefined,
           showCount: ('showCount' in fetchedRecipe && typeof fetchedRecipe.showCount === 'number') ? fetchedRecipe.showCount : 0,

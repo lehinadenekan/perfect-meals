@@ -1,14 +1,16 @@
 // app/layout.tsx
 'use client'; // Layout is already a Client Component
 
-import React, { useCallback } from 'react'; // Import useCallback
+import React from 'react'; // Removed useCallback as handleSearch will be removed
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'react-hot-toast';
 import { FavouritesProvider } from './context/FavouritesContext';
 import Navbar from '@/components/Navbar';
 // --- Import useRouter ---
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation'; // Removed as handleSearch will be removed
+import { SessionProvider } from 'next-auth/react';
+// import type { Session } from 'next-auth'; // No longer passing session prop
 
 // --- Remove Placeholder Search Handler if unused, keep if needed ---
 // const placeholderOnSearch = async (term: string) => { console.log(`Search triggered for: ${term} - Placeholder`); };
@@ -16,20 +18,22 @@ import { useRouter } from 'next/navigation';
 
 export default function RootLayout({
   children,
-  modal
+  modal,
+  // session // No longer receiving session as a direct prop
 }: {
   children: React.ReactNode;
   modal: React.ReactNode;
+  // session: Session | null; // No longer typing session prop
 }) {
   // --- Get router instance ---
-  const router = useRouter();
+  // const router = useRouter(); // Removed as handleSearch will be removed
 
-  // --- Placeholder search handler (replace if implementing search) ---
-  const handleSearch = useCallback(async (term: string) => {
-    console.log(`Search triggered for: ${term} - Placeholder`);
-    // Example: Redirect to search page
-    router.push(`/search?query=${encodeURIComponent(term)}`);
-  }, [router]); // <-- ADD 'router' back to dependency array
+  // --- Placeholder search handler (REMOVING) ---
+  // const handleSearch = useCallback(async (term: string) => {
+  //   console.log(`Search triggered for: ${term} - Placeholder`);
+  //   // Example: Redirect to search page
+  //   router.push(`/search?query=${encodeURIComponent(term)}`);
+  // }, [router]);
 
 
   return (
@@ -42,18 +46,18 @@ export default function RootLayout({
         <title>Recipe Ideas</title>
       </head>
       <body className="bg-[#ffc800] text-foreground">
-        <Providers>
-           {/* --- Pass the actual handleHomeClick function --- */}
-           <Navbar onSearch={handleSearch} />
-
-           <FavouritesProvider>
-             <main className="flex-grow bg-[#ffc800]">
-                {children}
-                {modal}
-             </main>
-             <Toaster />
-           </FavouritesProvider>
-        </Providers>
+        <SessionProvider> {/* SessionProvider without session prop */}
+          <Providers>
+             <Navbar />
+             <FavouritesProvider>
+               <main className="flex-grow bg-[#ffc800]">
+                  {children}
+                  {modal}
+               </main>
+               <Toaster />
+             </FavouritesProvider>
+          </Providers>
+        </SessionProvider>
       </body>
     </html>
   );

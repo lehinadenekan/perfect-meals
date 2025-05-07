@@ -70,7 +70,7 @@ export interface Recipe {
   type: string;
   cuisineId?: string;
   authenticity: string;
-  cookingMethods: string[];
+  cookingStyles: string[];
   spiceLevel: string;
   subCuisineType?: string;
   showCount: number;

@@ -108,8 +108,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 </div>
 
                 <div>
-                  <Dialog.Title as="h3" className="text-center text-lg font-semibold leading-6 text-gray-900">
-                    Sign in to Perfect Meals
+                  <Dialog.Title as="div" className="flex items-center justify-center text-lg font-semibold leading-6 text-gray-900">
+                    Sign in to&nbsp;
+                    <Image src="/recipe_ideas_logo.png" alt="Recipe Ideas Logo" width={24} height={24} className="mx-1" />
+                    Recipe Ideas
                   </Dialog.Title>
                   
                   {error && (

@@ -1,50 +1,64 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import AuthModal from './AuthModal';
 import LoginPromptModal from './LoginPromptModal';
 import {
   Search, User, Settings, LogOut, Bookmark, PlusCircle, CalendarDays, Compass, ChevronDown, List, History,
   FilePlus2, UploadCloud, Sparkles, UserCircle
 } from 'lucide-react';
+import { useDebouncedCallback } from 'use-debounce';
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 
-interface NavbarProps {
-  onSearch: (term: string) => Promise<void>;
+interface SearchSuggestion {
+  id: string;
+  title: string;
 }
 
-const Navbar = ({ onSearch }: NavbarProps) => {
+const Navbar = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isCollectionDropdownOpen, setIsCollectionDropdownOpen] = useState(false);
   const [isAddRecipeDropdownOpen, setIsAddRecipeDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInputValue, setSearchInputValue] = useState('');
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const commandRef = useRef<HTMLDivElement>(null);
 
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const collectionDropdownRef = useRef<HTMLDivElement>(null);
   const addRecipeDropdownRef = useRef<HTMLDivElement>(null);
 
-  // --- Click outside handler ---
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // Close User Dropdown
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setIsUserDropdownOpen(false);
       }
-      // Close Collection Dropdown
       if (collectionDropdownRef.current && !collectionDropdownRef.current.contains(event.target as Node)) {
         setIsCollectionDropdownOpen(false);
       }
-       // Close Add Recipe Dropdown
        if (addRecipeDropdownRef.current && !addRecipeDropdownRef.current.contains(event.target as Node)) {
          setIsAddRecipeDropdownOpen(false);
        }
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -52,14 +66,57 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     };
   }, [userDropdownRef, collectionDropdownRef, addRecipeDropdownRef]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedSearchTerm = searchTerm.trim();
-    if (!trimmedSearchTerm) return;
-    await onSearch(trimmedSearchTerm);
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.trim().length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsSuggestionsLoading(false);
+      return;
+    }
+    setIsSuggestionsLoading(true);
+    setShowSuggestions(true);
+    try {
+      const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+      const data: SearchSuggestion[] = await response.json();
+      setSuggestions(data);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      setSuggestions([]);
+    } finally {
+      setIsSuggestionsLoading(false);
+    }
+  }, []);
+
+  const debouncedFetchSuggestions = useDebouncedCallback(fetchSuggestions, 300);
+
+  const handleInputValueChange = (value: string) => {
+    setSearchInputValue(value);
+    debouncedFetchSuggestions(value);
   };
 
-  // --- User Dropdown Menu Component --- (Adding dark mode styles)
+  const handleSuggestionSelect = (suggestion: SearchSuggestion) => {
+    setSearchInputValue(suggestion.title);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    router.push(`/recipes/${suggestion.id}`);
+  };
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const termToSearch = searchInputValue.trim();
+    if (!termToSearch) return;
+    setSuggestions([]);
+    setShowSuggestions(false);
+    router.push(`/search?query=${encodeURIComponent(termToSearch)}`);
+  };
+
+  useEffect(() => {
+    setShowSuggestions(false);
+  }, [pathname]);
+
   const UserMenu = () => (
     <div className="relative">
       <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2">
@@ -110,7 +167,6 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     </div>
   );
 
-  // --- My Collection Dropdown --- (Adding dark mode styles)
   const CollectionDropdown = () => (
     <div className="relative" ref={collectionDropdownRef}>
        <button
@@ -156,7 +212,6 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     </div>
   );
 
-  // --- Add Recipe Dropdown --- (Adding dark mode styles)
   const AddRecipeDropdown = () => (
     <div className="relative" ref={addRecipeDropdownRef}>
       <button
@@ -211,15 +266,12 @@ const Navbar = ({ onSearch }: NavbarProps) => {
     </div>
   );
 
-
   return (
     <>
       <nav className="w-full bg-[#ffc800] p-4 sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto flex flex-wrap justify-between items-center gap-4">
 
-          {/* Left Side: Logo/Brand (Optional) & Navigation Links */}
            <div className="flex items-center gap-1 md:gap-2">
-              {/* Render Discover Link */}
               <Link href="/" passHref legacyBehavior>
                  <a className="px-3 py-2 rounded-md hover:bg-yellow-500/20 transition-colors text-black flex items-center gap-1.5 text-sm font-medium">
                    <Compass size={16} />
@@ -227,13 +279,10 @@ const Navbar = ({ onSearch }: NavbarProps) => {
                  </a>
               </Link>
 
-              {/* Conditionally render Collection Dropdown */}
               <CollectionDropdown />
 
-              {/* Conditionally render Add Recipe Dropdown */}
               <AddRecipeDropdown />
 
-              {/* Render Meal Planner Link/Button */}
               <button
                 onClick={() => {
                   if (session) {
@@ -249,26 +298,49 @@ const Navbar = ({ onSearch }: NavbarProps) => {
               </button>
            </div>
 
-          {/* Middle: Search Bar */}
-           <div className="flex-grow md:flex-grow-0 order-last w-full md:w-auto md:order-none">
-             <form onSubmit={handleSearch} className="relative">
-               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                 <Search className="h-5 w-5 text-gray-400" />
-               </div>
-               <input
-                 type="text"
-                 value={searchTerm}
-                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                   setSearchTerm(e.target.value);
+          <div className="flex items-center gap-4 flex-grow justify-end">
+            <div className="relative flex-grow max-w-xs lg:max-w-sm" ref={commandRef}>
+              <Command shouldFilter={false} className="rounded-md border border-gray-300 bg-white shadow-sm">
+                 <div className="relative">
+                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                   <CommandInput
+                      value={searchInputValue}
+                      onValueChange={handleInputValueChange}
+                      onFocus={() => searchInputValue.length > 0 && setShowSuggestions(true)}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === 'Enter' && searchInputValue.trim().length > 0) {
+                           handleSearchSubmit();
+                           e.preventDefault(); 
+                        }
                  }}
                  placeholder="Search recipes..."
-                 className="w-full lg:w-[400px] pl-10 pr-4 py-2 border border-gray-300 bg-white text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent shadow-sm transition-all duration-200 hover:border-yellow-400 placeholder-gray-500 text-sm"
-                 aria-label="Search for recipes"
-               />
-             </form>
+                      className="pl-10 h-9"
+                      disabled={status === 'loading'}
+                   />
+                 </div>
+                {showSuggestions && (
+                  <CommandList className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {isSuggestionsLoading ? (
+                      <div className="p-2 text-sm text-gray-500 text-center">Loading...</div>
+                    ) : suggestions.length > 0 ? (
+                      suggestions.map((suggestion) => (
+                        <CommandItem
+                          key={suggestion.id}
+                          value={suggestion.title}
+                          onSelect={() => handleSuggestionSelect(suggestion)}
+                          className="cursor-pointer"
+                        >
+                          {suggestion.title}
+                        </CommandItem>
+                      ))
+                    ) : (
+                      <CommandEmpty>No results found.</CommandEmpty>
+                    )}
+                  </CommandList>
+                )}
+              </Command>
            </div>
 
-           {/* Right Side: User Actions */}
            <div className="flex items-center gap-4">
              {status === 'loading' ? (
                <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
@@ -282,11 +354,11 @@ const Navbar = ({ onSearch }: NavbarProps) => {
                  Log In / Sign Up
                </button>
              )}
+            </div>
            </div>
         </div>
       </nav>
 
-      {/* Modals likely need dark mode styling too, but keeping focus on Navbar for now */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

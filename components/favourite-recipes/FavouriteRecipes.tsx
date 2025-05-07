@@ -151,7 +151,7 @@ export default function FavouriteRecipes({ // Keeping original name
         recipe.id === recipeId ? { ...recipe, isFavourite: true } : recipe
       );
       setFavouriteRecipes(updatedRecipes);
-      toast.success("Added to favourites");
+       toast.success("Added to favourites");
     }
   };
 
@@ -223,7 +223,7 @@ export default function FavouriteRecipes({ // Keeping original name
         <div className="mt-8">
           {/* All Favourites View */}
           {viewMode === 'allFavourites' && (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
               {favouriteRecipes.length > 0 ? (
                 favouriteRecipes.map((recipe) => (
                   <div key={recipe.id} className="w-72">
@@ -238,7 +238,7 @@ export default function FavouriteRecipes({ // Keeping original name
                   You haven&apos;t added any favourite recipes yet.
                 </p>
               )}
-            </div>
+              </div>
           )}
 
           {/* Albums View */}

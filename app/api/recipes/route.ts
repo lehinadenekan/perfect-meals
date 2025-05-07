@@ -157,6 +157,8 @@ export async function GET(request: Request) {
        where.AND = andConditions;
     }
 
+    console.log("Constructed Prisma Where Clause:", JSON.stringify(where, null, 2));
+
     // --- Database Queries --- 
     // Query for recipes with pagination and filtering
     const recipes = await prisma.recipe.findMany({

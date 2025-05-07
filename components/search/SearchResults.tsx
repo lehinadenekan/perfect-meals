@@ -77,11 +77,11 @@ export default function SearchResults({
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
               {recipes.map(recipe => (
                 <div key={recipe.id} className="w-72">
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    onFavouriteChange={handleFavouriteChange}
-                  />
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onFavouriteChange={handleFavouriteChange}
+                />
                 </div>
               ))}
             </div>

@@ -84,12 +84,12 @@ function SearchResults() {
         {results.length > 0 ? (
           results.map((recipe) => (
             <div key={recipe.id} className="w-72"> {/* Added wrapper div with w-72 */}
-              <RecipeCard
+            <RecipeCard
                 key={recipe.id} // key should ideally be on the wrapper
-                recipe={recipe}
+              recipe={recipe}
                 // onSelect={handleOpenModal} // Removed prop
-                onFavouriteChange={handleFavouriteChange}
-              />
+              onFavouriteChange={handleFavouriteChange}
+            />
             </div>
           ))
         ) : (
