@@ -20,6 +20,7 @@ export type RecipeDetailData = Recipe & {
   cuisine?: Cuisine | null;
   isFavourite?: boolean;
   dietaryNotes?: DietaryNotes | null; // <-- Changed from Prisma.JsonValue
+  notes?: string[]; // Explicitly adding notes here
 };
 
 
@@ -46,7 +47,7 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
           select: { id: true, name: true, image: true }
         },
         categories: true,
-        cuisines: true,
+        cuisine: true,
         dietaryNotes: true,
       },
     });

@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         instructions: true,
         nutritionFacts: true,
         categories: true,
-        cuisines: true,
+        cuisine: true,
         // tags: true <-- Removed non-existent relation
       }
     });

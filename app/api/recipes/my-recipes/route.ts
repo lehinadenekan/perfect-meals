@@ -36,8 +36,8 @@ export async function GET() {
         servings: true,
         cookingTime: true,
         difficulty: true,
-        continent: true,
-        regionOfOrigin: true, // <-- ADDED THIS LINE
+        // continent: true, // Ensure REMOVED
+        // regionOfOrigin: true, // Ensure REMOVED
         createdAt: true,
         updatedAt: true,
         authorId: true,
@@ -47,13 +47,9 @@ export async function GET() {
         nutritionFacts: {
             select: { protein: true, carbs: true, fat: true }
         },
-        savedBy: {
-          where: {
-            id: userId // Filter the relation to only include the current user
-          },
-          select: {
-            id: true // We only need to know if the relation exists
-          }
+        savedBy: { // Keep specific select to check relation existence
+          where: { id: userId },
+          select: { id: true }
         },
         // Select other boolean flags if needed by RecipeCard
         isVegetarian: true,

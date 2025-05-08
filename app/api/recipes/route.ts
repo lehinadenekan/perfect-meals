@@ -13,8 +13,7 @@ interface CreateRecipePayload {
   cookingTime: number;
   servings: number;
   difficulty?: string;
-  continent?: string;
-  regionOfOrigin?: string;
+  regionNames?: string[];
   imageUrl?: string;
   calories?: number;
   cookingStyles?: string[];
@@ -85,9 +84,18 @@ export async function GET(request: Request) {
       });
     }
 
-    // 2. Regional Filters (Assuming 'regionOfOrigin' is the field)
+    // 2. Regional Filters (Update to use many-to-many `regions` relation)
     if (regions.length > 0) {
-      andConditions.push({ regionOfOrigin: { in: regions, mode: 'insensitive' } });
+      andConditions.push({
+        regions: {
+          some: {
+            name: {
+              in: regions,
+              mode: 'insensitive'
+            }
+          }
+        }
+      });
     }
 
     // 3. Cooking Style Filters (Using new 'cookingStyles' field)
@@ -167,8 +175,8 @@ export async function GET(request: Request) {
         ingredients: true,
         instructions: { orderBy: { stepNumber: 'asc' } },
         categories: { select: { name: true } },
-        // tags: { select: { name: true } }, <-- Removed include for non-existent tags relation
-        nutritionFacts: true, 
+        nutritionFacts: true,
+        regions: true,
         // author: { select: { name: true, image: true } }, 
       },
       skip: skip,
@@ -206,21 +214,21 @@ export async function GET(request: Request) {
 
 // --- POST HANDLER ---
 export async function POST(request: Request) {
-  // Replace v5 call: const session = await auth();
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id; // Get user ID from v4 session
+  const userId = session?.user?.id;
 
-  // Check for user ID for authorization
   if (!userId) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const body: CreateRecipePayload = await request.json();
-
-    // Basic Validation (Consider using Zod for more robust validation)
-    if (!body.title || !body.description || !body.cookingTime || !body.servings) {
-      return NextResponse.json({ message: 'Missing required fields: title, description, cookingTime, servings' }, { status: 400 });
+    
+    if (!body.title || !body.description ) { 
+      return NextResponse.json({ message: 'Missing required fields: title, description' }, { status: 400 });
+    }
+    if (typeof body.cookingTime !== 'number' || typeof body.servings !== 'number') {
+        return NextResponse.json({ message: 'cookingTime and servings must be numbers' }, { status: 400 });
     }
     if (!Array.isArray(body.ingredients) || body.ingredients.length === 0) {
       return NextResponse.json({ message: 'Ingredients list is required and cannot be empty' }, { status: 400 });
@@ -228,25 +236,28 @@ export async function POST(request: Request) {
     if (!Array.isArray(body.instructions) || body.instructions.length === 0) {
        return NextResponse.json({ message: 'Instructions list is required and cannot be empty' }, { status: 400 });
     }
-    // Add validation for ingredient/instruction content if needed
 
-    const { ingredients, instructions, ...recipeData } = body;
+    const { ingredients, instructions, regionNames, ...recipeData } = body;
 
     const createdRecipe = await prisma.$transaction(async (tx) => {
+      let regionConnections: { id: string }[] = [];
+      if (regionNames && regionNames.length > 0) {
+        const existingRegions = await tx.region.findMany({
+          where: { name: { in: regionNames, mode: 'insensitive' } },
+          select: { id: true }
+        });
+        regionConnections = existingRegions.map((r: { id: string }) => ({ id: r.id }));
+      }
+
       const newRecipe = await tx.recipe.create({
         data: {
-          // Map required fields directly
           title: recipeData.title,
           description: recipeData.description,
           cookingTime: recipeData.cookingTime,
           servings: recipeData.servings,
-          authorId: userId, // Connect to the logged-in user using ID
-          source: 'USER_CREATED', // Use string literal
-
-          // Map optional fields, using defaults from Prisma schema if not provided
+          authorId: userId, 
+          source: 'USER_CREATED',
           difficulty: recipeData.difficulty,
-          continent: recipeData.continent,
-          regionOfOrigin: recipeData.regionOfOrigin,
           imageUrl: recipeData.imageUrl,
           calories: recipeData.calories,
           cookingStyles: recipeData.cookingStyles ?? [],
@@ -258,47 +269,41 @@ export async function POST(request: Request) {
           isPescatarian: recipeData.isPescatarian,
           isFermented: recipeData.isFermented,
           isLowFodmap: recipeData.isLowFodmap,
+          ...(regionConnections.length > 0 && { regions: { connect: regionConnections } }),
         },
       });
 
-      // Create ingredients
       await tx.ingredient.createMany({
         data: ingredients.map(ing => ({
           name: ing.name,
           amount: ing.amount,
           unit: ing.unit,
           notes: ing.notes,
-          recipeId: newRecipe.id, // Link to the created recipe
+          recipeId: newRecipe.id,
         })),
       });
 
-      // Create instructions
       await tx.instruction.createMany({
         data: instructions.map(inst => ({
           stepNumber: inst.stepNumber,
           description: inst.description,
-          recipeId: newRecipe.id, // Link to the created recipe
+          recipeId: newRecipe.id,
         })),
       });
 
-      // Return the created recipe object from the transaction
       return newRecipe;
     });
 
-    // Return minimal confirmation or the full created recipe object
     return NextResponse.json({ id: createdRecipe.id, title: createdRecipe.title }, { status: 201 });
 
   } catch (error) {
       console.error("Failed to create recipe:", error);
-       // Handle specific Prisma errors if possible
        if (error instanceof Prisma.PrismaClientValidationError) {
            return NextResponse.json({ message: 'Invalid data provided for recipe creation.', details: error.message }, { status: 400 });
        }
-       // Handle potential unique constraint errors (e.g., duplicate title)
        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            return NextResponse.json({ message: 'A recipe with this title already exists.', details: error.meta?.target }, { status: 409 }); // 409 Conflict
+            return NextResponse.json({ message: 'A recipe with this title already exists.', details: error.meta?.target }, { status: 409 });
        }
-      // Generic error response
       return NextResponse.json({ message: 'An unexpected error occurred while creating the recipe.' }, { status: 500 });
   }
 }

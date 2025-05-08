@@ -2,14 +2,14 @@
 type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK' | 'DESSERT' | 'BEVERAGE' | 'SIDE' | 'MAIN';
 
-interface Ingredient {
+export interface Ingredient {
   name: string;
   amount: number;
   unit: string;
   notes?: string;
 }
 
-interface Instruction {
+export interface Instruction {
   stepNumber: number;
   description: string;
   imageUrl?: string | null; // Added optional imageUrl
@@ -30,8 +30,7 @@ interface SeedRecipeRecipe {
   cookingTime: number;
   servings: number;
   difficulty: Difficulty;
-  continent: string;
-  regionOfOrigin: string;
+  regionNames: string[];
   imageUrl: string;
   calories: number;
   type: MealType;
@@ -42,6 +41,15 @@ interface SeedRecipeRecipe {
   isNutFree: boolean;
   isFermented: boolean;
   isLowFodmap: boolean;
+  prepTime?: number;
+  totalTime?: number;
+  source?: string;
+  isPublic?: boolean;
+  isDairyFree?: boolean;
+  isPescatarian?: boolean;
+  isSpicy?: boolean;
+  mealCategories?: string[];
+  cuisineId?: string; // Or number, if it's a numeric ID
   cookingStyles?: string[];
   ingredients: Ingredient[];
   instructions: Instruction[];
@@ -59,26 +67,27 @@ interface SeedRecipeRecipe {
 export type { SeedRecipeRecipe };
 export const seedRecipes: SeedRecipeRecipe[] = [
   {
-    "title": "Quinoa Buddha Bowl",
-    "description": "A vibrant and nutritious bowl featuring protein-rich quinoa, roasted sweet potatoes, crispy chickpeas, fresh kale, sweetcorn, avocado, tomato, cucumber, and parsley, all drizzled with a creamy tahini dressing. This balanced meal combines different textures and flavors for a satisfying and healthy dining experience.",
-    "cookingTime": 45,
-    "servings": 2,
-    "difficulty": "EASY",
-    "continent": "South America", 
-    "regionOfOrigin": "Peru", 
-    "imageUrl": "/images/recipes/quinoa_buddha_bowl2.jpg",
-    "calories": 550,
-    "type": "MAIN",
-    "isVegetarian": true,                 
-    "isVegan": true,
-    "isGlutenFree": true,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": false,
-    "isLowFodmap": false,
-    "cookingStyles": ["Roast", "Stovetop"],
-    "ingredients": [
+    title: "Quinoa Buddha Bowl",
+    description: "A vibrant and nutritious bowl featuring protein-rich quinoa, roasted sweet potatoes, crispy chickpeas, fresh kale, sweetcorn, avocado, tomato, cucumber, and parsley, all drizzled with a creamy tahini dressing. This balanced meal combines different textures and flavors for a satisfying and healthy dining experience.",
+    cookingTime: 45,
+    servings: 2,
+    difficulty: "EASY",
+    regionNames: ["Peru", "South America"],
+    // continent: "South America", 
+    // regionOfOrigin: "Peru", 
+    imageUrl: "/images/recipes/quinoa_buddha_bowl2.jpg",
+    calories: 550,
+    type: "MAIN",
+    isVegetarian: true,                 
+    isVegan: true,
+    isGlutenFree: true,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: false,
+    isLowFodmap: false,
+    cookingStyles: ["Roast", "Stovetop"],
+    ingredients: [
       { "name": "Quinoa", "amount": 170, "unit": "g", "notes": "approx 1 cup, rinsed and drained" },
       { "name": "Water", "amount": 474, "unit": "g", "notes": "approx 2 cups, for cooking quinoa" },
       { "name": "Sweet Potato", "amount": 1, "unit": "medium", "notes": "peeled and cut into 1-inch cubes" },
@@ -160,25 +169,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "味噌汁 (Misoshiru)",
-    "description": "A soul-warming traditional Japanese soup featuring a delicate dashi broth enriched with umami-rich miso paste, silky soft tofu, tender wakame seaweed, and fresh green onions. This nourishing soup is a cornerstone of Japanese cuisine, traditionally served for breakfast but perfect for any time of day.",
-    "cookingTime": 20,
-    "servings": 4,
-    "difficulty": "EASY",
-    "continent": "Asia",
-    "regionOfOrigin": "Japan",
-    "imageUrl": "/images/recipes/misoshiru.jpg",
-    "calories": 120,
-    "type": "MAIN",
-    "isVegetarian": true,
-    "isVegan": true,
-    "isGlutenFree": true,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "味噌汁 (Misoshiru)",
+    description: "A soul-warming traditional Japanese soup featuring a delicate dashi broth enriched with umami-rich miso paste, silky soft tofu, tender wakame seaweed, and fresh green onions. This nourishing soup is a cornerstone of Japanese cuisine, traditionally served for breakfast but perfect for any time of day.",
+    cookingTime: 20,
+    servings: 4,
+    difficulty: "EASY",
+    regionNames: ["Japan", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/misoshiru.jpg",
+    calories: 120,
+    type: "MAIN",
+    isVegetarian: true,
+    isVegan: true,
+    isGlutenFree: true,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Dashi Stock", "amount": 948, "unit": "g", "notes": "approx 4 cups, kombu and shiitake based for vegan version" },
       { "name": "Kombu (Dried Kelp)", "amount": 1, "unit": "piece", "notes": "4-inch square piece" },
       { "name": "Dried Shiitake Mushrooms", "amount": 2, "unit": "pieces" },
@@ -224,25 +232,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "Kimchi Sundubu Jjigae (Soft Tofu Stew with Kimchi)",
-    "description": "A rich and spicy Korean stew featuring soft silken tofu (sundubu) and fermented kimchi, often cooked with pork belly for extra flavor, and finished with a fresh egg cracked directly into the bubbling pot.",
-    "cookingTime": 25,
-    "servings": 2,
-    "difficulty": "MEDIUM",
-    "continent": "Asia",
-    "regionOfOrigin": "South Korea",
-    "imageUrl": "/images/recipes/Kimchi Sundubu Jjigae.webp",
-    "calories": 450,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "Kimchi Sundubu Jjigae (Soft Tofu Stew with Kimchi)",
+    description: "A rich and spicy Korean stew featuring soft silken tofu (sundubu) and fermented kimchi, often cooked with pork belly for extra flavor, and finished with a fresh egg cracked directly into the bubbling pot.",
+    cookingTime: 25,
+    servings: 2,
+    difficulty: "MEDIUM",
+    imageUrl: "/images/recipes/Kimchi Sundubu Jjigae.webp",
+    calories: 450,
+    regionNames: ["South Korea", "Asia", "East Asia"],
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: false,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Neutral Oil", "amount": 14, "unit": "g", "notes": "e.g., vegetable, canola (approx 1 tbsp)" },
       { "name": "Onion", "amount": 40, "unit": "g", "notes": "finely chopped (approx 1/4 cup)" },
       { "name": "Garlic", "amount": 1, "unit": "clove", "notes": "minced" },
@@ -296,25 +303,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "肉骨茶 (Bak Kut Teh)",
-    "description": "A nourishing pork rib soup that originated from Singapore and Malaysia, featuring tender pork ribs simmered in a rich, aromatic broth infused with garlic, white pepper, and Chinese herbs. Despite its name meaning \"meat bone tea\", the dish contains no tea - it was traditionally served with Chinese tea on the side.",
-    "cookingTime": 120,
-    "servings": 4,
-    "difficulty": "MEDIUM",
-    "continent": "Asia",
-    "regionOfOrigin": "Singapore",
-    "imageUrl": "/images/recipes/bak-kut-teh.jpg",
-    "calories": 450,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": true,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "肉骨茶 (Bak Kut Teh)",
+    description: "A nourishing pork rib soup that originated from Singapore and Malaysia, featuring tender pork ribs simmered in a rich, aromatic broth infused with garlic, white pepper, and Chinese herbs. Despite its name meaning \"meat bone tea\", the dish contains no tea - it was traditionally served with Chinese tea on the side.",
+    cookingTime: 120,
+    servings: 4,
+    difficulty: "MEDIUM",
+    regionNames: ["Singapore", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/bak-kut-teh.jpg",
+    calories: 450,
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: true,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Pork Ribs", "amount": 1, "unit": "kg", "notes": "preferably meaty prime ribs, cut into individual pieces" },
       { "name": "Garlic", "amount": 20, "unit": "cloves", "notes": "whole, lightly smashed" },
       { "name": "White Peppercorns", "amount": 2, "unit": "tbsp", "notes": "lightly crushed" },
@@ -359,25 +365,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "Ogokbap: 오곡밥 (Ogokbap)",
-    "description": "A traditional Korean mixed grain rice dish that symbolizes abundance and good fortune. Made with five different grains, this nutritious dish is traditionally eaten during Korean holidays, especially Lunar New Year, but is now enjoyed year-round for its health benefits and nutty flavor.",
-    "cookingTime": 60,
-    "servings": 6,
-    "difficulty": "MEDIUM",
-    "continent": "Asia",
-    "regionOfOrigin": "South Korea",
-    "imageUrl": "/images/recipes/ogokbap.jpg",
-    "calories": 250,
-    "type": "MAIN",
-    "isVegetarian": true,
-    "isVegan": true,
-    "isGlutenFree": true,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": false,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "Ogokbap: 오곡밥 (Ogokbap)",
+    description: "A traditional Korean mixed grain rice dish that symbolizes abundance and good fortune. Made with five different grains, this nutritious dish is traditionally eaten during Korean holidays, especially Lunar New Year, but is now enjoyed year-round for its health benefits and nutty flavor.",
+    cookingTime: 60,
+    difficulty: "MEDIUM",
+    servings: 6,
+    regionNames: ["South Korea", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/ogokbap.jpg",
+    calories: 250,
+    type: "MAIN",
+    isVegetarian: true,
+    isVegan: true,
+    isGlutenFree: true,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: false,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Short Grain Rice", "amount": 380, "unit": "g", "notes": "approx 2 cups, pref Korean, rinsed" },
       { "name": "Millet", "amount": 100, "unit": "g", "notes": "approx 0.5 cup, rinsed" },
       { "name": "Black Rice", "amount": 90, "unit": "g", "notes": "approx 0.5 cup, forbidden rice, rinsed" },
@@ -418,25 +423,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "炒刀削面 (Chao Dao Xiao Mian)",
-    "description": "A traditional Shanxi noodle dish where thin slices of dough are skillfully shaved directly into boiling soup, creating fresh, tender noodles with a unique texture. This knife-cut noodle technique requires special skill, making each bowl a demonstration of culinary craftsmanship.",
-    "cookingTime": 45,
-    "servings": 2,
-    "difficulty": "HARD",
-    "continent": "Asia",
-    "regionOfOrigin": "China",
-    "imageUrl": "/images/recipes/chao-dao-xiao-mian-5.jpg",
-    "calories": 400,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": false,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "炒刀削面 (Chao Dao Xiao Mian)",
+    description: "A traditional Shanxi noodle dish where thin slices of dough are skillfully shaved directly into boiling soup, creating fresh, tender noodles with a unique texture. This knife-cut noodle technique requires special skill, making each bowl a demonstration of culinary craftsmanship.",
+    cookingTime: 45,
+    servings: 2,
+    difficulty: "HARD",
+    regionNames: ["China", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/chao-dao-xiao-mian-5.jpg",
+    calories: 400,
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: false,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: false,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Flour", "amount": 300, "unit": "g" },
       { "name": "Water", "amount": 150, "unit": "ml", "notes": "approx 150g" },
       { "name": "Beef", "amount": 200, "unit": "g", "notes": "sliced" },
@@ -465,25 +469,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "ขนมจีนน้ำยาป่า (Khanom Jeen Nam Ya Pa)",
-    "description": "A beloved Southern Thai dish featuring fermented rice noodles (khanom jeen) served with a rich, spicy fish curry sauce. This complex dish combines the subtle tang of fermented noodles with an aromatic curry made from fresh fish and a blend of Thai herbs and spices.",
-    "cookingTime": 90,
-    "servings": 4,
-    "difficulty": "MEDIUM",
-    "continent": "Asia",
-    "regionOfOrigin": "Thailand",
-    "imageUrl": "/images/recipes/Khanom Jeen Nam Ya Pa .jpg",
-    "calories": 380,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isPescatarian": true,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "ขนมจีนน้ำยาป่า (Khanom Jeen Nam Ya Pa)",
+    description: "A beloved Southern Thai dish featuring fermented rice noodles (khanom jeen) served with a rich, spicy fish curry sauce. This complex dish combines the subtle tang of fermented noodles with an aromatic curry made from fresh fish and a blend of Thai herbs and spices.",
+    cookingTime: 90,
+    servings: 4,
+    difficulty: "MEDIUM",
+    regionNames: ["Thailand", "Asia", "Southeast Asia"],
+    imageUrl: "/images/recipes/Khanom Jeen Nam Ya Pa .jpg",
+    calories: 380,
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: false,
+    isPescatarian: true,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Khanom Jeen Noodles", "amount": 500, "unit": "g", "notes": "fresh or dried fermented rice noodles" },
       { "name": "White Fish Fillets", "amount": 400, "unit": "g", "notes": "firm white fish like sea bass or snapper, deboned" },
       { "name": "Coconut Milk", "amount": 400, "unit": "ml", "notes": "approx 400g, full-fat" },
@@ -528,25 +531,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "親子丼 (Oyakodon)",
-    "description": "A classic Japanese comfort food dish where chicken and egg are simmered in a sweet and savory dashi-based sauce and served over steaming rice. The name \"oyako\" means parent-and-child, referring to the combination of chicken and egg in the dish.",
-    "cookingTime": 20,
-    "servings": 2,
-    "difficulty": "EASY",
-    "continent": "Asia",
-    "regionOfOrigin": "Japan",
-    "imageUrl": "/images/recipes/oyakodon.jpg",
-    "calories": 550,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": false,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "親子丼 (Oyakodon)",
+    description: "A classic Japanese comfort food dish where chicken and egg are simmered in a sweet and savory dashi-based sauce and served over steaming rice. The name \"oyako\" means parent-and-child, referring to the combination of chicken and egg in the dish.",
+    cookingTime: 20,
+    servings: 2,
+    difficulty: "EASY",
+    regionNames: ["Japan", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/oyakodon.jpg",
+    calories: 550,
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: false,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Chicken Thigh", "amount": 300, "unit": "g", "notes": "skinless, cut into bite-sized pieces" },
       { "name": "Eggs", "amount": 3, "unit": "large", "notes": "room temperature, lightly beaten" },
       { "name": "Onion", "amount": 1, "unit": "medium", "notes": "thinly sliced" },
@@ -590,25 +592,24 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     }
   },
   {
-    "title": "麻婆豆腐 (Mapo Doufu)",
-    "description": "A beloved Sichuan dish featuring soft tofu cubes in a spicy, numbing sauce with ground pork. The combination of doubanjiang (fermented broad bean paste) and Sichuan peppercorns creates the signature mala flavor that makes this dish iconic.",
-    "cookingTime": 30,
-    "servings": 4,
-    "difficulty": "MEDIUM",
-    "continent": "Asia",
-    "regionOfOrigin": "China",
-    "imageUrl": "/images/recipes/mapo-doufu-8.jpg",
-    "calories": 300,
-    "type": "MAIN",
-    "isVegetarian": false,
-    "isVegan": false,
-    "isGlutenFree": true,
-    "isPescatarian": false,
-    "isLactoseFree": true,
-    "isNutFree": true,
-    "isFermented": true,
-    "isLowFodmap": false,
-    "ingredients": [
+    title: "麻婆豆腐 (Mapo Doufu)",
+    description: "A beloved Sichuan dish featuring soft tofu cubes in a spicy, numbing sauce with ground pork. The combination of doubanjiang (fermented broad bean paste) and Sichuan peppercorns creates the signature mala flavor that makes this dish iconic.",
+    cookingTime: 30,
+    servings: 4,
+    difficulty: "MEDIUM",
+    regionNames: ["China", "Asia", "East Asia"],
+    imageUrl: "/images/recipes/mapo-doufu-8.jpg",
+    calories: 300,
+    type: "MAIN",
+    isVegetarian: false,
+    isVegan: false,
+    isGlutenFree: true,
+    isPescatarian: false,
+    isLactoseFree: true,
+    isNutFree: true,
+    isFermented: true,
+    isLowFodmap: false,
+    ingredients: [
       { "name": "Soft Tofu", "amount": 400, "unit": "g", "notes": "cut into 1-inch cubes" },
       { "name": "Ground Pork", "amount": 200, "unit": "g", "notes": "80% lean" },
       { "name": "Doubanjiang", "amount": 2, "unit": "tbsp", "notes": "Sichuan fermented broad bean paste" },
@@ -6852,4 +6853,160 @@ export const seedRecipes: SeedRecipeRecipe[] = [
       sodium: 890
     }
   },
+  {
+    "title": "Jerk Chicken",
+    "description": "A spicy and flavorful grilled chicken dish marinated in a blend of Scotch bonnet peppers, allspice, thyme, and other herbs and spices, embodying the essence of Jamaican cuisine.",
+    "cookingTime": 90,
+    "servings": 4,
+    "difficulty": "MEDIUM",
+    "continent": "North America",
+    "regionOfOrigin": "Jamaica",
+    "imageUrl": "/images/recipes/jamaican_jerk_chicken.jpg",
+    "calories": 650,
+    "type": "MAIN",
+    "isVegetarian": false,
+    "isVegan": false,
+    "isGlutenFree": true,
+    "isPescatarian": false,
+    "isLactoseFree": true,
+    "isNutFree": true,
+    "isFermented": false,
+    "isLowFodmap": false,
+    "cookingStyles": ["Grill"],
+    "ingredients": [
+      { "name": "Chicken Thighs", "amount": 1000, "unit": "g", "notes": "bone-in, skin-on preferred" },
+      { "name": "Scotch Bonnet Peppers", "amount": 2, "unit": "whole", "notes": "seeded and chopped" },
+      { "name": "Garlic", "amount": 4, "unit": "cloves", "notes": "minced" },
+      { "name": "Onion", "amount": 1, "unit": "medium", "notes": "chopped" },
+      { "name": "Thyme", "amount": 2, "unit": "teaspoons", "notes": "fresh or 1 tsp dried" },
+      { "name": "Ground Allspice", "amount": 1, "unit": "teaspoon", "notes": "" },
+      { "name": "Cinnamon", "amount": 0.5, "unit": "teaspoon", "notes": "" },
+      { "name": "Nutmeg", "amount": 0.25, "unit": "teaspoon", "notes": "" },
+      { "name": "Brown Sugar", "amount": 1, "unit": "tablespoon", "notes": "" },
+      { "name": "Lime Juice", "amount": 2, "unit": "tablespoons", "notes": "freshly squeezed" },
+      { "name": "Olive Oil", "amount": 2, "unit": "tablespoons", "notes": "" },
+      { "name": "Salt", "amount": 1, "unit": "teaspoon", "notes": "" },
+      { "name": "Black Pepper", "amount": 0.5, "unit": "teaspoon", "notes": "" }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "description": "In a blender, combine Scotch bonnet peppers, garlic, onion, thyme, allspice, cinnamon, nutmeg, brown sugar, lime juice, olive oil, salt, and pepper. Blend until smooth."
+      },
+      {
+        "stepNumber": 2,
+        "description": "Rub the marinade all over the chicken thighs, ensuring they are well coated. Cover and marinate in the refrigerator for at least 4 hours, preferably overnight."
+      },
+      {
+        "stepNumber": 3,
+        "description": "Preheat a grill to medium-high heat. Grill chicken for 30-40 minutes, turning occasionally, until cooked through and skin is charred and crispy."
+      },
+      {
+        "stepNumber": 4,
+        "description": "Serve hot with rice and peas, festival bread, or fried plantains."
+      }
+    ],
+    "notes": [
+      "Marinate the chicken overnight for best flavor.",
+      "Adjust Scotch bonnet quantity for your spice tolerance.",
+      "Charred bits on the chicken add authentic flavor."
+    ],
+    "dietaryNotes": {
+      "fodmapInfo": "Contains garlic and onion, which are high-FODMAP ingredients. Individuals with FODMAP sensitivities should omit or substitute with garlic-infused oil and green onion tops.",
+      "keyNutrients": "This dish is rich in protein from the chicken, and contributes significant amounts of iron, zinc, and B vitamins. The spice blend adds beneficial micronutrients such as vitamin C (from peppers and lime), manganese (from allspice, thyme, and cinnamon), and small amounts of vitamin E and K from herbs and olive oil.",
+      "antiInflammatoryInfo": "Olive oil contains oleocanthal and monounsaturated fats known for anti-inflammatory effects. Scotch bonnet peppers are rich in capsaicin, which may reduce inflammation. Thyme, cinnamon, and allspice contribute antioxidants and phytochemicals that may help combat oxidative stress."
+    },
+    "nutritionFacts": {
+      "protein": 42,
+      "carbs": 8,
+      "fat": 48,
+      "fiber": 1,
+      "sugar": 3,
+      "sodium": 750
+    }
+  },
+
+  {
+    "title": "Ackee and Saltfish",
+    "description": "Jamaica's national dish, combining salted cod with the delicate, buttery ackee fruit, sautéed with onions, peppers, and spices.",
+    "cookingTime": 45,
+    "servings": 4,
+    "difficulty": "MEDIUM",
+    "continent": "North America",
+    "regionOfOrigin": "Jamaica",
+    "imageUrl": "/images/recipes/ackee_and_saltfish.jpg",
+    "calories": 350,
+    "type": "MAIN",
+    "isVegetarian": false,
+    "isVegan": false,
+    "isGlutenFree": true,
+    "isPescatarian": true,
+    "isLactoseFree": true,
+    "isNutFree": true,
+    "isFermented": false,
+    "isLowFodmap": false,
+    "cookingStyles": ["Stovetop"],
+    "ingredients": [
+      { "name": "Salted Codfish", "amount": 450, "unit": "g", "notes": "soaked overnight and flaked" },
+      { "name": "Ackee", "amount": 540, "unit": "g", "notes": "drained if canned" },
+      { "name": "Onion", "amount": 1, "unit": "medium", "notes": "sliced" },
+      { "name": "Tomato", "amount": 1, "unit": "medium", "notes": "chopped" },
+      { "name": "Scotch Bonnet Pepper", "amount": 1, "unit": "small", "notes": "seeded and chopped" },
+      { "name": "Garlic", "amount": 2, "unit": "cloves", "notes": "minced" },
+      { "name": "Thyme", "amount": 1, "unit": "teaspoon", "notes": "fresh" },
+      { "name": "Black Pepper", "amount": 0.5, "unit": "teaspoon", "notes": "freshly ground" },
+      { "name": "Vegetable Oil", "amount": 2, "unit": "tablespoons", "notes": "" }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "description": "Boil the salted codfish in water for 20 minutes to remove excess salt. Drain, cool, and flake into pieces.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step1.jpg"
+      },
+      {
+        "stepNumber": 2,
+        "description": "In a large skillet, heat vegetable oil over medium heat. Sauté onions, garlic, and scotch bonnet pepper until fragrant.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step2.jpg"
+      },
+      {
+        "stepNumber": 3,
+        "description": "Add tomatoes and thyme to the skillet. Cook until tomatoes soften.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step3.jpg"
+      },
+      {
+        "stepNumber": 4,
+        "description": "Stir in the flaked codfish and cook for 5 minutes.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step4.jpg"
+      },
+      {
+        "stepNumber": 5,
+        "description": "Gently fold in the ackee, being careful not to mash it. Cook until heated through.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step5.jpg"
+      },
+      {
+        "stepNumber": 6,
+        "description": "Season with black pepper to taste and serve hot.",
+        "imageUrl": "/recipe_step_images/ackee_and_saltfish/step6.jpg"
+      }
+    ],
+    "notes": [
+      "Ackee is toxic if not properly prepared; use canned ackee or ensure fresh ackee is fully ripe and properly cleaned.",
+      "Serve with fried dumplings, boiled green bananas, or breadfruit for a traditional Jamaican breakfast."
+    ],
+    "dietaryNotes": {
+      "fodmapInfo": "Contains onions and garlic, which are high in FODMAPs.",
+      "keyNutrients": "High in protein from codfish and rich in essential fatty acids.",
+      "antiInflammatoryInfo": "Includes ingredients like garlic and thyme known for their anti-inflammatory properties."
+    },
+    "nutritionFacts": {
+      "protein": 25,
+      "carbs": 10,
+      "fat": 20,
+      "fiber": 3,
+      "sugar": 2,
+      "sodium": 800
+    }
+  },
+  
+  
 ] as SeedRecipeRecipe[];

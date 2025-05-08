@@ -13,7 +13,10 @@ import { Clock, BarChart, User, Import } from 'lucide-react';
 import Link from 'next/link';
 
 interface RecipeCardProps {
-  recipe: Recipe & { isFavourite?: boolean };
+  recipe: Recipe & { 
+    isFavourite?: boolean; 
+    regions?: { id: string; name: string }[];
+  };
   onFavouriteChange: (recipeId: string, newIsFavorite: boolean) => void;
 }
 
@@ -162,7 +165,12 @@ export default function RecipeCard({
             <div className="mb-2">
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                <span className="text-sm text-gray-600">{recipe.regionOfOrigin || 'N/A'}</span>
+                <span className="text-sm text-gray-600">
+                  {recipe.regions && recipe.regions.length > 0 
+                    ? recipe.regions.map((region: { name: string }) => region.name).join(', ')
+                    : recipe.regionOfOrigin || 'N/A'
+                  }
+                </span>
               </div>
             </div>
 

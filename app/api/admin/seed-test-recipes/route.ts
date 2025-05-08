@@ -86,8 +86,6 @@ export async function POST() {
               cookingTime: 30,
               servings: 4,
               difficulty: 'MEDIUM',
-              continent: 'International',
-              regionOfOrigin: 'International',
               imageUrl: SAMPLE_IMAGES[i],
               isVegetarian: false,
               isVegan: false,
@@ -97,7 +95,7 @@ export async function POST() {
               author: {
                 connect: { id: authorUser.id }
               },
-              cuisines: {
+              cuisine: {
                 connectOrCreate: {
                   where: { name: 'International' },
                   create: {

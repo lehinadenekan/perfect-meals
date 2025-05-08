@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       instructions: true,
       nutritionFacts: true,
       categories: true,
-      cuisines: true,
+      cuisine: true,
     },
     orderBy: {
       title: 'asc'

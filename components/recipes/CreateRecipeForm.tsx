@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useForm, useFieldArray, Controller, ControllerRenderProps, FieldError, FieldPath } from 'react-hook-form'; // Added FieldError and FieldPath
+import { useForm, useFieldArray, Controller, ControllerRenderProps, FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// Removed Unused Alert Dialog Imports
 import {
   Card,
   CardContent,
@@ -32,7 +31,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Zod schema definitions
+interface FetchedRegion {
+  id: string;
+  name: string;
+  continent: string | null;
+  type: string | null;
+}
+
 const DifficultyEnum = z.enum(["Easy", "Medium", "Hard"]);
 const CuisineTypeEnum = z.enum(["Italian", "Mexican", "Asian", "Indian", "American", "Mediterranean", "Other"]);
 const CookingStyleEnum = z.enum(["Air Fryer", "Bake", "BBQ", "Boil", "Instant Pot", "Microwave", "No-Cook", "Oven", "Roast", "Slow Cooker", "Steam", "Stovetop"]);
@@ -43,7 +48,7 @@ const createRecipeSchema = z.object({
     description: z.string().optional(),
     cookingTime: z.coerce.number({ invalid_type_error: 'Must be a number' }).positive('Must be positive').optional(),
     servings: z.coerce.number({ invalid_type_error: 'Must be a number' }).positive('Must be positive').optional(),
-    regionOfOrigin: z.string().optional(),
+    regionNames: z.array(z.string()).optional(),
     ingredients: z.array(z.object({
         name: z.string().min(2, 'Required'),
         amount: z.coerce.number({ invalid_type_error: 'Num' }).positive('Pos'),
@@ -67,13 +72,12 @@ const createRecipeSchema = z.object({
 });
 type CreateRecipeFormData = z.infer<typeof createRecipeSchema>;
 
-// RecipePayload Type Definition
 type RecipePayload = {
   title: string;
   description?: string;
   cookingTime?: number;
   servings?: number;
-  regionOfOrigin?: string;
+  regionNames?: string[];
   ingredients: { name: string; amount: number; unit: string }[];
   instructions: { description: string; stepNumber: number }[];
   isVegetarian?: boolean;
@@ -91,10 +95,6 @@ type RecipePayload = {
   mealCategories?: string[];
 };
 
-// Define types for field array items to avoid direct indexing errors
-type IngredientField = CreateRecipeFormData['ingredients'][number];
-type InstructionField = CreateRecipeFormData['instructions'][number];
-
 export default function CreateRecipeForm() {
     const {
         register,
@@ -104,12 +104,13 @@ export default function CreateRecipeForm() {
         reset,
         watch,
         setValue,
+        getValues,
     } = useForm<CreateRecipeFormData>({
         resolver: zodResolver(createRecipeSchema),
         defaultValues: {
             title: '',
             description: '',
-            regionOfOrigin: '',
+            regionNames: [],
             ingredients: [{ name: '', amount: NaN, unit: '' }],
             instructions: [{ description: '' }],
             isVegetarian: false,
@@ -131,7 +132,30 @@ export default function CreateRecipeForm() {
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const router = useRouter();
 
-    // Removed Unused Watched Variables
+    const [availableRegions, setAvailableRegions] = useState<FetchedRegion[]>([]);
+    const [isLoadingRegions, setIsLoadingRegions] = useState(true);
+    const [regionFetchError, setRegionFetchError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchRegions = async () => {
+            setIsLoadingRegions(true);
+            setRegionFetchError(null);
+            try {
+                const response = await fetch('/api/regions');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch regions for form');
+                }
+                const data: FetchedRegion[] = await response.json();
+                setAvailableRegions(data);
+            } catch (err) {
+                setRegionFetchError(err instanceof Error ? err.message : 'An unknown error occurred');
+                toast.error("Could not load regions for the form.");
+            } finally {
+                setIsLoadingRegions(false);
+            }
+        };
+        fetchRegions();
+    }, []);
 
     useEffect(() => {
         if (imageFile) {
@@ -148,67 +172,32 @@ export default function CreateRecipeForm() {
             fileRejections.forEach(({ file, errors: dropzoneErrors }) => {
                 dropzoneErrors.forEach(err => {
                     let message = `Error with file ${file.name}: ${err.message}`;
-                    if (err.code === 'file-too-large') {
-                        message = `File ${file.name} is too large (max 5MB).`;
-                    } else if (err.code === 'file-invalid-type') {
-                        message = `File ${file.name} has an invalid type (only images allowed).`;
-                    }
+                    if (err.code === 'file-too-large') message = `File ${file.name} is too large (max 5MB).`;
+                    else if (err.code === 'file-invalid-type') message = `File ${file.name} has an invalid type.`;
                     toast.error(message);
-                    console.error("Upload Error:", err);
                 });
             });
             return;
         }
-
         if (acceptedFiles.length > 0) {
             const file = acceptedFiles[0];
-            if (!file.type.startsWith('image/')) {
-                toast.error('Invalid file type. Please upload an image.');
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error('File is too large. Maximum size is 5MB.');
-                return;
-            }
+            if (!file.type.startsWith('image/')) { toast.error('Invalid file type.'); return; }
+            if (file.size > 5 * 1024 * 1024) { toast.error('File too large (max 5MB).'); return; }
             setImageFile(file);
         }
     }, []);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            'image/jpeg': [], 'image/png': [], 'image/webp': [], 'image/gif': []
-        },
-        maxSize: 5 * 1024 * 1024,
-        multiple: false
-    });
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/jpeg': [], 'image/png': [], 'image/webp': [], 'image/gif': [] }, maxSize: 5 * 1024 * 1024, multiple: false });
+    const clearImage = (e: React.MouseEvent) => { e.stopPropagation(); setImageFile(null); };
 
-    const clearImage = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setImageFile(null);
-    };
-
-    const {
-        fields: ingredientFields,
-        append: appendIngredient,
-        remove: removeIngredient
-    } = useFieldArray({ control, name: 'ingredients' });
-
-    const {
-        fields: instructionFields,
-        append: appendInstruction,
-        remove: removeInstruction
-    } = useFieldArray({ control, name: 'instructions' });
+    const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({ control, name: 'ingredients' });
+    const { fields: instructionFields, append: appendInstruction, remove: removeInstruction } = useFieldArray({ control, name: 'instructions' });
 
     const onSubmit = async (data: CreateRecipeFormData) => {
         let uploadedImageUrl: string | undefined = undefined;
-
         if (imageFile) {
             try {
-                const uploadResponse = await fetch(
-                    `/api/upload/image?filename=${encodeURIComponent(imageFile.name)}`,
-                    { method: 'POST', body: imageFile }
-                );
+                const uploadResponse = await fetch(`/api/upload/image?filename=${encodeURIComponent(imageFile.name)}`, { method: 'POST', body: imageFile });
                 if (!uploadResponse.ok) {
                     const errorData = await uploadResponse.json().catch(() => ({ message: 'Unknown upload error' }));
                     throw new Error(`Image upload failed: ${uploadResponse.statusText} - ${errorData?.message || 'Server error'}`);
@@ -216,24 +205,18 @@ export default function CreateRecipeForm() {
                 const blobResult = await uploadResponse.json();
                 uploadedImageUrl = blobResult?.url;
                 if (!uploadedImageUrl) throw new Error('Image URL not found in upload response.');
-                console.log('Image uploaded successfully:', uploadedImageUrl);
             } catch (error) {
-                console.error("Image Upload Error:", error);
-                toast.error(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
+                toast.error(error instanceof Error ? error.message : 'Failed to upload image.');
                 return;
             }
         }
-
-        const instructionsWithSteps = data.instructions.map((inst, index) => ({
-            ...inst, stepNumber: index + 1,
-        }));
-
+        const instructionsWithSteps = data.instructions.map((inst, index) => ({ ...inst, stepNumber: index + 1 }));
         const recipePayload: RecipePayload = {
             title: data.title,
             description: data.description,
             cookingTime: data.cookingTime,
             servings: data.servings,
-            regionOfOrigin: data.regionOfOrigin,
+            regionNames: data.regionNames,
             ingredients: data.ingredients,
             instructions: instructionsWithSteps,
             isVegetarian: data.isVegetarian,
@@ -251,389 +234,311 @@ export default function CreateRecipeForm() {
             mealCategories: data.mealCategories,
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const payloadToSend: Record<string, any> = { ...recipePayload };
-        Object.keys(payloadToSend).forEach(key => {
-             const K = key as keyof RecipePayload;
-            if (payloadToSend[K] === undefined || payloadToSend[K] === null || payloadToSend[K] === '' || (typeof payloadToSend[K] === 'number' && isNaN(payloadToSend[K]))) {
-                delete payloadToSend[K];
-            }
-        });
-
-        console.log('Submitting Recipe Payload:', JSON.stringify(payloadToSend, null, 2));
-
         try {
             const response = await fetch('/api/recipes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadToSend),
+                body: JSON.stringify(recipePayload),
             });
-
             if (!response.ok) {
-                let errorMessage = 'Unknown error occurred.';
-                try {
-                    const errorBody = await response.json();
-                    errorMessage = errorBody.message || (errorBody.details ? JSON.stringify(errorBody.details) : errorMessage);
-                } catch (_parseError) {
-                    errorMessage = response.statusText || 'Server error';
-                }
-                throw new Error(`Failed to create recipe: ${errorMessage} (Status: ${response.status})`);
+                const errorData = await response.json().catch(() => ({ message: "An unknown error occurred"}));
+                throw new Error(errorData.message || `Server error: ${response.status}`);
             }
-
             const result = await response.json();
-            toast.success(`Recipe "${result.title}" created successfully!`);
-            reset();
-            setImageFile(null);
-            if (result.id) {
-                router.push(`/recipes/${result.id}`);
-            } else {
-                router.push('/');
-            }
+            toast.success('Recipe created successfully!');
+            reset(); // Reset form fields
+            setImageFile(null); // Clear image preview
+            router.push(`/recipes/${result.id}`); // Navigate to the new recipe page
         } catch (error) {
-            console.error("Recipe Creation Error:", error);
-            toast.error(error instanceof Error ? error.message : 'An unexpected error occurred while creating the recipe.');
+            toast.error(error instanceof Error ? error.message : 'Failed to create recipe.');
         }
     };
 
-    // Helper function for rendering error messages
-    const renderError = (field: keyof CreateRecipeFormData | `ingredients.${number}.${keyof IngredientField}` | `instructions.${number}.${keyof InstructionField}`) => {
-        let error: FieldError | undefined; // Use FieldError type
-        if (typeof field === 'string') {
-            const parts = field.split('.');
-            if (parts.length === 3 && (parts[0] === 'ingredients' || parts[0] === 'instructions')) {
-                 type FieldArrayKeys = 'ingredients' | 'instructions';
-                 type FieldKeys = keyof CreateRecipeFormData[FieldArrayKeys][number];
-                 const fieldArrayErrors = errors[parts[0] as FieldArrayKeys];
-                 if(fieldArrayErrors && typeof fieldArrayErrors === 'object' && !Array.isArray(fieldArrayErrors)) {
-                     // Access nested errors more safely
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const specificErrorArray = (fieldArrayErrors as any)[parseInt(parts[1])];
-                    if (specificErrorArray) {
-                         error = specificErrorArray[parts[2] as FieldKeys] as FieldError | undefined;
-                    }
-                 }
-            } else {
-                // Directly access the potential error message for the simple field
-                const simpleErrorObject = errors[field as keyof CreateRecipeFormData];
-                if (simpleErrorObject && typeof simpleErrorObject === 'object' && 'message' in simpleErrorObject && typeof simpleErrorObject.message === 'string') {
-                    // If it has a message, return it directly, bypassing the 'error' variable assignment here
-                     return <p className="text-red-500 text-xs mt-1">{simpleErrorObject.message}</p>;
-                }
-                 // If it's not a simple FieldError with a message, assign undefined
-                error = undefined;
+    const renderError = (fieldName: string) => {
+        // Function to recursively get nested error message
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const getNestedError = (obj: any, path: string[]): string | undefined => {
+            const key = path.shift();
+            if (!key || !obj || typeof obj !== 'object') return undefined;
+            if (path.length === 0) {
+                return typeof obj[key]?.message === 'string' ? obj[key].message : undefined;
             }
-        }
-        // Existing return for array field errors or if simpleErrorObject had no message
-        return error ? (
-            <p className="text-red-500 text-xs mt-1">{error.message}</p>
-        ) : null;
+            return getNestedError(obj[key], path);
+        };
+
+        const message = getNestedError(errors, fieldName.split('.'));
+
+        return message ? <p className="text-xs text-red-500 mt-1">{message}</p> : null;
     };
 
-    // Helper for Select component rendering - Use FieldPath for the field name constraint
     const renderSelect = (field: ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, placeholder: string, options: readonly string[]) => (
-        <Select
-            onValueChange={field.onChange}
-            value={String(field.value ?? "")}
-            disabled={isSubmitting}
-        >
-            <SelectTrigger>
-                <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
+        <Select onValueChange={field.onChange} value={String(field.value || "")} disabled={isSubmitting}>
+            <SelectTrigger><SelectValue placeholder={placeholder} /></SelectTrigger>
             <SelectContent>
-                {options.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
+                <SelectItem value="">{placeholder}</SelectItem>
+                {options.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
             </SelectContent>
         </Select>
     );
 
-    // Helper for Cooking Styles Checkbox Group
     const handleCookingStyleChange = (style: z.infer<typeof CookingStyleEnum>, isChecked: boolean) => {
-        const currentStyles = watch('cookingStyles') || [];
-        const newStyles = isChecked
-            ? [...currentStyles, style]
-            : currentStyles.filter((s) => s !== style);
-        setValue('cookingStyles', newStyles, { shouldValidate: true });
+        const currentStyles = getValues("cookingStyles") || [];
+        let newStyles;
+        if (isChecked) newStyles = [...currentStyles, style];
+        else newStyles = currentStyles.filter(s => s !== style);
+        setValue("cookingStyles", newStyles, { shouldValidate: true, shouldDirty: true });
     };
 
-    // Helper for Meal Categories Checkbox Group
     const handleMealCategoryChange = (category: z.infer<typeof MealCategoryEnum>, isChecked: boolean) => {
-        const currentCategories = watch('mealCategories') || [];
-        let updatedCategories:
-          | z.infer<typeof MealCategoryEnum>[]
-          | undefined = [];
-        if (isChecked) {
-          updatedCategories = [...currentCategories, category];
-        } else {
-          updatedCategories = currentCategories.filter((c) => c !== category);
-        }
-        setValue('mealCategories', updatedCategories);
+        const currentCategories = getValues("mealCategories") || [];
+        let newCategories;
+        if (isChecked) newCategories = [...currentCategories, category];
+        else newCategories = currentCategories.filter(c => c !== category);
+        setValue("mealCategories", newCategories, { shouldValidate: true, shouldDirty: true });
     };
-
-    // Explicitly define the options to render
+    
+    const cookingStyleOptions: z.infer<typeof CookingStyleEnum>[] = ["Air Fryer", "Bake", "BBQ", "Boil", "Instant Pot", "Microwave", "No-Cook", "Oven", "Roast", "Slow Cooker", "Steam", "Stovetop"];
     const mealCategoryOptions: z.infer<typeof MealCategoryEnum>[] = ["Main", "Dessert", "Drink"];
 
-    // JSX rendering
+    const handleRegionCheckboxChange = (regionName: string, isChecked: boolean) => {
+        const currentRegionNames = getValues("regionNames") || [];
+        let newRegionNames;
+        if (isChecked) {
+            newRegionNames = [...currentRegionNames, regionName];
+        } else {
+            newRegionNames = currentRegionNames.filter(name => name !== regionName);
+        }
+        setValue("regionNames", newRegionNames, { shouldValidate: true, shouldDirty: true });
+    };
+
+    const regionsByContinent = availableRegions.reduce((acc, region) => {
+        const continentKey = region.continent || 'Unknown';
+        if (!acc[continentKey]) acc[continentKey] = [];
+        acc[continentKey].push(region);
+        return acc;
+    }, {} as Record<string, FetchedRegion[]>);
+
+    const sortedContinentNamesFromFetched = Object.keys(regionsByContinent).sort((a,b) => {
+        if(a === 'Unknown') return 1;
+        if(b === 'Unknown') return -1;
+        return a.localeCompare(b);
+    });
+    
+    const currentSelectedRegions = watch("regionNames") || [];
+
     return (
-        <Card className="w-full max-w-4xl mx-auto my-8">
-            <CardHeader>
-                <CardTitle>Create a New Recipe</CardTitle>
-                <CardDescription>Fill in the details below to add your recipe.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} id="recipe-form" className="space-y-8">
-
-                    {/* Section 1: Basic Details */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Basic Information</h3>
-                        <div>
-                            <Label htmlFor="title">Title *</Label>
-                            <Input id="title" {...register('title')} placeholder="e.g., Grandma's Apple Pie" disabled={isSubmitting} />
-                            {renderError('title')}
-                        </div>
-                        <div>
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea id="description" {...register('description')} placeholder="A brief description of your recipe..." disabled={isSubmitting} />
-                            {renderError('description')}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="cookingTime">Cooking Time (minutes)</Label>
-                                <Input id="cookingTime" type="number" {...register('cookingTime')} placeholder="e.g., 45" disabled={isSubmitting} />
-                                {renderError('cookingTime')}
-                            </div>
-                            <div>
-                                <Label htmlFor="servings">Servings</Label>
-                                <Input id="servings" type="number" {...register('servings')} placeholder="e.g., 4" disabled={isSubmitting} />
-                                {renderError('servings')}
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="cuisineType">Cuisine Type</Label>
-                                <Controller
-                                    name="cuisineType"
-                                    control={control}
-                                    render={({ field }) => renderSelect(field as ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, "Select Cuisine", CuisineTypeEnum.options)} // Added type assertion here
-                                />
-                                {renderError('cuisineType')}
-                            </div>
-                            <div>
-                                <Label htmlFor="difficulty">Difficulty</Label>
-                                <Controller
-                                    name="difficulty"
-                                    control={control}
-                                    render={({ field }) => renderSelect(field as ControllerRenderProps<CreateRecipeFormData, FieldPath<CreateRecipeFormData>>, "Select Difficulty", DifficultyEnum.options)} // Added type assertion here
-                                />
-                                {renderError('difficulty')}
-                            </div>
-                            <div>
-                                <Label htmlFor="regionOfOrigin">Region of Origin</Label>
-                                <Input id="regionOfOrigin" {...register('regionOfOrigin')} placeholder="e.g., Sicily, Oaxaca, Sichuan" disabled={isSubmitting} />
-                                {renderError('regionOfOrigin')}
-                            </div>
-                        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" id="recipe-form">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Basic Information</CardTitle>
+                    <CardDescription>Tell us about your recipe.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
+                        <Input id="title" {...register('title')} placeholder="e.g., Spaghetti Carbonara" disabled={isSubmitting} />
+                        {renderError('title')}
                     </div>
+                    <div className="md:col-span-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea id="description" {...register('description')} placeholder="A brief overview of your recipe..." disabled={isSubmitting} />
+                        {renderError('description')}
+                    </div>
+                    <div>
+                        <Label htmlFor="cookingTime">Cooking Time (minutes)</Label>
+                        <Input id="cookingTime" type="number" {...register('cookingTime')} placeholder="e.g., 30" disabled={isSubmitting} />
+                        {renderError('cookingTime')}
+                    </div>
+                    <div>
+                        <Label htmlFor="servings">Servings</Label>
+                        <Input id="servings" type="number" {...register('servings')} placeholder="e.g., 4" disabled={isSubmitting} />
+                        {renderError('servings')}
+                    </div>
+                </CardContent>
+            </Card>
 
-                    {/* Section 2: Dietary Information */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Dietary Information</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {([
-                                'isVegetarian', 'isVegan', 'isGlutenFree', 'isNutFree',
-                                'isPescatarian', 'isLactoseFree', 'isLowFodmap', 'isFermented'
-                            ] as const).map((flag) => (
-                                <div key={flag} className="flex items-center space-x-2">
-                                    <Controller
-                                        name={flag}
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Checkbox
-                                                id={flag}
-                                                checked={!!field.value} // Ensure value is boolean
-                                                onCheckedChange={field.onChange}
-                                                disabled={isSubmitting}
-                                            />
-                                        )}
-                                    />
-                                    <Label htmlFor={flag} className="cursor-pointer">
-                                        {flag.substring(2).replace(/([A-Z])/g, ' $1').trim()}
-                                    </Label>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Geographic Origin</CardTitle>
+                    <CardDescription>Select all applicable regions for this recipe.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoadingRegions && <p className="text-sm text-gray-500">Loading regions...</p>}
+                    {!isLoadingRegions && regionFetchError && <p className="text-sm text-red-500">Error loading regions: {regionFetchError}</p>}
+                    {!isLoadingRegions && !regionFetchError && availableRegions.length === 0 && <p className="text-sm text-gray-500">No regions available to select.</p>}
+                    {!isLoadingRegions && !regionFetchError && availableRegions.length > 0 && (
+                        <div className="space-y-4">
+                            {sortedContinentNamesFromFetched.map(continentName => {
+                                const regionsInThisContinent = (regionsByContinent[continentName] || []).sort((a, b) => {
+                                     const typeOrder = { 'CONTINENT': 0, 'SUB_REGION': 1, 'COUNTRY': 2 };
+                                     const typeA = a.type || '';
+                                     const typeB = b.type || '';
+                                     if (typeOrder[typeA as keyof typeof typeOrder] !== typeOrder[typeB as keyof typeof typeOrder]) {
+                                         return (typeOrder[typeA as keyof typeof typeOrder] ?? 3) - (typeOrder[typeB as keyof typeof typeOrder] ?? 3);
+                                     }
+                                     return a.name.localeCompare(b.name);
+                                 });
+                                
+                                if (regionsInThisContinent.length === 0) return null;
+
+                                return (
+                                    <div key={continentName}>
+                                        <h4 className="text-md font-semibold mb-2 border-b pb-1">{continentName}</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3">
+                                            {regionsInThisContinent.map(region => (
+                                                <div key={region.id} className="flex items-center space-x-2">
+                                                    <Checkbox 
+                                                        id={`region-${region.id}`}
+                                                        checked={currentSelectedRegions.includes(region.name)}
+                                                        onCheckedChange={(checked) => handleRegionCheckboxChange(region.name, !!checked)}
+                                                        disabled={isSubmitting}
+                                                    />
+                                                    <Label htmlFor={`region-${region.id}`} className="text-sm font-normal cursor-pointer">
+                                                        {region.name} <span className="text-xs text-gray-500">({region.type || 'N/A'})</span>
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    {renderError('regionNames')}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle>Dietary Information</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {[{id: "isVegetarian", label:"Vegetarian"}, {id: "isVegan", label:"Vegan"}, {id: "isGlutenFree", label:"Gluten-Free"}, {id: "isNutFree", label:"Nut-Free"}, {id:"isPescatarian", label:"Pescatarian"}, {id:"isLactoseFree", label:"Lactose-Free"}, {id:"isLowFodmap", label:"Low-FODMAP"}, {id:"isFermented", label:"Fermented"}].map(diet => (
+                        <div key={diet.id} className="flex items-center space-x-2">
+                            <Controller name={diet.id as keyof CreateRecipeFormData} control={control} render={({ field }) => <Checkbox id={diet.id} checked={!!field.value} onCheckedChange={field.onChange} disabled={isSubmitting} />} />
+                            <Label htmlFor={diet.id} className="text-sm font-normal">{diet.label}</Label>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle>Ingredients *</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    {ingredientFields.map((field, index) => (
+                        <div key={field.id} className="flex flex-col sm:flex-row items-start gap-2 p-3 border rounded-md bg-gray-50/50">
+                            <div className="grid grid-cols-3 gap-2 flex-grow w-full sm:w-auto">
+                                <div className="col-span-3 sm:col-span-1">
+                                    <Label htmlFor={`ingredients.${index}.amount`} className="text-xs">Amount *</Label>
+                                    <Input id={`ingredients.${index}.amount`} type="number" step="0.1" {...register(`ingredients.${index}.amount`)} placeholder="e.g., 1" disabled={isSubmitting} className="text-sm" />
+                                    {renderError(`ingredients.${index}.amount`)}
                                 </div>
-                            ))}
+                                <div className="col-span-3 sm:col-span-1">
+                                    <Label htmlFor={`ingredients.${index}.unit`} className="text-xs">Unit *</Label>
+                                    <Input id={`ingredients.${index}.unit`} {...register(`ingredients.${index}.unit`)} placeholder="e.g., cup, tbsp" disabled={isSubmitting} className="text-sm" />
+                                    {renderError(`ingredients.${index}.unit`)}
+                                </div>
+                                <div className="col-span-3 sm:col-span-1">
+                                    <Label htmlFor={`ingredients.${index}.name`} className="text-xs">Name *</Label>
+                                    <Input id={`ingredients.${index}.name`} {...register(`ingredients.${index}.name`)} placeholder="e.g., All-purpose Flour" disabled={isSubmitting} className="text-sm" />
+                                    {renderError(`ingredients.${index}.name`)}
+                                </div>
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => ingredientFields.length > 1 && removeIngredient(index)} disabled={isSubmitting || ingredientFields.length <= 1} className="mt-2 sm:mt-0 sm:self-center text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0" aria-label="Remove ingredient">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    {renderError('ingredients')}
+                    <Button type="button" variant="outline" onClick={() => appendIngredient({ name: '', amount: NaN, unit: '' })} disabled={isSubmitting}>+ Add Ingredient</Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle>Instructions *</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    {instructionFields.map((field, index) => (
+                        <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-gray-50/50">
+                            <div className="flex-grow space-y-1">
+                                <Label htmlFor={`instructions.${index}.description`} className="font-medium">Step {index + 1}</Label>
+                                <Textarea id={`instructions.${index}.description`} {...register(`instructions.${index}.description`)} placeholder="Describe this step..." rows={3} disabled={isSubmitting} className="text-sm" />
+                                {renderError(`instructions.${index}.description`)}
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => instructionFields.length > 1 && removeInstruction(index)} disabled={isSubmitting || instructionFields.length <= 1} className="mt-5 sm:self-center text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0" aria-label="Remove instruction">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    {renderError('instructions')}
+                    <Button type="button" variant="outline" onClick={() => appendInstruction({ description: '' })} disabled={isSubmitting}>+ Add Step</Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle>Recipe Image</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    <div {...getRootProps()} className={`p-6 border-2 border-dashed rounded-md cursor-pointer transition-colors ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50/50'}`}>
+                        <input {...getInputProps()} />
+                        <div className="text-center">
+                            <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
+                            {isDragActive ? <p className="mt-2 text-sm text-blue-600">Drop the image here...</p> : <p className="mt-2 text-sm text-gray-600">Drag & drop an image here, or click to select</p>}
+                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WEBP up to 5MB</p>
                         </div>
                     </div>
+                    {imagePreviewUrl && (
+                        <div className="mt-4 relative w-48 h-32 border rounded-md overflow-hidden">
+                            <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="cover" />
+                            <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 rounded-full p-1" onClick={clearImage} aria-label="Remove image">
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
-                    {/* Section: Cooking Styles */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Cooking Styles</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {CookingStyleEnum.options.map((style) => (
+            <Card>
+                <CardHeader><CardTitle>Categorization</CardTitle></CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <Label>Cooking Styles</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-2">
+                            {cookingStyleOptions.map(style => (
                                 <div key={style} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`style-${style}`}
-                                        checked={watch('cookingStyles')?.includes(style)}
-                                        onCheckedChange={(checked) => handleCookingStyleChange(style, !!checked)}
-                                        disabled={isSubmitting}
-                                    />
-                                    <Label htmlFor={`style-${style}`} className="cursor-pointer font-normal">{style}</Label>
+                                    <Checkbox id={`style-${style}`} checked={(watch("cookingStyles") || []).includes(style)} onCheckedChange={(checked) => handleCookingStyleChange(style, !!checked)} disabled={isSubmitting} />
+                                    <Label htmlFor={`style-${style}`} className="text-sm font-normal">{style}</Label>
                                 </div>
                             ))}
                         </div>
                         {renderError('cookingStyles')}
                     </div>
-
-                    {/* Section: Meal Categories */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Meal Categories</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {mealCategoryOptions.map((category) => (
+                    <div>
+                        <Label>Meal Categories</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+                            {mealCategoryOptions.map(category => (
                                 <div key={category} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`mealCategory-${category}`}
-                                        checked={(watch('mealCategories') || []).includes(category)}
-                                        onCheckedChange={(checked) => handleMealCategoryChange(category, !!checked)}
-                                        disabled={isSubmitting}
-                                    />
-                                    <Label htmlFor={`mealCategory-${category}`} className="cursor-pointer font-normal">{category}</Label>
+                                    <Checkbox id={`category-${category}`} checked={(watch("mealCategories") || []).includes(category)} onCheckedChange={(checked) => handleMealCategoryChange(category, !!checked)} disabled={isSubmitting} />
+                                    <Label htmlFor={`category-${category}`} className="text-sm font-normal">{category}</Label>
                                 </div>
                             ))}
                         </div>
                         {renderError('mealCategories')}
                     </div>
-
-                    {/* Section 3: Ingredients */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Ingredients *</h3>
-                        {ingredientFields.map((field, index) => (
-                            <div key={field.id} className="flex flex-col sm:flex-row items-start sm:items-end gap-2 p-3 border rounded-md bg-gray-50/50">
-                                <div className="grid grid-cols-3 gap-2 flex-grow w-full">
-                                    <div className="col-span-3 sm:col-span-1">
-                                        <Label htmlFor={`ingredients.${index}.amount`} className="text-xs">Amount *</Label>
-                                        <Input id={`ingredients.${index}.amount`} type="number" step="0.1" {...register(`ingredients.${index}.amount`)} placeholder="e.g., 1" disabled={isSubmitting} className="text-sm" />
-                                        {renderError(`ingredients.${index}.amount` as const)}
-                                    </div>
-                                    <div className="col-span-3 sm:col-span-1">
-                                        <Label htmlFor={`ingredients.${index}.unit`} className="text-xs">Unit *</Label>
-                                        <Input id={`ingredients.${index}.unit`} {...register(`ingredients.${index}.unit`)} placeholder="e.g., cup, tbsp" disabled={isSubmitting} className="text-sm" />
-                                        {renderError(`ingredients.${index}.unit` as const)}
-                                    </div>
-                                    <div className="col-span-3 sm:col-span-1">
-                                        <Label htmlFor={`ingredients.${index}.name`} className="text-xs">Name *</Label>
-                                        <Input id={`ingredients.${index}.name`} {...register(`ingredients.${index}.name`)} placeholder="e.g., All-purpose Flour" disabled={isSubmitting} className="text-sm" />
-                                        {renderError(`ingredients.${index}.name` as const)}
-                                    </div>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => ingredientFields.length > 1 && removeIngredient(index)}
-                                    disabled={isSubmitting || ingredientFields.length <= 1}
-                                    className="mt-2 sm:mt-0 sm:mb-1 text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0"
-                                    aria-label="Remove ingredient"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))}
-                         {renderError('ingredients')}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => appendIngredient({ name: '', amount: NaN, unit: '' })}
-                            disabled={isSubmitting}
-                        >
-                            + Add Ingredient
-                        </Button>
+                     <div>
+                        <Label htmlFor="cuisineType">Primary Cuisine Type</Label>
+                        <Controller name="cuisineType" control={control} render={({ field }) => renderSelect(field, "Select cuisine type", CuisineTypeEnum.options)} />
+                        {renderError('cuisineType')}
                     </div>
-
-                    {/* Section 4: Instructions */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Instructions *</h3>
-                        {instructionFields.map((field, index) => (
-                            <div key={field.id} className="flex items-start gap-2 p-3 border rounded-md bg-gray-50/50">
-                                <div className="flex-grow space-y-1">
-                                    <Label htmlFor={`instructions.${index}.description`} className="font-medium">Step {index + 1}</Label>
-                                    <Textarea
-                                        id={`instructions.${index}.description`}
-                                        {...register(`instructions.${index}.description`)}
-                                        placeholder="Describe this step..."
-                                        rows={3}
-                                        disabled={isSubmitting}
-                                        className="text-sm"
-                                    />
-                                    {renderError(`instructions.${index}.description` as const)}
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => instructionFields.length > 1 && removeInstruction(index)}
-                                    disabled={isSubmitting || instructionFields.length <= 1}
-                                    className="mt-5 text-red-500 hover:text-red-700 hover:bg-red-100 flex-shrink-0"
-                                    aria-label="Remove instruction"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))}
-                        {renderError('instructions')}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => appendInstruction({ description: '' })}
-                            disabled={isSubmitting}
-                        >
-                            + Add Step
-                        </Button>
+                    <div>
+                        <Label htmlFor="difficulty">Difficulty</Label>
+                        <Controller name="difficulty" control={control} render={({ field }) => renderSelect(field, "Select difficulty", DifficultyEnum.options)} />
+                        {renderError('difficulty')}
                     </div>
+                </CardContent>
+            </Card>
 
-                    {/* Section 5: Image Upload */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium border-b pb-2">Recipe Image</h3>
-                        <div
-                            {...getRootProps()}
-                            className={`p-6 border-2 border-dashed rounded-md cursor-pointer transition-colors ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50/50'}`}
-                        >
-                            <input {...getInputProps()} />
-                            <div className="text-center">
-                                <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
-                                {isDragActive ? (
-                                    <p className="mt-2 text-sm text-blue-600">Drop the image here...</p>
-                                ) : (
-                                    <p className="mt-2 text-sm text-gray-600">Drag & drop an image here, or click to select</p>
-                                )}
-                                <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WEBP up to 5MB</p>
-                            </div>
-                        </div>
-                        {imagePreviewUrl && (
-                            <div className="mt-4 relative w-48 h-32 border rounded-md overflow-hidden">
-                                <Image src={imagePreviewUrl} alt="Image preview" layout="fill" objectFit="cover" />
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-1 right-1 h-6 w-6 rounded-full p-1"
-                                    onClick={clearImage}
-                                    aria-label="Remove image"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-
-                </form>
-            </CardContent>
             <CardFooter className="flex justify-end">
                 <Button type="submit" form="recipe-form" disabled={isSubmitting} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                    {isSubmitting ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
-                    ) : (
-                        'Create Recipe'
-                    )}
+                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create Recipe'}
                 </Button>
             </CardFooter>
-        </Card>
+        </form>
     );
 }

@@ -61,7 +61,7 @@ const formatMinutes = (totalMinutes: number | null | undefined): string => {
   return `${hours}h ${minutes}m`;
 };
 
-type InitialRecipeData = Recipe & { isFavourite?: boolean };
+type InitialRecipeData = Recipe & { isFavourite?: boolean; regions?: { id: string; name: string }[]; };
 
 interface RecipeDetailModalProps {
   recipe: InitialRecipeData;
