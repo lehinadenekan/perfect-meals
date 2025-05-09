@@ -190,6 +190,7 @@ async function main() {
         },
         nutritionFacts: recipeData.nutritionFacts ? { create: { ...recipeData.nutritionFacts } } : undefined,
         dietaryNotes: recipeData.dietaryNotes ? { create: { ...recipeData.dietaryNotes } } : undefined,
+        notes: recipeData.notes || [],
       };
 
       if (recipeData.cuisineId) {
@@ -251,6 +252,7 @@ async function main() {
             update: { ...recipeData.dietaryNotes },
           }
         } : undefined,
+        notes: recipeData.notes || [],
       };
 
       if (recipeData.cuisineId) {

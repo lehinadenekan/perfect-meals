@@ -1,6 +1,6 @@
 // lib/data/recipes.ts
 // Modify imports at the top
-import { Recipe, Ingredient, NutritionFacts, Tag, Category, Cuisine, DietaryNotes } from '@prisma/client'; // Removed unused Prisma import
+import { Recipe, Ingredient, NutritionFacts, Tag, Category, Cuisine, DietaryNotes } from '@prisma/client'; // Removed Prisma as it was unused
 import { Instruction } from '@/lib/types/recipe'; // Import Instruction from our defined types
 import 'server-only';
 import { prisma } from '@/lib/prisma';
@@ -21,6 +21,7 @@ export type RecipeDetailData = Recipe & {
   isFavourite?: boolean;
   dietaryNotes?: DietaryNotes | null; // <-- Changed from Prisma.JsonValue
   notes?: string[]; // Explicitly adding notes here
+  // Ensure all fields selected below are potentially part of this type or the base Recipe type
 };
 
 
@@ -35,20 +36,59 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
   try {
     const recipe = await prisma.recipe.findUnique({
       where: { id },
-      include: {
-        ingredients: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        servings: true,
+        cookingTime: true,
+        difficulty: true,
+        imageUrl: true,
+        authorId: true,
+        source: true,
+        createdAt: true,
+        updatedAt: true,
+        nutritionFactsId: true,
+        dietaryNotesId: true,
+        isPublic: true,
+        calories: true,
+        // Scalar fields that were in the API response but might be from direct Recipe model or relations
+        // Check schema: protein, carbs, fat were direct on Recipe model in a previous version.
+        // Assuming they are still direct for this select. If they were moved to NutritionFacts exclusively, remove from here.
+        protein: true, 
+        carbs: true,
+        fat: true,
+        type: true,
+        isVegetarian: true,
+        isVegan: true,
+        isGlutenFree: true,
+        isDairyFree: true,
+        isNutFree: true,
+        isPescatarian: true,
+        isLactoseFree: true,
+        isLowFodmap: true,
+        isSpicy: true,
+        isFermented: true,
+        cookingStyles: true,
+        mealCategories: true,
+        notes: true, // Explicitly select notes
+        cuisineId: true,
+
+        // Relations (ensure these are correct based on RecipeDetailData needs)
+        ingredients: true, // Selects all fields of related ingredients
         instructions: {
           orderBy: {
             stepNumber: 'asc',
           },
         },
-        nutritionFacts: true,
+        nutritionFacts: true, // Selects the full related NutritionFacts object
         author: {
           select: { id: true, name: true, image: true }
         },
-        categories: true,
-        cuisine: true,
-        dietaryNotes: true,
+        categories: true, // Selects related categories
+        cuisine: true,    // Selects the full related Cuisine object
+        dietaryNotes: true // Selects the full related DietaryNotes object
+        // regions: true, // If regions are needed by RecipeDetailData
       },
     });
 
@@ -56,22 +96,16 @@ export async function getRecipeById(id: string): Promise<RecipeDetailData | null
       console.warn(`[Server Data] Recipe not found for ID: ${id}`);
       return null;
     }
+    
+    // Now TypeScript should be happy because 'notes' is explicitly selected
+    console.log(`[Server Data] Raw recipe.notes from Prisma for ID ${id}:`, recipe.notes);
 
-    // Prisma's generated type with include should match RecipeDetailData if defined correctly
-    // The cast might not be strictly necessary but provides an extra layer of type safety
     return recipe as RecipeDetailData;
 
   } catch (error) {
     console.error(`[Server Data] Failed to fetch recipe ${id}:`, error);
-    // In production, consider more generic error handling or logging
-    return null; // Return null on error to be handled by the API route/component
+    return null;
   }
-  // Remove finally block if using a shared Prisma instance
-  // finally {
-  //   if (prisma && typeof prisma.$disconnect === 'function') {
-  //     await prisma.$disconnect();
-  //   }
-  // }
 }
 
 // Add other server-only data fetching functions here if needed

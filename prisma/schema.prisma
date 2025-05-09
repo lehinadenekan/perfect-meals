@@ -104,6 +104,7 @@ model Recipe {
   isFermented         Boolean?
   cookingStyles       String[] // e.g. ["Baking", "Grilling", "Slow Cooker"]
   mealCategories      String[] // e.g. ["Breakfast", "Lunch", "Dinner", "Snack", "Drink"]
+  notes               String[]
   cuisineId           String?
   cuisine             Cuisine?            @relation("CuisineRecipes", fields: [cuisineId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   regions             Region[]            @relation("RecipeRegions")

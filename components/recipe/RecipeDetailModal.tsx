@@ -139,6 +139,11 @@ export default function RecipeDetailModal({
   const recipeToDisplay = detailedRecipe || initialRecipe;
   const isAuthor = session?.user?.id === recipeToDisplay?.authorId;
   const initialIsFavourite = initialRecipe?.isFavourite ?? false;
+
+  console.log("[RecipeDetailModal] Initial Recipe Notes:", initialRecipe?.notes);
+  console.log("[RecipeDetailModal] Detailed Recipe Notes:", detailedRecipe?.notes);
+  console.log("[RecipeDetailModal] Recipe To Display Notes:", recipeToDisplay?.notes);
+
   const dietaryNotesData = detailedRecipe?.dietaryNotes as DietaryNotesData | null | undefined;
 
   const fodmapSentences = dietaryNotesData?.fodmapInfo ? splitIntoSentences(dietaryNotesData.fodmapInfo) : [];
