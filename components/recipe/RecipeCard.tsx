@@ -163,11 +163,16 @@ export default function RecipeCard({
             </div>
 
             <div className="mb-2">
-              <div className="flex items-center space-x-2 whitespace-nowrap">
+              <div className="flex items-center space-x-2">
                 <GlobeAltIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
                 <span className="text-sm text-gray-600">
-                  {recipe.regions && recipe.regions.length > 0 
-                    ? recipe.regions.map((region: { name: string }) => region.name).join(', ')
+                  {recipe.regions && recipe.regions.length > 0
+                    ? recipe.regions.map((region: { id?: string; name: string }, index: number) => (
+                        <span key={region.id || region.name}>
+                          {region.name}
+                          {index < (recipe.regions?.length ?? 0) - 1 ? ', ' : ''}
+                        </span>
+                      ))
                     : recipe.regionOfOrigin || 'N/A'
                   }
                 </span>

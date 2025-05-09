@@ -73,8 +73,6 @@ export const seedRecipes: SeedRecipeRecipe[] = [
     servings: 2,
     difficulty: "EASY",
     regionNames: ["Peru", "South America"],
-    // continent: "South America", 
-    // regionOfOrigin: "Peru", 
     imageUrl: "/images/recipes/quinoa_buddha_bowl2.jpg",
     calories: 550,
     type: "MAIN",
